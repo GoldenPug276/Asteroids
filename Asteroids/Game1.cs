@@ -124,7 +124,7 @@ namespace Asteroid
          */
 
         /*REMINDERS:
-         * Do some work at home if possible
+         * In order to push to Git correctly, you must first create a commit and then push
          * 
          * Don't need to put ==true and can do !bool for false, apply to code
          * 
