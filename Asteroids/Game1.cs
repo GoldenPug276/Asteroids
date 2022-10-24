@@ -124,6 +124,8 @@ namespace Asteroid
          */
 
         /*REMINDERS:
+         * Do some work at home if possible
+         * 
          * Don't need to put ==true and can do !bool for false, apply to code
          * 
          * When on new PC, in order to make it work right, you must do the following:
