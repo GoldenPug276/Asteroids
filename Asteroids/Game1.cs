@@ -156,6 +156,8 @@ namespace Asteroid
          */
 
         /*REMINDERS:
+         * In order to push to Git correctly, you must first create a commit and then push
+         * 
          * Don't need to put ==true and can do !bool for false, apply to code
          * 
          * When on new PC, in order to make it work right, you must do the following:
