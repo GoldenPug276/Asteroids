@@ -26,6 +26,23 @@ namespace Asteroid
         Level level;
         SpriteFont font;
 
+        public enum StatUpgradeType
+        {
+            None = 0,
+            MovementSpeed=1
+        }
+        public enum AbilityUpgradeType
+        {
+            None = 0,
+
+        }
+        List<Upgrade> PossibleUpgrades = new List<Upgrade>();
+        List<Upgrade> ActiveUpgrades = new List<Upgrade>();
+        List<Upgrade> ActiveAbilities = new List<Upgrade>();
+
+        Upgrade MovementSpeed;
+        Button UpgradeSkip;
+
         Powerup machine;
         Bullet machineShot;
         Powerup laser;
@@ -36,7 +53,9 @@ namespace Asteroid
         Button FirstUpgradeChoice;
         Button SecondUpgradeChoice;
         Button ThirdUpgradeChoice;
-        Button UpgradeSkip;
+
+        Button UpgradeChoice;
+
         Texture2D UpgradeSlot;
         Texture2D SkipUpgrade;
         string tempPress = "";
@@ -103,9 +122,19 @@ namespace Asteroid
          *          
          *      remember, sprite's positions are in the middle of the sprite
          *      
-         *      deal with upgrade class later (rn it's only a copy of powerup with 0 differences)
+         *      deal with upgrade class later (rn it's only a copy of powerup with 0 differences) {Do now}
          *      actually, make upgrade a class with a button and upgrade. Basically, the entire upgrade is in this class.
          *          rn, the gui and its buttons will be in the main class just so I can first make them work
+         *          
+         *          have it pick 3 random upgrades and place them with a certain amount of pixels in between
+         *          have the location assigned when the upgrade is gotten
+         *          spawn the text and image using the main button position
+         *          call the button inside of the upgrade to check for presses
+         *          set position and upgradebutton position from game1
+         *          have abilities have upgrade trees in forms of list, and have the current prog as an int
+         *          
+         *              tink i finished upgrade class, use
+         *              do the conversion at home
          *          
          *      have a button class;        {FINISHED}
          *          inherits from sprite
@@ -118,6 +147,9 @@ namespace Asteroid
          *          
          *      
          *      convert powerups into gun upgrades
+         *      
+         *      remember to push and pull from github
+         *          rename and give description if possitble, also take off github if possible
          *      
          * Make particles
          * Make actual death animations
@@ -188,10 +220,19 @@ namespace Asteroid
 
             UpgradeSlot = Content.Load<Texture2D>("UpgradeSlot");
             SkipUpgrade = Content.Load<Texture2D>("UpgradeSkip");
+            UpgradeChoice = new Button(new Vector2(-500, -500), UpgradeSlot, 0, 1, Color.White);
+
+            MovementSpeed = new Upgrade(new Vector2(-500, -500), StatUpgradeType.MovementSpeed, AbilityUpgradeType.None, "Speed", "Gives speed, I guess (TESTING)", UpgradeChoice,
+                Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+            PossibleUpgrades.Add(MovementSpeed);
+
+            UpgradeSkip = new Button(new Vector2(width - 37, height - 21), SkipUpgrade, 0, 1, Color.White);
+
+
             FirstUpgradeChoice = new Button(new Vector2(135, 240), UpgradeSlot, 0, 1, Color.White);
             SecondUpgradeChoice = new Button(new Vector2(405, 240), Content.Load<Texture2D>("UpgradeSlot"), 0, 1, Color.White);
             ThirdUpgradeChoice = new Button(new Vector2(675, 240), Content.Load<Texture2D>("UpgradeSlot"), 0, 1, Color.White);
-            UpgradeSkip = new Button(new Vector2(width - 37, height - 21), Content.Load<Texture2D>("UpgradeSkip"), 0, 1, Color.White);
+
 
             // TODO: use this.Content to load your game content here
         }
