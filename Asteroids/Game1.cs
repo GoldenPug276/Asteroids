@@ -29,7 +29,7 @@ namespace Asteroid
         public enum StatUpgradeType
         {
             None = 0,
-            MovementSpeed=1
+            Test = 1
         }
         public enum AbilityUpgradeType
         {
@@ -37,11 +37,15 @@ namespace Asteroid
 
         }
         List<Upgrade> PossibleUpgrades = new List<Upgrade>();
+        List<Upgrade> UpgradesToDraw = new List<Upgrade>();
         List<Upgrade> ActiveUpgrades = new List<Upgrade>();
         List<Upgrade> ActiveAbilities = new List<Upgrade>();
 
-        Upgrade MovementSpeed;
-        Button UpgradeSkip;
+        Upgrade TestUpgrade1;
+        Upgrade TestUpgrade2;
+        Upgrade TestUpgrade3;
+        Upgrade UpgradeSkip;
+        Button UpgradeSkipButton;
 
         Powerup machine;
         Bullet machineShot;
@@ -54,7 +58,9 @@ namespace Asteroid
         Button SecondUpgradeChoice;
         Button ThirdUpgradeChoice;
 
-        Button UpgradeChoice;
+        Button UpgradeChoice1;
+        Button UpgradeChoice2;
+        Button UpgradeChoice3;
 
         Texture2D UpgradeSlot;
         Texture2D SkipUpgrade;
@@ -145,6 +151,9 @@ namespace Asteroid
          *              an update function that checks all of the above at once
          *          
          *          
+         *          
+         *          for som reason, upgrade positions are wack, fix {NOOOOOOOOOOOOOOOOOWWWWWWWWWWWWWWWWW}
+         *              rn, button right spot, eevrything else, no
          *      
          *      convert powerups into gun upgrades
          *      
@@ -215,23 +224,37 @@ namespace Asteroid
                 powerDamages, laserShot, 40, Content.Load<Texture2D>("LaserPower"), 0, 1 / 1f, Color.Yellow);
 
             level = new Level(5, 1, 0, 0, TimeSpan.FromMilliseconds(20000), 100, 5, 1);
-            
+
             asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, Content.Load<Texture2D>("BigAsteroid"), ship));
             asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, Content.Load<Texture2D>("BigAsteroid"), ship));
             asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, Content.Load<Texture2D>("BigAsteroid"), ship));
 
             UpgradeSlot = Content.Load<Texture2D>("UpgradeSlot");
             SkipUpgrade = Content.Load<Texture2D>("UpgradeSkip");
-            UpgradeChoice = new Button(new Vector2(-500, -500), UpgradeSlot, 0, 1, Color.White);
+            UpgradeChoice1 = new Button(new Vector2(135, 240), UpgradeSlot, 0, 1, Color.White);
+            UpgradeChoice2 = new Button(new Vector2(405, 240), UpgradeSlot, 0, 1, Color.White);
+            UpgradeChoice3 = new Button(new Vector2(675, 240), UpgradeSlot, 0, 1, Color.White);
 
-            MovementSpeed = new Upgrade(new Vector2(-500, -500), StatUpgradeType.MovementSpeed, AbilityUpgradeType.None, "Speed", "Gives speed, I guess (TESTING)", UpgradeChoice,
+            TestUpgrade1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test1", "I dunno man V1 (TESTING)", UpgradeChoice1,
                 Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
-            PossibleUpgrades.Add(MovementSpeed);
+            PossibleUpgrades.Add(TestUpgrade1);
 
-            UpgradeSkip = new Button(new Vector2(width - 37, height - 21), SkipUpgrade, 0, 1, Color.White);
+            TestUpgrade2 = new Upgrade(new Vector2(270, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test2", "I dunno man V2 (TESTING)", UpgradeChoice2,
+                Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+            PossibleUpgrades.Add(TestUpgrade2);
 
+            TestUpgrade3 = new Upgrade(new Vector2(540, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test3", "I dunno man V3 (TESTING)", UpgradeChoice3,
+                Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+            PossibleUpgrades.Add(TestUpgrade3);
 
+            UpgradeSkipButton = new Button(new Vector2(width - 37, height - 21), SkipUpgrade, 0, 1, Color.White);
+
+            UpgradeSkip = new Upgrade(new Vector2(width - 37, height - 21), StatUpgradeType.None, AbilityUpgradeType.None, "Skip", "Skips (TEST SKIP)", UpgradeSkipButton,
+                SkipUpgrade, 0, 1 / 1, Color.White);
+
+            /*
             FirstUpgradeChoice = new Button(new Vector2(135, 240), UpgradeSlot, 0, 1, Color.White);
+            */
             SecondUpgradeChoice = new Button(new Vector2(405, 240), Content.Load<Texture2D>("UpgradeSlot"), 0, 1, Color.White);
             ThirdUpgradeChoice = new Button(new Vector2(675, 240), Content.Load<Texture2D>("UpgradeSlot"), 0, 1, Color.White);
 
@@ -253,15 +276,46 @@ namespace Asteroid
             KeyboardState keyboardState = Keyboard.GetState();
             MouseState mouseState = Mouse.GetState();
 
-
-            FirstUpgradeChoice.Update(mouseState, lastMouseState);
-            SecondUpgradeChoice.Update(mouseState, lastMouseState);
-            ThirdUpgradeChoice.Update(mouseState, lastMouseState);
-            UpgradeSkip.Update(mouseState, lastMouseState);
-
-            if (FirstUpgradeChoice.isPressed)
+            for (int i = 0; i < 3; i++)
             {
-                FirstUpgradeChoice.isPressed = false;
+                UpgradesToDraw.Add(PossibleUpgrades[rand.Next(0, PossibleUpgrades.Count)]);
+                if (i+1==UpgradesToDraw.Count)
+                {
+                    UpgradesToDraw.Add(UpgradeSkip);
+                }
+            }
+            for (int i = 0; i < UpgradesToDraw.Count; i++)
+            {
+                UpgradesToDraw[i].UpgradeButton.Update(mouseState, lastMouseState);
+                UpgradesToDraw[i].WhenSelected(PossibleUpgrades, ActiveUpgrades, null, 0);
+            }
+            for (int i = 0; i < UpgradesToDraw.Count; i++)
+            {
+                if (UpgradesToDraw[i].isActive)
+                {
+                    tempPress = UpgradesToDraw[i].UpgradeName;
+                    /*
+                    List<Upgrade> tempUpgrades = new List<Upgrade>();
+                    tempUpgrades.Add(UpgradesToDraw[0]);
+                    tempUpgrades.Add(UpgradesToDraw[1]);
+                    tempUpgrades.Add(UpgradesToDraw[2]);
+                    tempUpgrades.Add(UpgradesToDraw[3]);
+                    tempUpgrades.RemoveAt(i);
+                    */
+                    for (int j = 0; j < UpgradesToDraw.Count; j++)
+                    {
+                        if (j!=i)
+                        {
+                            UpgradesToDraw[j].Skipped();
+                        }
+                    }
+                    break;
+                }
+            }
+            /*
+            if (TestUpgrade1.UpgradeButton.isPressed)
+            {
+                TestUpgrade1.UpgradeButton.isPressed = false;
 
                 FirstUpgradeChoice.isActive = false;
                 SecondUpgradeChoice.isActive = false;
@@ -303,7 +357,7 @@ namespace Asteroid
 
                 tempPress = "skip";
             }
-
+            */
 
             score0s = "";
 
@@ -323,8 +377,8 @@ namespace Asteroid
             laser.IsInBounds(playSpace);
 
             powerups.Clear();
-            if (machine.isActive) {powerups.Add(machine);}
-            if (laser.isActive) {powerups.Add(laser);}
+            if (machine.isActive) { powerups.Add(machine); }
+            if (laser.isActive) { powerups.Add(laser); }
 
             ship.Move(keyboardState);
 
@@ -332,50 +386,50 @@ namespace Asteroid
             laser.ShotTimer -= gameTime.ElapsedGameTime;
             defaultShotTimer -= gameTime.ElapsedGameTime;
 
-            if (mouseState.LeftButton==ButtonState.Pressed)
+            if (mouseState.LeftButton == ButtonState.Pressed)
             {
-                if (machine.isActive && machine.ShotTimer<=TimeSpan.Zero)
+                if (machine.isActive && machine.ShotTimer <= TimeSpan.Zero)
                 {
                     shots.Add(Bullet.BulletTypeCopy(machine.ProjectileShot, ship.Position, ship.Rotation));
                 }
-                else if (laser.isActive && laser.ShotTimer<=TimeSpan.Zero)
+                else if (laser.isActive && laser.ShotTimer <= TimeSpan.Zero)
                 {
                     shots.Add(Bullet.BulletTypeCopy(laser.ProjectileShot, ship.Position, ship.Rotation));
                 }
-                else if (defaultShotTimer<=TimeSpan.Zero || lastMouseState.LeftButton==ButtonState.Released)
+                else if (defaultShotTimer <= TimeSpan.Zero || lastMouseState.LeftButton == ButtonState.Released)
                 {
                     shots.Add(Bullet.BulletTypeCopy(defaultShot, ship.Position, ship.Rotation));
                 }
             }
-            if (mouseState.RightButton==ButtonState.Pressed && lastMouseState.RightButton==ButtonState.Released)
+            if (mouseState.RightButton == ButtonState.Pressed && lastMouseState.RightButton == ButtonState.Released)
             {
                 ship.Position = new Vector2(rand.Next(0, width), rand.Next(0, height));
             }
 
-            if (machine.ShotTimer<=TimeSpan.Zero)
+            if (machine.ShotTimer <= TimeSpan.Zero)
             {
                 machine.ShotTimer = machine.reserveShotTimer;
             }
-            if (laser.ShotTimer<=TimeSpan.Zero)
+            if (laser.ShotTimer <= TimeSpan.Zero)
             {
                 laser.ShotTimer = laser.reserveShotTimer;
             }
-            if (defaultShotTimer<=TimeSpan.Zero)
+            if (defaultShotTimer <= TimeSpan.Zero)
             {
                 defaultShotTimer = reserveDefaultShotTimer;
             }
 
-            level.VariablePass(tinyAsteroidVelocity , smallAsteroidVelocity, largeAsteroidVelocity, Content.Load<Texture2D>("SmallAsteroid"), Content.Load<Texture2D>("BigAsteroid"), 
+            level.VariablePass(tinyAsteroidVelocity, smallAsteroidVelocity, largeAsteroidVelocity, Content.Load<Texture2D>("SmallAsteroid"), Content.Load<Texture2D>("BigAsteroid"),
                 Content.Load<Texture2D>("Small Saucer"), Content.Load<Texture2D>("Big Saucer"));
 
             level.Update(gameTime.ElapsedGameTime, playSpace, asteroids, UFOs);
             UFOShot.Velocity = level.UFOShotSpeed;
 
-            if (asteroids.Count==0 && UFOs.Count==0 && level.Finished ||
+            if (asteroids.Count == 0 && UFOs.Count == 0 && level.Finished ||
                 keyboardState.IsKeyDown(Keys.OemCloseBrackets) && lastKeyboardState.IsKeyUp(Keys.OemCloseBrackets))
             {
                 level.GlobalSpawnTimer = level.reserveSpawnTimer;
-                if (level.LevelNum==10)
+                if (level.LevelNum == 10)
                 {
                     level.GlobalSpawnTimer = new TimeSpan(0, 0, 0, 0, 500);
                 }
@@ -393,9 +447,9 @@ namespace Asteroid
             }
 
             iFrames -= gameTime.ElapsedGameTime;
-            if (iFrames>=TimeSpan.Zero)
+            if (iFrames >= TimeSpan.Zero)
             {
-                if ((int)iFrames.TotalMilliseconds%2<1)
+                if ((int)iFrames.TotalMilliseconds % 2 < 1)
                 {
                     ship.Color = Color.Black;
                 }
@@ -411,7 +465,7 @@ namespace Asteroid
 
             for (int i = 0; i < shots.Count; i++)
             {
-                shots[i].Move();  
+                shots[i].Move();
 
                 if (!IsBulletInBounds(shots, i, playSpace))
                 {
@@ -428,7 +482,7 @@ namespace Asteroid
                 if (ship.Hitbox.Intersects(enemyShots[i].Hitbox))
                 {
                     enemyShots.RemoveAt(i);
-                    if (iFrames<=TimeSpan.Zero)
+                    if (iFrames <= TimeSpan.Zero)
                     {
                         ship.Position = playSpace.Center.ToVector2();
                         lives--;
@@ -449,29 +503,29 @@ namespace Asteroid
                     {
                         machine.Spawned(asteroids[i].Position, new Vector2(rand.Next(1, 4), rand.Next(1, 4)), asteroids[i].leSize);
 
-                        if (asteroids[i].leSize==Size.LeChonk)
+                        if (asteroids[i].leSize == Size.LeChonk)
                         {
                             score += 10;
                             asteroids[i].leSize++;
                             asteroids[i].Image = Content.Load<Texture2D>("SmallAsteroid");
-                            asteroids[i].Velocity = new Vector2(asteroids[i].Velocity.X * (largeAsteroidVelocity / smallAsteroidVelocity), 
+                            asteroids[i].Velocity = new Vector2(asteroids[i].Velocity.X * (largeAsteroidVelocity / smallAsteroidVelocity),
                                 asteroids[i].Velocity.Y * (largeAsteroidVelocity / smallAsteroidVelocity));
-                            asteroids.Add(new Asteroid(new Vector2(asteroids[i].Position.X + 60, asteroids[i].Position.Y), 
+                            asteroids.Add(new Asteroid(new Vector2(asteroids[i].Position.X + 60, asteroids[i].Position.Y),
                                 new Vector2(-asteroids[i].Velocity.X * 2, -asteroids[i].Velocity.Y * 2), Content.Load<Texture2D>("SmallAsteroid"), 0,
                                 1 / 1f, Color.White, Size.Normal));
                         }
-                        else if (asteroids[i].leSize==Size.Normal)
+                        else if (asteroids[i].leSize == Size.Normal)
                         {
                             score += 30;
                             asteroids[i].leSize++;
                             asteroids[i].Image = Content.Load<Texture2D>("TinyAsteroid");
                             asteroids[i].Velocity = new Vector2(asteroids[i].Velocity.X * (smallAsteroidVelocity / tinyAsteroidVelocity),
                                 asteroids[i].Velocity.Y * (smallAsteroidVelocity / tinyAsteroidVelocity));
-                            asteroids.Add(new Asteroid(new Vector2(asteroids[i].Position.X + 25, asteroids[i].Position.Y), 
+                            asteroids.Add(new Asteroid(new Vector2(asteroids[i].Position.X + 25, asteroids[i].Position.Y),
                                 new Vector2(-asteroids[i].Velocity.X * 2, -asteroids[i].Velocity.Y * 2), Content.Load<Texture2D>("TinyAsteroid"), 0,
                                 1 / 1f, Color.White, Size.Baby));
                         }
-                        else if (asteroids[i].leSize==Size.Baby)
+                        else if (asteroids[i].leSize == Size.Baby)
                         {
                             score += 50;
 
@@ -483,12 +537,12 @@ namespace Asteroid
                     }
                 }
 
-                if (i>=asteroids.Count)
+                if (i >= asteroids.Count)
                 {
                     break;
                 }
 
-                if (asteroids[i].leSize==Size.LeChonk)
+                if (asteroids[i].leSize == Size.LeChonk)
                 {
                     asteroids[i].Rotation += 0.005f;
                 }
@@ -503,7 +557,7 @@ namespace Asteroid
 
                 if (ship.Hitbox.Intersects(asteroids[i].Hitbox))
                 {
-                    if (iFrames<=TimeSpan.Zero)
+                    if (iFrames <= TimeSpan.Zero)
                     {
                         ship.Position = playSpace.Center.ToVector2();
                         lives--;
@@ -525,11 +579,11 @@ namespace Asteroid
                     {
                         laser.Spawned(UFOs[i].Position, new Vector2(rand.Next(1, 3), rand.Next(1, 3)), UFOs[i].leSize);
 
-                        if (UFOs[i].leSize==Size.Normal)
+                        if (UFOs[i].leSize == Size.Normal)
                         {
                             score += 100;
                         }
-                        else if (UFOs[i].leSize==Size.Baby)
+                        else if (UFOs[i].leSize == Size.Baby)
                         {
                             score += 200;
                         }
@@ -540,7 +594,7 @@ namespace Asteroid
                     }
                 }
 
-                if (i>=UFOs.Count)
+                if (i >= UFOs.Count)
                 {
                     break;
                 }
@@ -551,22 +605,22 @@ namespace Asteroid
                     break;
                 }
 
-                if (UFOs[i].Position.X<=UFOMovementSpace.X)
+                if (UFOs[i].Position.X <= UFOMovementSpace.X)
                 {
                     UFOs[i].Velocity.X = Math.Abs(UFOs[i].Velocity.X);
                 }
-                else if (UFOs[i].Position.X>=UFOMovementSpace.X+UFOMovementSpace.Width)
+                else if (UFOs[i].Position.X >= UFOMovementSpace.X + UFOMovementSpace.Width)
                 {
                     UFOs[i].Velocity.X = Math.Abs(UFOs[i].Velocity.X);
                     UFOs[i].Velocity.X *= -1;
                 }
 
 
-                if (UFOs[i].Position.Y<=UFOMovementSpace.Y)
+                if (UFOs[i].Position.Y <= UFOMovementSpace.Y)
                 {
                     UFOs[i].Velocity.Y = Math.Abs(UFOs[i].Velocity.Y);
                 }
-                else if (UFOs[i].Position.Y >= UFOMovementSpace.Y+UFOMovementSpace.Height)
+                else if (UFOs[i].Position.Y >= UFOMovementSpace.Y + UFOMovementSpace.Height)
                 {
                     UFOs[i].Velocity.Y = Math.Abs(UFOs[i].Velocity.Y);
                     UFOs[i].Velocity.Y *= -1;
@@ -578,7 +632,7 @@ namespace Asteroid
 
                 if (ship.Hitbox.Intersects(UFOs[i].Hitbox))
                 {
-                    if (iFrames<=TimeSpan.Zero)
+                    if (iFrames <= TimeSpan.Zero)
                     {
                         ship.Position = playSpace.Center.ToVector2();
                         lives--;
@@ -589,8 +643,8 @@ namespace Asteroid
             }
 
             ship.IsInBounds(playSpace);
-            
-            if (lives<0)
+
+            if (lives < 0)
             {
                 Exit();
             }
@@ -599,11 +653,11 @@ namespace Asteroid
             {
                 score0s += '0';
             }
-            if (score>99999)
+            if (score > 99999)
             {
                 score = 0;
             }
-            if (score+1%10000==0)
+            if (score + 1 % 10000 == 0)
             {
                 lives++;
             }
@@ -638,11 +692,15 @@ namespace Asteroid
 
             ship.Draw(_spriteBatch);
 
-            for (int i = 0; i < shots.Count; i++){
-                shots[i].Draw(_spriteBatch);}
+            for (int i = 0; i < shots.Count; i++)
+            {
+                shots[i].Draw(_spriteBatch);
+            }
 
-            for (int i = 0; i < enemyShots.Count; i++){
-                enemyShots[i].Draw(_spriteBatch);}
+            for (int i = 0; i < enemyShots.Count; i++)
+            {
+                enemyShots[i].Draw(_spriteBatch);
+            }
 
 
             for (int i = 0; i < lives; i++)
@@ -664,13 +722,15 @@ namespace Asteroid
             }
 
 
-
-
-            FirstUpgradeChoice.Draw(_spriteBatch);
+            for (int i = 0; i < UpgradesToDraw.Count; i++)
+            {
+                UpgradesToDraw[i].Draw(font, _spriteBatch);
+            }
+            /*
             SecondUpgradeChoice.Draw(_spriteBatch);
             ThirdUpgradeChoice.Draw(_spriteBatch);
             UpgradeSkip.Draw(_spriteBatch);
-
+            */
 
 
             _spriteBatch.End();

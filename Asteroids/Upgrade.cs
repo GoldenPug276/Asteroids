@@ -19,7 +19,7 @@ namespace Asteroid
         public string UpgradeName;
         public string UpgradeDescription;
 
-        public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability, string name, string descrip, Button button, 
+        public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability, string name, string descrip, Button button,
             Texture2D image, float rot, float scale, Color color) : base(position, image, rot, scale, color)
         {
             Position = position;
@@ -27,6 +27,7 @@ namespace Asteroid
             AbilityType = ability;
             UpgradeName = name;
             UpgradeDescription = descrip;
+            UpgradeButton = button;
             UpgradeImage = image;
             Rotation = rot;
             Scale = scale;
@@ -77,21 +78,28 @@ namespace Asteroid
                 UpgradeButton.Position = new Vector2(-500, -500);
                 isActive = true;
 
-                if (abilityProg!=null && currentProg<abilityProg.Count)
+                if (abilityProg != null && currentProg < abilityProg.Count)
                 {
                     currentProg++;
                     possibleUpgrades.Add(abilityProg[currentProg]);
                 }
             }
         }
+        
+        public void Skipped()
+        {
+            Position = new Vector2(-500, -500);
+            UpgradeButton.Position = new Vector2(-500, -500);
+            isActive = false;
+        }
 
         public void Draw(SpriteFont font, SpriteBatch sb)//current position changs are placeholders, change when sure of position
         {
-            sb.Draw(UpgradeButton.Image, Position, null, Color.Black, Rotation, Origin, Scale, SpriteEffects.None, 0);
+            UpgradeButton.Draw(sb);
 
-            sb.Draw(UpgradeImage, new Vector2(Position.X, Position.Y - 20), null, Color.Black, Rotation, Origin, Scale, SpriteEffects.None, 0);
+            sb.Draw(UpgradeImage, new Vector2(Position.X, Position.Y - 20), null, Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
 
-            sb.DrawString(font, UpgradeDescription, new Vector2(Position.X, Position.Y + 10), Color.Black, Rotation, Origin, Scale, SpriteEffects.None, 0);
+            sb.DrawString(font, UpgradeDescription, new Vector2(Position.X, Position.Y + 10), Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
         }
     }
 }
