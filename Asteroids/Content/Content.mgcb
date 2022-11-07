@@ -224,6 +224,13 @@
 /processorParam:TextureFormat=Color
 /build:TinyAsteroid.png
 
+#begin UpgradeFont.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:UpgradeFont.spritefont
+
 #begin UpgradeSkip.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -247,4 +254,11 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:UpgradeSlot.png
+
+#begin UpgradeTitleFont.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:UpgradeTitleFont.spritefont
 

@@ -17,16 +17,23 @@ namespace Asteroid
         public Button UpgradeButton;
         public Texture2D UpgradeImage;
         public string UpgradeName;
-        public string UpgradeDescription;
+        public string UpgradeDescription1;
+        public string UpgradeDescription2;
+        public string UpgradeDescription3;
+        public string UpgradeDescription4;
 
-        public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability, string name, string descrip, Button button,
+        public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability,
+            string name, string descrip1, string descrip2, string descrip3, string descrip4, Button button,
             Texture2D image, float rot, float scale, Color color) : base(position, image, rot, scale, color)
         {
             Position = position;
             StatType = statype;
             AbilityType = ability;
             UpgradeName = name;
-            UpgradeDescription = descrip;
+            UpgradeDescription1 = descrip1;
+            UpgradeDescription2 = descrip2;
+            UpgradeDescription3 = descrip3;
+            UpgradeDescription4 = descrip4;
             UpgradeButton = button;
             UpgradeImage = image;
             Rotation = rot;
@@ -72,7 +79,7 @@ namespace Asteroid
 
         public void WhenSelected(List<Upgrade> possibleUpgrades, List<Upgrade> activeUpgrades, List<Upgrade> abilityProg, int currentProg)
         {
-            if (UpgradeButton.isPressed)
+            if (UpgradeButton.wasClicked)
             {
                 Position = new Vector2(-500, -500);
                 UpgradeButton.Position = new Vector2(-500, -500);
@@ -93,13 +100,18 @@ namespace Asteroid
             isActive = false;
         }
 
-        public void Draw(SpriteFont font, SpriteBatch sb)//current position changs are placeholders, change when sure of position
+        public void Draw(SpriteFont title, SpriteFont desc, SpriteBatch sb)//current position changs are placeholders, change when sure of position
         {
             UpgradeButton.Draw(sb);
 
-            sb.Draw(UpgradeImage, new Vector2(Position.X, Position.Y - 20), null, Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
+            sb.Draw(UpgradeImage, new Vector2(Position.X - 10, Position.Y - 130), null, Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
 
-            sb.DrawString(font, UpgradeDescription, new Vector2(Position.X, Position.Y + 10), Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
+            sb.DrawString(title, UpgradeName, new Vector2(Position.X - 50, Position.Y - 200), Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
+
+            sb.DrawString(desc, UpgradeDescription1, new Vector2(Position.X - 110, Position.Y + 20), Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
+            sb.DrawString(desc, UpgradeDescription2, new Vector2(Position.X - 110, Position.Y + 40), Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
+            sb.DrawString(desc, UpgradeDescription3, new Vector2(Position.X - 110, Position.Y + 60), Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
+            sb.DrawString(desc, UpgradeDescription4, new Vector2(Position.X - 110, Position.Y + 80), Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
         }
     }
 }

@@ -14,6 +14,7 @@ namespace Asteroid
         public bool isActive = true;
         public bool isPressed = false;
         public bool isHeld = false;
+        public bool wasClicked = false;
 
         public Button(Vector2 position, Texture2D image, float rot, float scale, Color color) : base(position, image, rot, scale, color)
         {
@@ -40,6 +41,10 @@ namespace Asteroid
                     isPressed = true;
                 }
             }
+            else
+            {
+                wasClicked = false;
+            }
         }
 
         public void Held(MouseState lastState)
@@ -61,6 +66,10 @@ namespace Asteroid
                 {
                     isHeld = false;
                     isPressed = false;
+                    if (Hitbox.Contains(currentState.Position.ToVector2()))
+                    {
+                        wasClicked = true;
+                    }
                 }
             }
         }

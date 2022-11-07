@@ -25,6 +25,8 @@ namespace Asteroid
         List<Bullet> enemyShots = new List<Bullet>();
         Level level;
         SpriteFont font;
+        SpriteFont upgradeTitleFont;
+        SpriteFont upgradeDescFont;
 
         public enum StatUpgradeType
         {
@@ -44,8 +46,7 @@ namespace Asteroid
         Upgrade TestUpgrade1;
         Upgrade TestUpgrade2;
         Upgrade TestUpgrade3;
-        Upgrade UpgradeSkip;
-        Button UpgradeSkipButton;
+        Button UpgradeSkip;
 
         Powerup machine;
         Bullet machineShot;
@@ -53,10 +54,6 @@ namespace Asteroid
         Bullet laserShot;
         Texture2D[] powerDamages;
         List<Powerup> powerups = new List<Powerup>();
-
-        Button FirstUpgradeChoice;
-        Button SecondUpgradeChoice;
-        Button ThirdUpgradeChoice;
 
         Button UpgradeChoice1;
         Button UpgradeChoice2;
@@ -120,10 +117,16 @@ namespace Asteroid
          *      so first, i'll have to design an upgrade menu in-between levels where you can pick up or skip upgrades
          *          (use as reference: https://progameguides.com/wp-content/uploads/2022/06/roblox-hours-vitality-1024x576.jpg)
          *          made a slot asset
-         *          
+         *      
+         *      
          *      make the gui work with its conditions; buttons are active by default rn for testing
          *          rn, make a gui that shows up and detects which choice is pressed
          *      ok, it does that
+         *      
+         *              ok, made a gui with working buttons
+         *                  first, make the upgrades and their spots random, cuz right now it's the same upgrade in the same spot {NOW NOW NOW}
+         *                  now, work on making the gui appear when a level is cleared {AFTER}
+         *                  after that, make temporary upgrades that do shit {AFTER}
          *      
          *          
          *      remember, sprite's positions are in the middle of the sprite
@@ -132,15 +135,16 @@ namespace Asteroid
          *      actually, make upgrade a class with a button and upgrade. Basically, the entire upgrade is in this class.
          *          rn, the gui and its buttons will be in the main class just so I can first make them work
          *          
+         *          **DONE**
          *          have it pick 3 random upgrades and place them with a certain amount of pixels in between
          *          have the location assigned when the upgrade is gotten
          *          spawn the text and image using the main button position
          *          call the button inside of the upgrade to check for presses
          *          set position and upgradebutton position from game1
+         *          **DONE**
+         *          
          *          have abilities have upgrade trees in forms of list, and have the current prog as an int
          *          
-         *              tink i finished upgrade class, use
-         *              do the conversion at home
          *          
          *      have a button class;        {FINISHED}
          *          inherits from sprite
@@ -150,15 +154,8 @@ namespace Asteroid
          *              a function that detects when it's released
          *              an update function that checks all of the above at once
          *          
-         *          
-         *          
-         *          for som reason, upgrade positions are wack, fix {NOOOOOOOOOOOOOOOOOWWWWWWWWWWWWWWWWW}
-         *              rn, button right spot, eevrything else, no
          *      
          *      convert powerups into gun upgrades
-         *      
-         *      remember to push and pull from github
-         *          rename and give description if possitble, also take off github if possible
          *      
          * Make particles
          * Make actual death animations
@@ -207,6 +204,8 @@ namespace Asteroid
 
             playSpace = new Rectangle(0, 0, width, height);
             font = Content.Load<SpriteFont>("Font");
+            upgradeTitleFont = Content.Load<SpriteFont>("UpgradeTitleFont");
+            upgradeDescFont = Content.Load<SpriteFont>("UpgradeFont");
 
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             ship = new Ship(playSpace.Center.ToVector2(), 0, Content.Load<Texture2D>("Ship"), 0, 1 / 1f, Color.White);
@@ -235,28 +234,22 @@ namespace Asteroid
             UpgradeChoice2 = new Button(new Vector2(405, 240), UpgradeSlot, 0, 1, Color.White);
             UpgradeChoice3 = new Button(new Vector2(675, 240), UpgradeSlot, 0, 1, Color.White);
 
-            TestUpgrade1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test1", "I dunno man V1 (TESTING)", UpgradeChoice1,
-                Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+            TestUpgrade1 = new Upgrade(new Vector2(135, 240), StatUpgradeType.Test, AbilityUpgradeType.None, "Test1",
+                "I dunno", "man V1", "(TESTING)", "",
+                UpgradeChoice1, Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade1);
 
-            TestUpgrade2 = new Upgrade(new Vector2(270, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test2", "I dunno man V2 (TESTING)", UpgradeChoice2,
-                Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+            TestUpgrade2 = new Upgrade(new Vector2(405, 240), StatUpgradeType.Test, AbilityUpgradeType.None, "Test2",
+                "I dunno", "man V2", "(TESTING)", "",
+                UpgradeChoice2, Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade2);
 
-            TestUpgrade3 = new Upgrade(new Vector2(540, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test3", "I dunno man V3 (TESTING)", UpgradeChoice3,
-                Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+            TestUpgrade3 = new Upgrade(new Vector2(675, 240), StatUpgradeType.Test, AbilityUpgradeType.None, "Test3",
+                "I dunno", "man V3", "(TESTING)", "",
+                UpgradeChoice3, Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade3);
 
-            UpgradeSkipButton = new Button(new Vector2(width - 37, height - 21), SkipUpgrade, 0, 1, Color.White);
-
-            UpgradeSkip = new Upgrade(new Vector2(width - 37, height - 21), StatUpgradeType.None, AbilityUpgradeType.None, "Skip", "Skips (TEST SKIP)", UpgradeSkipButton,
-                SkipUpgrade, 0, 1 / 1, Color.White);
-
-            /*
-            FirstUpgradeChoice = new Button(new Vector2(135, 240), UpgradeSlot, 0, 1, Color.White);
-            */
-            SecondUpgradeChoice = new Button(new Vector2(405, 240), Content.Load<Texture2D>("UpgradeSlot"), 0, 1, Color.White);
-            ThirdUpgradeChoice = new Button(new Vector2(675, 240), Content.Load<Texture2D>("UpgradeSlot"), 0, 1, Color.White);
+            UpgradeSkip = new Button(new Vector2(width - 47, height - 13), SkipUpgrade, 0, 1, Color.White);
 
 
             // TODO: use this.Content to load your game content here
@@ -279,29 +272,33 @@ namespace Asteroid
             for (int i = 0; i < 3; i++)
             {
                 UpgradesToDraw.Add(PossibleUpgrades[rand.Next(0, PossibleUpgrades.Count)]);
-                if (i+1==UpgradesToDraw.Count)
+            }
+            UpgradeSkip.Update(mouseState, lastMouseState);
+            for (int i = 0; i < UpgradesToDraw.Count; i++)
+            {
+                if (!UpgradeSkip.wasClicked)
                 {
-                    UpgradesToDraw.Add(UpgradeSkip);
+                    UpgradesToDraw[i].UpgradeButton.Update(mouseState, lastMouseState);
+                    UpgradesToDraw[i].WhenSelected(PossibleUpgrades, ActiveUpgrades, null, 0);
                 }
             }
+
             for (int i = 0; i < UpgradesToDraw.Count; i++)
             {
-                UpgradesToDraw[i].UpgradeButton.Update(mouseState, lastMouseState);
-                UpgradesToDraw[i].WhenSelected(PossibleUpgrades, ActiveUpgrades, null, 0);
-            }
-            for (int i = 0; i < UpgradesToDraw.Count; i++)
-            {
-                if (UpgradesToDraw[i].isActive)
+                if (UpgradeSkip.wasClicked)
+                {
+                    tempPress = "skipped";
+                    for (int j = 0; j < UpgradesToDraw.Count; j++)
+                    {
+                        UpgradesToDraw[j].Skipped();
+                    }
+                    UpgradeSkip.isActive = false;
+                    break;
+                }
+                if (UpgradesToDraw[i].isActive && !UpgradeSkip.wasClicked)
                 {
                     tempPress = UpgradesToDraw[i].UpgradeName;
-                    /*
-                    List<Upgrade> tempUpgrades = new List<Upgrade>();
-                    tempUpgrades.Add(UpgradesToDraw[0]);
-                    tempUpgrades.Add(UpgradesToDraw[1]);
-                    tempUpgrades.Add(UpgradesToDraw[2]);
-                    tempUpgrades.Add(UpgradesToDraw[3]);
-                    tempUpgrades.RemoveAt(i);
-                    */
+
                     for (int j = 0; j < UpgradesToDraw.Count; j++)
                     {
                         if (j!=i)
@@ -309,55 +306,11 @@ namespace Asteroid
                             UpgradesToDraw[j].Skipped();
                         }
                     }
+                    UpgradeSkip.isActive = false;
                     break;
                 }
+
             }
-            /*
-            if (TestUpgrade1.UpgradeButton.isPressed)
-            {
-                TestUpgrade1.UpgradeButton.isPressed = false;
-
-                FirstUpgradeChoice.isActive = false;
-                SecondUpgradeChoice.isActive = false;
-                ThirdUpgradeChoice.isActive = false;
-                UpgradeSkip.isActive = false;
-
-                tempPress = "first";
-            }
-            else if (SecondUpgradeChoice.isPressed)
-            {
-                SecondUpgradeChoice.isPressed = false;
-
-                FirstUpgradeChoice.isActive = false;
-                SecondUpgradeChoice.isActive = false;
-                ThirdUpgradeChoice.isActive = false;
-                UpgradeSkip.isActive = false;
-
-                tempPress = "second";
-            }
-            else if (ThirdUpgradeChoice.isPressed)
-            {
-                ThirdUpgradeChoice.isPressed = false;
-
-                FirstUpgradeChoice.isActive = false;
-                SecondUpgradeChoice.isActive = false;
-                ThirdUpgradeChoice.isActive = false;
-                UpgradeSkip.isActive = false;
-
-                tempPress = "third";
-            }
-            else if (UpgradeSkip.isPressed)
-            {
-                UpgradeSkip.isPressed = false;
-
-                FirstUpgradeChoice.isActive = false;
-                SecondUpgradeChoice.isActive = false;
-                ThirdUpgradeChoice.isActive = false;
-                UpgradeSkip.isActive = false;
-
-                tempPress = "skip";
-            }
-            */
 
             score0s = "";
 
@@ -724,13 +677,9 @@ namespace Asteroid
 
             for (int i = 0; i < UpgradesToDraw.Count; i++)
             {
-                UpgradesToDraw[i].Draw(font, _spriteBatch);
+                UpgradesToDraw[i].Draw(upgradeTitleFont, upgradeDescFont, _spriteBatch);
             }
-            /*
-            SecondUpgradeChoice.Draw(_spriteBatch);
-            ThirdUpgradeChoice.Draw(_spriteBatch);
             UpgradeSkip.Draw(_spriteBatch);
-            */
 
 
             _spriteBatch.End();
