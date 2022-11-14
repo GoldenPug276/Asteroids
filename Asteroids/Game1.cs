@@ -43,9 +43,14 @@ namespace Asteroid
         List<Upgrade> ActiveUpgrades = new List<Upgrade>();
         List<Upgrade> ActiveAbilities = new List<Upgrade>();
 
+        bool UpgradeChosen = false;
+        int UpgradeTime = 0;
+
         Upgrade TestUpgrade1;
         Upgrade TestUpgrade2;
         Upgrade TestUpgrade3;
+        Upgrade TestUpgrade4;
+        Upgrade TestUpgrade5;
         Button UpgradeSkip;
 
         Powerup machine;
@@ -58,6 +63,7 @@ namespace Asteroid
         Button UpgradeChoice1;
         Button UpgradeChoice2;
         Button UpgradeChoice3;
+        Button[] UpgradeChoiceList;
 
         Texture2D UpgradeSlot;
         Texture2D SkipUpgrade;
@@ -124,15 +130,21 @@ namespace Asteroid
          *      ok, it does that
          *      
          *              ok, made a gui with working buttons
-         *                  first, make the upgrades and their spots random, cuz right now it's the same upgrade in the same spot {NOW NOW NOW}
+         *                  first, make the upgrades and their spots random, cuz right now it's the same upgrade in the same spot {DONE}
          *                  now, work on making the gui appear when a level is cleared {AFTER}
+         *                  
+         *                  at home, make chosen upgrades get removed from bank and make the gui appearing between levels work
+         *                  
          *                  after that, make temporary upgrades that do shit {AFTER}
          *      
          *          
          *      remember, sprite's positions are in the middle of the sprite
          *      
+         *      **DONE**
          *      deal with upgrade class later (rn it's only a copy of powerup with 0 differences) {Do now}
          *      actually, make upgrade a class with a button and upgrade. Basically, the entire upgrade is in this class.
+         *      **DONE**
+         *      
          *          rn, the gui and its buttons will be in the main class just so I can first make them work
          *          
          *          **DONE**
@@ -233,23 +245,31 @@ namespace Asteroid
             UpgradeChoice1 = new Button(new Vector2(135, 240), UpgradeSlot, 0, 1, Color.White);
             UpgradeChoice2 = new Button(new Vector2(405, 240), UpgradeSlot, 0, 1, Color.White);
             UpgradeChoice3 = new Button(new Vector2(675, 240), UpgradeSlot, 0, 1, Color.White);
+            UpgradeChoiceList = new Button[] { UpgradeChoice1, UpgradeChoice2, UpgradeChoice3 };
 
-            TestUpgrade1 = new Upgrade(new Vector2(135, 240), StatUpgradeType.Test, AbilityUpgradeType.None, "Test1",
-                "I dunno", "man V1", "(TESTING)", "",
-                UpgradeChoice1, Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+            TestUpgrade1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test1",
+                "I dunno", "man V1", "(TESTING)", "", Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade1);
 
-            TestUpgrade2 = new Upgrade(new Vector2(405, 240), StatUpgradeType.Test, AbilityUpgradeType.None, "Test2",
-                "I dunno", "man V2", "(TESTING)", "",
-                UpgradeChoice2, Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+            TestUpgrade2 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test2",
+                "I dunno", "man V2", "(TESTING)", "", Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade2);
 
-            TestUpgrade3 = new Upgrade(new Vector2(675, 240), StatUpgradeType.Test, AbilityUpgradeType.None, "Test3",
-                "I dunno", "man V3", "(TESTING)", "",
-                UpgradeChoice3, Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+            TestUpgrade3 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test3",
+                "I dunno", "man V3", "(TESTING)", "", Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade3);
 
+            TestUpgrade4 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test4",
+                "I dunno", "man V4", "(TESTING)", "", Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+            PossibleUpgrades.Add(TestUpgrade4);
+
+            TestUpgrade5 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test5",
+                "I dunno", "man V5", "(TESTING)", "", Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+            PossibleUpgrades.Add(TestUpgrade5);
+
             UpgradeSkip = new Button(new Vector2(width - 47, height - 13), SkipUpgrade, 0, 1, Color.White);
+
+
 
 
             // TODO: use this.Content to load your game content here
@@ -258,8 +278,6 @@ namespace Asteroid
         MouseState lastMouseState;
         protected override void Update(GameTime gameTime)
         {
-
-
             int width = GraphicsDevice.Viewport.Width;
             int height = GraphicsDevice.Viewport.Height;
 
@@ -269,48 +287,9 @@ namespace Asteroid
             KeyboardState keyboardState = Keyboard.GetState();
             MouseState mouseState = Mouse.GetState();
 
-            for (int i = 0; i < 3; i++)
-            {
-                UpgradesToDraw.Add(PossibleUpgrades[rand.Next(0, PossibleUpgrades.Count)]);
-            }
-            UpgradeSkip.Update(mouseState, lastMouseState);
-            for (int i = 0; i < UpgradesToDraw.Count; i++)
-            {
-                if (!UpgradeSkip.wasClicked)
-                {
-                    UpgradesToDraw[i].UpgradeButton.Update(mouseState, lastMouseState);
-                    UpgradesToDraw[i].WhenSelected(PossibleUpgrades, ActiveUpgrades, null, 0);
-                }
-            }
 
-            for (int i = 0; i < UpgradesToDraw.Count; i++)
-            {
-                if (UpgradeSkip.wasClicked)
-                {
-                    tempPress = "skipped";
-                    for (int j = 0; j < UpgradesToDraw.Count; j++)
-                    {
-                        UpgradesToDraw[j].Skipped();
-                    }
-                    UpgradeSkip.isActive = false;
-                    break;
-                }
-                if (UpgradesToDraw[i].isActive && !UpgradeSkip.wasClicked)
-                {
-                    tempPress = UpgradesToDraw[i].UpgradeName;
 
-                    for (int j = 0; j < UpgradesToDraw.Count; j++)
-                    {
-                        if (j!=i)
-                        {
-                            UpgradesToDraw[j].Skipped();
-                        }
-                    }
-                    UpgradeSkip.isActive = false;
-                    break;
-                }
 
-            }
 
             score0s = "";
 
@@ -381,6 +360,42 @@ namespace Asteroid
             if (asteroids.Count == 0 && UFOs.Count == 0 && level.Finished ||
                 keyboardState.IsKeyDown(Keys.OemCloseBrackets) && lastKeyboardState.IsKeyUp(Keys.OemCloseBrackets))
             {
+                if (UpgradeTime<1)
+                {
+                    for (int i = 0; i < 3; i++)
+                    {
+                        bool same = false;
+                        UpgradesToDraw.Add(PossibleUpgrades[rand.Next(0, PossibleUpgrades.Count)]);
+
+                        if (i != 0)
+                        {
+                            for (int j = 0; j < UpgradesToDraw.Count - 1; j++)
+                            {
+                                if (UpgradesToDraw[j] == UpgradesToDraw[i])
+                                {
+                                    same = true;
+                                }
+                            }
+                        }
+                        if (same)
+                        {
+                            UpgradesToDraw.RemoveAt(i);
+                            i--;
+                        }
+                        else
+                        {
+                            UpgradesToDraw[i].UpgradeButton = UpgradeChoiceList[i];
+                            UpgradesToDraw[i].UpgradeButton.isActive = true;
+                            UpgradesToDraw[i].Position = UpgradesToDraw[i].UpgradeButton.Position;
+                        }
+                    }
+                    UpgradeSkip.isActive = true;
+                }
+
+                UpgradeTime++;
+            }
+            if (UpgradeChosen==true)
+            {
                 level.GlobalSpawnTimer = level.reserveSpawnTimer;
                 if (level.LevelNum == 10)
                 {
@@ -397,7 +412,57 @@ namespace Asteroid
                 asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, Content.Load<Texture2D>("BigAsteroid"), ship));
                 asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, Content.Load<Texture2D>("BigAsteroid"), ship));
                 asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, Content.Load<Texture2D>("BigAsteroid"), ship));
+                UpgradeChosen = false;
+                UpgradeTime = 0;
             }
+
+            //Upgrade Code
+
+            UpgradeSkip.Update(mouseState, lastMouseState);
+            for (int i = 0; i < UpgradesToDraw.Count; i++)
+            {
+                if (!UpgradeSkip.wasClicked)
+                {
+                    UpgradesToDraw[i].UpgradeButton.Update(mouseState, lastMouseState);
+                    UpgradesToDraw[i].WhenSelected(PossibleUpgrades, ActiveUpgrades, null, 0);
+                }
+            }
+
+            for (int i = 0; i < UpgradesToDraw.Count; i++)
+            {
+                bool broken = false;
+                if (UpgradeSkip.wasClicked)
+                {
+                    tempPress = "skipped";
+                    for (int j = 0; j < UpgradesToDraw.Count; j++)
+                    {
+                        UpgradesToDraw[j].Skipped();
+                    }
+                    broken = true;
+                }
+                if (UpgradesToDraw[i].isActive && !UpgradeSkip.wasClicked && !broken)
+                {
+                    tempPress = UpgradesToDraw[i].UpgradeName;
+
+                    for (int j = 0; j < UpgradesToDraw.Count; j++)
+                    {
+                        if (j != i)
+                        {
+                            UpgradesToDraw[j].Skipped();
+                        }
+                    }
+                    broken = true;
+                }
+                if (broken)
+                {
+                    UpgradeChosen = true;
+                    UpgradeSkip.isActive = false;
+                    UpgradesToDraw.Clear();
+                    break;
+                }
+            }
+
+            //Upgrade Code
 
             iFrames -= gameTime.ElapsedGameTime;
             if (iFrames >= TimeSpan.Zero)

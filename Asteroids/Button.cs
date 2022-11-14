@@ -11,7 +11,7 @@ namespace Asteroid
 {
     class Button : Sprite
     {
-        public bool isActive = true;
+        public bool isActive = false;
         public bool isPressed = false;
         public bool isHeld = false;
         public bool wasClicked = false;

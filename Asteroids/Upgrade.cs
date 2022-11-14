@@ -23,7 +23,7 @@ namespace Asteroid
         public string UpgradeDescription4;
 
         public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability,
-            string name, string descrip1, string descrip2, string descrip3, string descrip4, Button button,
+            string name, string descrip1, string descrip2, string descrip3, string descrip4,
             Texture2D image, float rot, float scale, Color color) : base(position, image, rot, scale, color)
         {
             Position = position;
@@ -34,7 +34,6 @@ namespace Asteroid
             UpgradeDescription2 = descrip2;
             UpgradeDescription3 = descrip3;
             UpgradeDescription4 = descrip4;
-            UpgradeButton = button;
             UpgradeImage = image;
             Rotation = rot;
             Scale = scale;
@@ -82,7 +81,7 @@ namespace Asteroid
             if (UpgradeButton.wasClicked)
             {
                 Position = new Vector2(-500, -500);
-                UpgradeButton.Position = new Vector2(-500, -500);
+                UpgradeButton.isActive = false;
                 isActive = true;
 
                 if (abilityProg != null && currentProg < abilityProg.Count)
@@ -96,11 +95,10 @@ namespace Asteroid
         public void Skipped()
         {
             Position = new Vector2(-500, -500);
-            UpgradeButton.Position = new Vector2(-500, -500);
             isActive = false;
         }
 
-        public void Draw(SpriteFont title, SpriteFont desc, SpriteBatch sb)//current position changs are placeholders, change when sure of position
+        public void Draw(SpriteFont title, SpriteFont desc, SpriteBatch sb)
         {
             UpgradeButton.Draw(sb);
 
