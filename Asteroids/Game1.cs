@@ -31,7 +31,10 @@ namespace Asteroid
         public enum StatUpgradeType
         {
             None = 0,
-            Test = 1
+            Test = 1,
+            TestMovement1 = 2,
+            TestMovement2 = 4,
+            TestMovement3 = 6
         }
         public enum AbilityUpgradeType
         {
@@ -51,6 +54,7 @@ namespace Asteroid
         Upgrade TestUpgrade3;
         Upgrade TestUpgrade4;
         Upgrade TestUpgrade5;
+        Upgrade TestUpgrade6;
         Button UpgradeSkip;
 
         Powerup machine;
@@ -131,11 +135,12 @@ namespace Asteroid
          *      
          *              ok, made a gui with working buttons
          *                  first, make the upgrades and their spots random, cuz right now it's the same upgrade in the same spot {DONE}
-         *                  now, work on making the gui appear when a level is cleared {AFTER}
+         *                  now, work on making the gui appear when a level is cleared {DONE}
          *                  
-         *                  at home, make chosen upgrades get removed from bank and make the gui appearing between levels work
+         *                  at home, make chosen upgrades get removed from bank and make the gui appearing between levels work {DONE}
          *                  
          *                  after that, make temporary upgrades that do shit {AFTER}
+         *                      try to do this with movement speed; the type will dictate the stat changes, for movement speed, try to do x/1000 for changes
          *      
          *          
          *      remember, sprite's positions are in the middle of the sprite
@@ -267,6 +272,10 @@ namespace Asteroid
                 "I dunno", "man V5", "(TESTING)", "", Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade5);
 
+            TestUpgrade6 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test6",
+                "I dunno", "man V6", "(TESTING)", "", Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+            PossibleUpgrades.Add(TestUpgrade6);
+
             UpgradeSkip = new Button(new Vector2(width - 47, height - 13), SkipUpgrade, 0, 1, Color.White);
 
 
@@ -371,7 +380,7 @@ namespace Asteroid
                         {
                             for (int j = 0; j < UpgradesToDraw.Count - 1; j++)
                             {
-                                if (UpgradesToDraw[j] == UpgradesToDraw[i])
+                                if (UpgradesToDraw[j] == UpgradesToDraw[i] || UpgradesToDraw[i].isActive)
                                 {
                                     same = true;
                                 }
@@ -385,6 +394,7 @@ namespace Asteroid
                         else
                         {
                             UpgradesToDraw[i].UpgradeButton = UpgradeChoiceList[i];
+                            UpgradesToDraw[i].UpgradeButton.wasClicked = false;
                             UpgradesToDraw[i].UpgradeButton.isActive = true;
                             UpgradesToDraw[i].Position = UpgradesToDraw[i].UpgradeButton.Position;
                         }
@@ -437,6 +447,7 @@ namespace Asteroid
                     for (int j = 0; j < UpgradesToDraw.Count; j++)
                     {
                         UpgradesToDraw[j].Skipped();
+                        UpgradesToDraw[j].UpgradeButton.wasClicked = false;
                     }
                     broken = true;
                 }
@@ -449,6 +460,11 @@ namespace Asteroid
                         if (j != i)
                         {
                             UpgradesToDraw[j].Skipped();
+                            UpgradesToDraw[j].UpgradeButton.wasClicked = false;
+                        }
+                        else
+                        {
+                            PossibleUpgrades.Remove(UpgradesToDraw[j]);
                         }
                     }
                     broken = true;
