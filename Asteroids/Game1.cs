@@ -45,6 +45,7 @@ namespace Asteroid
         List<Upgrade> UpgradesToDraw = new List<Upgrade>();
         List<Upgrade> ActiveUpgrades = new List<Upgrade>();
         List<Upgrade> ActiveAbilities = new List<Upgrade>();
+        List<Upgrade> NoneHolder = new List<Upgrade>();
 
         bool UpgradeChosen = false;
         int UpgradeTime = 0;
@@ -55,6 +56,7 @@ namespace Asteroid
         Upgrade TestUpgrade4;
         Upgrade TestUpgrade5;
         Upgrade TestUpgrade6;
+        Upgrade None;
         Button UpgradeSkip;
 
         Powerup machine;
@@ -139,8 +141,14 @@ namespace Asteroid
          *                  
          *                  at home, make chosen upgrades get removed from bank and make the gui appearing between levels work {DONE}
          *                  
-         *                  after that, make temporary upgrades that do shit {AFTER}
+         *                  make a "none" upgrade with a "noneUpgrade" list {DONE}
+         *                  
+         *                  after that, make temporary upgrades that do shit {NOW}
          *                      try to do this with movement speed; the type will dictate the stat changes, for movement speed, try to do x/1000 for changes
+         *                          actually, make a temporary upgrade that will make the defaultShotTimer lower and give it a tree of 3 total upgrades (might not keep these)
+         *                  
+         *                  after that, make the machine gun into an ability and test it {AFTER}
+         *                      have fancy little text on the side that says what weapon you have and allow switching
          *      
          *          
          *      remember, sprite's positions are in the middle of the sprite
@@ -170,9 +178,16 @@ namespace Asteroid
          *              a function that detects if it's held
          *              a function that detects when it's released
          *              an update function that checks all of the above at once
-         *          
+         *      
+         *      if there are less than 3 possible upgrades to get, the game will close.
+         *          i shouldn't need to change this since I should have enough upgrades that there is no way for the player to run out
          *      
          *      convert powerups into gun upgrades
+         *      
+         *      at home, grab a screen shot of the cold treasure upgrade in hours
+         *          also grab a better title font
+         *          
+         *      may want to setup files next class; i've downloaded it, and we'll see if it actually syncs
          *      
          * Make particles
          * Make actual death animations
@@ -198,6 +213,23 @@ namespace Asteroid
                 removed = true;
             }
             return removed;
+        }
+        void NoneRefresh(List<Upgrade> nones, Upgrade baseNone)
+        {
+            nones.Clear();
+
+            Upgrade None1 = new Upgrade(baseNone.Position, baseNone.StatType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
+                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color);
+
+            Upgrade None2 = new Upgrade(baseNone.Position, baseNone.StatType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
+                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color);
+
+            Upgrade None3 = new Upgrade(baseNone.Position, baseNone.StatType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
+                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color);
+
+            nones.Add(None1);
+            nones.Add(None2);
+            nones.Add(None3);
         }
 
         public Game1()
@@ -275,6 +307,11 @@ namespace Asteroid
             TestUpgrade6 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test6",
                 "I dunno", "man V6", "(TESTING)", "", Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade6);
+
+            None = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.None, "Cold Treasure",
+                "We will not", "become stronger.", "", "", Content.Load<Texture2D>("BigAsteroid"), 0, 1 / 1, Color.White);
+
+            NoneRefresh(NoneHolder, None);
 
             UpgradeSkip = new Button(new Vector2(width - 47, height - 13), SkipUpgrade, 0, 1, Color.White);
 
@@ -374,9 +411,19 @@ namespace Asteroid
                     for (int i = 0; i < 3; i++)
                     {
                         bool same = false;
-                        UpgradesToDraw.Add(PossibleUpgrades[rand.Next(0, PossibleUpgrades.Count)]);
+                        bool none = false;
 
-                        if (i != 0)
+                        if (i + 1 > PossibleUpgrades.Count)
+                        {
+                            UpgradesToDraw.Add(NoneHolder[i]);
+                            none = true;
+                        }
+                        else
+                        {
+                            UpgradesToDraw.Add(PossibleUpgrades[rand.Next(0, PossibleUpgrades.Count)]);
+                        }
+
+                        if (i!=0 && !none)
                         {
                             for (int j = 0; j < UpgradesToDraw.Count - 1; j++)
                             {
@@ -464,7 +511,14 @@ namespace Asteroid
                         }
                         else
                         {
-                            PossibleUpgrades.Remove(UpgradesToDraw[j]);
+                            if (UpgradesToDraw[j]==None)
+                            {
+                                UpgradesToDraw[j].isActive = false;
+                            }
+                            else
+                            {
+                                PossibleUpgrades.Remove(UpgradesToDraw[j]);
+                            }
                         }
                     }
                     broken = true;
@@ -474,6 +528,7 @@ namespace Asteroid
                     UpgradeChosen = true;
                     UpgradeSkip.isActive = false;
                     UpgradesToDraw.Clear();
+                    NoneRefresh(NoneHolder, None);
                     break;
                 }
             }
