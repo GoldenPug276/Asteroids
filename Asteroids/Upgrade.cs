@@ -102,7 +102,7 @@ namespace Asteroid
         {
             UpgradeButton.Draw(sb);
 
-            sb.Draw(UpgradeImage, new Vector2(Position.X - 10, Position.Y - 130), null, Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
+            sb.Draw(UpgradeImage, new Vector2(Position.X - 8, Position.Y - 130), null, Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
 
             sb.DrawString(title, UpgradeName, new Vector2(Position.X - 60, Position.Y - 200), Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
 

@@ -184,8 +184,7 @@ namespace Asteroid
          *      
          *      convert powerups into gun upgrades
          *      
-         *      at home, grab a screen shot of the cold treasure upgrade in hours
-         *          also grab a better title font
+         *      somehow, the cold treasure broke, but only the text. it broke while i was adjusting the image positions. HUUUUUUUUUUUUUUUUUUUUUUUUH
          *          
          *      may want to setup files next class; i've downloaded it, and we'll see if it actually syncs
          *      
@@ -309,7 +308,7 @@ namespace Asteroid
             PossibleUpgrades.Add(TestUpgrade6);
 
             None = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.None, "Cold Treasure",
-                "We will not", "become stronger.", "", "", Content.Load<Texture2D>("BigAsteroid"), 0, 1 / 1, Color.White);
+                "We will not", "become stronger.", "", "", Content.Load<Texture2D>("Cold Treasure"), 0, 1 / 1, Color.White);
 
             NoneRefresh(NoneHolder, None);
 
@@ -529,6 +528,10 @@ namespace Asteroid
                     UpgradeSkip.isActive = false;
                     UpgradesToDraw.Clear();
                     NoneRefresh(NoneHolder, None);
+                    for (int k = 0; k < UpgradeChoiceList.Length; k++)
+                    {
+                        UpgradeChoiceList[k] = UpgradeChoiceList[k];
+                    }
                     break;
                 }
             }
