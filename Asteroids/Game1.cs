@@ -81,6 +81,11 @@ namespace Asteroid
 
         List<Asteroid> asteroids = new List<Asteroid>();
         List<UFO> UFOs = new List<UFO>();
+        Texture2D BigAsteroid;
+        Texture2D SmallAsteroid;
+        Texture2D TinyAsteroid;
+        Texture2D BigSaucer;
+        Texture2D SmallSaucer;
 
         public enum Size
         {
@@ -184,9 +189,10 @@ namespace Asteroid
          *      
          *      convert powerups into gun upgrades
          *      
-         *      somehow, the cold treasure broke, but only the text. it broke while i was adjusting the image positions. HUUUUUUUUUUUUUUUUUUUUUUUUH
-         *          
-         *      may want to setup files next class; i've downloaded it, and we'll see if it actually syncs
+         *      make a "you are an idiot" upgrade that, when chosen, replaces the asteroids, ufos, background, and all other upgrades into "you are a idiot"
+         *          do this at home, and have them be in different sizes so that they can actually replace
+         *          also have them alternate
+         *              for now, before this is done, the test upgrades are "you are an idiot"
          *      
          * Make particles
          * Make actual death animations
@@ -197,10 +203,14 @@ namespace Asteroid
          * 
          * Don't need to put ==true and can do !bool for false, apply to code
          * 
-         * When on new PC, in order to make it work right, you must do the following:
+         * When on new PC, in order to make it work right, you must do the following (may not actually need to do this):
          *      Map a network drive
          *      Install Monogame templates
          *      While it's installing, run the following command in cmd: "dotnet tool install -g dotnet-mgcb"
+         * 
+         * Upgrade images have to have a resolution of 110 x 88 to fit correctly in the spot
+         * 
+         * I have made seperate folders in the "Content" folder to hold specific image groups
          */
 
         bool IsBulletInBounds(List<Bullet> bullets, int i, Rectangle playSpace)
@@ -255,13 +265,19 @@ namespace Asteroid
             upgradeTitleFont = Content.Load<SpriteFont>("UpgradeTitleFont");
             upgradeDescFont = Content.Load<SpriteFont>("UpgradeFont");
 
-            _spriteBatch = new SpriteBatch(GraphicsDevice);
-            ship = new Ship(playSpace.Center.ToVector2(), 0, Content.Load<Texture2D>("Ship"), 0, 1 / 1f, Color.White);
+            BigAsteroid = Content.Load<Texture2D>("Enemies/BigAsteroid");
+            SmallAsteroid = Content.Load<Texture2D>("Enemies/SmallAsteroid");
+            TinyAsteroid = Content.Load<Texture2D>("Enemies/TinyAsteroid");
+            BigSaucer = Content.Load<Texture2D>("Enemies/Big Saucer");
+            SmallSaucer = Content.Load<Texture2D>("Enemies/Small Saucer");
 
-            defaultShot = new Bullet(new Vector2(-20, -20), shotVelocity, Content.Load<Texture2D>("Shot"), 0, 1 / 1f, Color.White);
-            UFOShot = new Bullet(new Vector2(-20, -20), 5, Content.Load<Texture2D>("LaserShot"), 0, 1 / 1f, Color.White);
-            machineShot = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, Content.Load<Texture2D>("MachineShot"), 0, 1 / 1f, Color.White);
-            laserShot = new Bullet(new Vector2(-20, -20), shotVelocity * 1.5f, Content.Load<Texture2D>("LaserShot"), 0, 1 / 1f, Color.White);
+            _spriteBatch = new SpriteBatch(GraphicsDevice);
+            ship = new Ship(playSpace.Center.ToVector2(), 0, Content.Load<Texture2D>("ShipAndShots/Ship"), 0, 1 / 1f, Color.White);
+
+            defaultShot = new Bullet(new Vector2(-20, -20), shotVelocity, Content.Load<Texture2D>("ShipAndShots/Shot"), 0, 1 / 1f, Color.White);
+            UFOShot = new Bullet(new Vector2(-20, -20), 5, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White);
+            machineShot = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, Content.Load<Texture2D>("ShipAndShots/MachineShot"), 0, 1 / 1f, Color.White);
+            laserShot = new Bullet(new Vector2(-20, -20), shotVelocity * 1.5f, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White);
 
             powerDamages = new Texture2D[] { Content.Load<Texture2D>("Hit 0"), Content.Load<Texture2D>("Hit 4"), Content.Load<Texture2D>("Hit 3"),
                 Content.Load<Texture2D>("Hit 2"), Content.Load<Texture2D>("Hit 1"), Content.Load<Texture2D>("Hit 0") };
@@ -272,43 +288,43 @@ namespace Asteroid
 
             level = new Level(5, 1, 0, 0, TimeSpan.FromMilliseconds(20000), 100, 5, 1);
 
-            asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, Content.Load<Texture2D>("BigAsteroid"), ship));
-            asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, Content.Load<Texture2D>("BigAsteroid"), ship));
-            asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, Content.Load<Texture2D>("BigAsteroid"), ship));
+            asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
+            asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
+            asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
 
-            UpgradeSlot = Content.Load<Texture2D>("UpgradeSlot");
-            SkipUpgrade = Content.Load<Texture2D>("UpgradeSkip");
+            UpgradeSlot = Content.Load<Texture2D>("UpgradeImages/UpgradeSlot");
+            SkipUpgrade = Content.Load<Texture2D>("UpgradeImages/UpgradeSkip");
             UpgradeChoice1 = new Button(new Vector2(135, 240), UpgradeSlot, 0, 1, Color.White);
             UpgradeChoice2 = new Button(new Vector2(405, 240), UpgradeSlot, 0, 1, Color.White);
             UpgradeChoice3 = new Button(new Vector2(675, 240), UpgradeSlot, 0, 1, Color.White);
             UpgradeChoiceList = new Button[] { UpgradeChoice1, UpgradeChoice2, UpgradeChoice3 };
 
             TestUpgrade1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test1",
-                "I dunno", "man V1", "(TESTING)", "", Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+                "I dunno", "man V1", "(TESTING)", "", Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade1);
 
             TestUpgrade2 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test2",
-                "I dunno", "man V2", "(TESTING)", "", Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+                "I dunno", "man V2", "(TESTING)", "", Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade2);
 
             TestUpgrade3 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test3",
-                "I dunno", "man V3", "(TESTING)", "", Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+                "I dunno", "man V3", "(TESTING)", "", Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade3);
 
             TestUpgrade4 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test4",
-                "I dunno", "man V4", "(TESTING)", "", Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+                "I dunno", "man V4", "(TESTING)", "", Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade4);
 
             TestUpgrade5 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test5",
-                "I dunno", "man V5", "(TESTING)", "", Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+                "I dunno", "man V5", "(TESTING)", "", Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade5);
 
             TestUpgrade6 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test6",
-                "I dunno", "man V6", "(TESTING)", "", Content.Load<Texture2D>("SmallAsteroid"), 0, 1 / 1, Color.White);
+                "I dunno", "man V6", "(TESTING)", "", Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade6);
 
             None = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.None, "Cold Treasure",
-                "We will not", "become stronger.", "", "", Content.Load<Texture2D>("Cold Treasure"), 0, 1 / 1, Color.White);
+                "We will not", "become stronger.", "", "", Content.Load<Texture2D>("UpgradeImages/Cold Treasure"), 0, 1 / 1, Color.White);
 
             NoneRefresh(NoneHolder, None);
 
@@ -396,8 +412,7 @@ namespace Asteroid
                 defaultShotTimer = reserveDefaultShotTimer;
             }
 
-            level.VariablePass(tinyAsteroidVelocity, smallAsteroidVelocity, largeAsteroidVelocity, Content.Load<Texture2D>("SmallAsteroid"), Content.Load<Texture2D>("BigAsteroid"),
-                Content.Load<Texture2D>("Small Saucer"), Content.Load<Texture2D>("Big Saucer"));
+            level.VariablePass(tinyAsteroidVelocity, smallAsteroidVelocity, largeAsteroidVelocity, SmallAsteroid, BigAsteroid, SmallSaucer, BigSaucer);
 
             level.Update(gameTime.ElapsedGameTime, playSpace, asteroids, UFOs);
             UFOShot.Velocity = level.UFOShotSpeed;
@@ -465,9 +480,9 @@ namespace Asteroid
                 tinyAsteroidVelocity *= 1.05f;
                 smallAsteroidVelocity *= 1.1f;
                 largeAsteroidVelocity *= 1.2f;
-                asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, Content.Load<Texture2D>("BigAsteroid"), ship));
-                asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, Content.Load<Texture2D>("BigAsteroid"), ship));
-                asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, Content.Load<Texture2D>("BigAsteroid"), ship));
+                asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
+                asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
+                asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
                 UpgradeChosen = false;
                 UpgradeTime = 0;
             }
@@ -599,23 +614,21 @@ namespace Asteroid
                         {
                             score += 10;
                             asteroids[i].leSize++;
-                            asteroids[i].Image = Content.Load<Texture2D>("SmallAsteroid");
+                            asteroids[i].Image = SmallAsteroid;
                             asteroids[i].Velocity = new Vector2(asteroids[i].Velocity.X * (largeAsteroidVelocity / smallAsteroidVelocity),
                                 asteroids[i].Velocity.Y * (largeAsteroidVelocity / smallAsteroidVelocity));
                             asteroids.Add(new Asteroid(new Vector2(asteroids[i].Position.X + 60, asteroids[i].Position.Y),
-                                new Vector2(-asteroids[i].Velocity.X * 2, -asteroids[i].Velocity.Y * 2), Content.Load<Texture2D>("SmallAsteroid"), 0,
-                                1 / 1f, Color.White, Size.Normal));
+                                new Vector2(-asteroids[i].Velocity.X * 2, -asteroids[i].Velocity.Y * 2), SmallAsteroid, 0, 1 / 1f, Color.White, Size.Normal));
                         }
                         else if (asteroids[i].leSize == Size.Normal)
                         {
                             score += 30;
                             asteroids[i].leSize++;
-                            asteroids[i].Image = Content.Load<Texture2D>("TinyAsteroid");
+                            asteroids[i].Image = TinyAsteroid;
                             asteroids[i].Velocity = new Vector2(asteroids[i].Velocity.X * (smallAsteroidVelocity / tinyAsteroidVelocity),
                                 asteroids[i].Velocity.Y * (smallAsteroidVelocity / tinyAsteroidVelocity));
                             asteroids.Add(new Asteroid(new Vector2(asteroids[i].Position.X + 25, asteroids[i].Position.Y),
-                                new Vector2(-asteroids[i].Velocity.X * 2, -asteroids[i].Velocity.Y * 2), Content.Load<Texture2D>("TinyAsteroid"), 0,
-                                1 / 1f, Color.White, Size.Baby));
+                                new Vector2(-asteroids[i].Velocity.X * 2, -asteroids[i].Velocity.Y * 2), TinyAsteroid, 0, 1 / 1f, Color.White, Size.Baby));
                         }
                         else if (asteroids[i].leSize == Size.Baby)
                         {
@@ -643,7 +656,8 @@ namespace Asteroid
                     asteroids[i].Rotation += 0.01f;
                 }
 
-                asteroids[i].Position = new Vector2(asteroids[i].Position.X + (float)Math.Sin(asteroids[i].Rotation) + asteroids[i].Velocity.X, asteroids[i].Position.Y - (float)Math.Cos(asteroids[i].Rotation) + asteroids[i].Velocity.Y);
+                asteroids[i].Position = new Vector2(asteroids[i].Position.X + (float)Math.Sin(asteroids[i].Rotation) + asteroids[i].Velocity.X, 
+                    asteroids[i].Position.Y - (float)Math.Cos(asteroids[i].Rotation) + asteroids[i].Velocity.Y);
 
                 asteroids[i].IsInBounds(playSpace);
 
@@ -797,7 +811,7 @@ namespace Asteroid
 
             for (int i = 0; i < lives; i++)
             {
-                _spriteBatch.Draw(Content.Load<Texture2D>("Life"), new Vector2(10 + (i * 15), 28), Color.DarkGray);
+                _spriteBatch.Draw(Content.Load<Texture2D>("ShipAndShots/Life"), new Vector2(10 + (i * 15), 28), Color.DarkGray);
             }
 
             _spriteBatch.DrawString(font, $"{score0s}{score}", new Vector2(10, 10), Color.DarkGray);

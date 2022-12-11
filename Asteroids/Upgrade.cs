@@ -102,14 +102,14 @@ namespace Asteroid
         {
             UpgradeButton.Draw(sb);
 
-            sb.Draw(UpgradeImage, new Vector2(Position.X - 8, Position.Y - 130), null, Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
+            sb.Draw(UpgradeImage, new Vector2(Position.X - 62, Position.Y - 173), null, Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
 
-            sb.DrawString(title, UpgradeName, new Vector2(Position.X - 60, Position.Y - 200), Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
+            sb.DrawString(title, UpgradeName, new Vector2(Position.X - 90, Position.Y - 224), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
 
-            sb.DrawString(desc, UpgradeDescription1, new Vector2(Position.X - 95, Position.Y + 20), Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
-            sb.DrawString(desc, UpgradeDescription2, new Vector2(Position.X - 95, Position.Y + 40), Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
-            sb.DrawString(desc, UpgradeDescription3, new Vector2(Position.X - 95, Position.Y + 60), Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
-            sb.DrawString(desc, UpgradeDescription4, new Vector2(Position.X - 95, Position.Y + 80), Color.White, Rotation, Origin, Scale, SpriteEffects.None, 0);
+            sb.DrawString(desc, UpgradeDescription1, new Vector2(Position.X - 115, Position.Y - 4), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
+            sb.DrawString(desc, UpgradeDescription2, new Vector2(Position.X - 115, Position.Y + 16), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
+            sb.DrawString(desc, UpgradeDescription3, new Vector2(Position.X - 115, Position.Y + 36), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
+            sb.DrawString(desc, UpgradeDescription4, new Vector2(Position.X - 115, Position.Y + 56), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
         }
     }
 }
