@@ -788,7 +788,17 @@ namespace Asteroid
             //Upgrade Effect Code (definitly replace the bloody 'if elses' in the future)
 
 
+            for (int i = 0; i < ShotSpeedProgHolder.Count; i++)
+            {
+                if (ShotSpeedProgHolder[i].isActive && !ShotSpeedProgHolder[i].inEffect)
+                {
+                    reserveDefaultShotTimer -= new TimeSpan(0, 0, 0, 0, 250);
+                    ShotSpeedProgHolder[i].inEffect = true;
+                    break;
+                }
+            }
 
+            /*
             if (ShotSpeedUp1.isActive==true && ShotSpeedUp1.inEffect==false)
             {
                 defaultShotTimer = new TimeSpan(0, 0, 0, 1, 0);
@@ -807,7 +817,7 @@ namespace Asteroid
                 reserveDefaultShotTimer = defaultShotTimer;
                 ShotSpeedUp3.inEffect = true;
             }
-
+            */
 
 
             //Upgrade Effect Code
