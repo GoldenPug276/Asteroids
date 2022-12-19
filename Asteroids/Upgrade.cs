@@ -14,6 +14,7 @@ namespace Asteroid
         public Game1.AbilityUpgradeType AbilityType;
         Random rand = new Random();
         public bool isActive = false;
+        public bool inEffect = false;
         public Button UpgradeButton;
         public Texture2D UpgradeImage;
         public string UpgradeName;
@@ -21,9 +22,11 @@ namespace Asteroid
         public string UpgradeDescription2;
         public string UpgradeDescription3;
         public string UpgradeDescription4;
+        public List<Upgrade> ProgressionList;
+        public int ProgressionLevel;
 
         public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability,
-            string name, string descrip1, string descrip2, string descrip3, string descrip4,
+            string name, string descrip1, string descrip2, string descrip3, string descrip4, List<Upgrade> progList, int progLevel,
             Texture2D image, float rot, float scale, Color color) : base(position, image, rot, scale, color)
         {
             Position = position;
@@ -34,6 +37,8 @@ namespace Asteroid
             UpgradeDescription2 = descrip2;
             UpgradeDescription3 = descrip3;
             UpgradeDescription4 = descrip4;
+            ProgressionList = progList;
+            ProgressionLevel = progLevel;
             UpgradeImage = image;
             Rotation = rot;
             Scale = scale;
@@ -76,7 +81,7 @@ namespace Asteroid
         }
         */
 
-        public void WhenSelected(List<Upgrade> possibleUpgrades, List<Upgrade> activeUpgrades, List<Upgrade> abilityProg, int currentProg)
+        public void WhenSelected(List<Upgrade> possibleUpgrades, List<Upgrade> activeUpgrades)
         {
             if (UpgradeButton.wasClicked)
             {
@@ -84,10 +89,9 @@ namespace Asteroid
                 UpgradeButton.isActive = false;
                 isActive = true;
 
-                if (abilityProg != null && currentProg < abilityProg.Count)
+                if (ProgressionList != null && ProgressionLevel < ProgressionList.Count)
                 {
-                    currentProg++;
-                    possibleUpgrades.Add(abilityProg[currentProg]);
+                    possibleUpgrades.Add(ProgressionList[ProgressionLevel]);
                 }
             }
         }

@@ -32,9 +32,9 @@ namespace Asteroid
         {
             None = 0,
             Test = 1,
-            TestMovement1 = 2,
-            TestMovement2 = 4,
-            TestMovement3 = 6
+            ShotSpeedUp1 = 2,
+            ShotSpeedUp2 = 3,
+            ShotSpeedUp3 = 4
         }
         public enum AbilityUpgradeType
         {
@@ -54,10 +54,13 @@ namespace Asteroid
         Upgrade TestUpgrade2;
         Upgrade TestUpgrade3;
         Upgrade TestUpgrade4;
-        Upgrade TestUpgrade5;
-        Upgrade TestUpgrade6;
         Upgrade None;
         Button UpgradeSkip;
+
+        Upgrade ShotSpeedUp1;
+        Upgrade ShotSpeedUp2;
+        Upgrade ShotSpeedUp3;
+        List<Upgrade> ShotSpeedProgHolder = new List<Upgrade>();
 
         Powerup machine;
         Bullet machineShot;
@@ -127,7 +130,7 @@ namespace Asteroid
          *      so by dumbass thought of maybe making this a rougelike; i hate myself but i want to
          *          have some unlockable abilities with meters and cooldowns and upgrades
          *          this would force me to make the game less of a pain so that you can, you know, progress
-         *              som upgrade ideas: speed, firing speed, shields, drones
+         *              som upgrade ideas: firing speed, shields, drones
          *              som ability ideas: timestop, time erase, time rewind, screen nuke
          *                  i'll need to make the powerups into weapon upgrades that can be swapped to
          *                  
@@ -148,22 +151,29 @@ namespace Asteroid
          *                  
          *                  make a "none" upgrade with a "noneUpgrade" list {DONE}
          *                  
-         *                  after that, make temporary upgrades that do shit {NOW}
+         *                  after that, make temporary upgrades that do shit {MOSTLY DONE}
          *                      try to do this with movement speed; the type will dictate the stat changes, for movement speed, try to do x/1000 for changes
          *                          actually, make a temporary upgrade that will make the defaultShotTimer lower and give it a tree of 3 total upgrades (might not keep these)
+         *                          if i keep this, i'll make this shot speed increase all shots rather than just the default {NOT DONE}
          *                  
-         *                  after that, make the machine gun into an ability and test it {AFTER}
+         *                  after that, make the machine gun into an ability and test it {TRY NOW}
          *                      have fancy little text on the side that says what weapon you have and allow switching
+         *                      I can attempt to do this by making an ability class that is mostly a copy of powerup to test machine, then replace powerup with ability
+         *                      
+         *                  convert powerups into gun upgrades once I have made machine gun work
+         *                  
+         *                  come up with a better way of checking if an upgrade has been collected that isn't "else ifs"
          *      
-         *          
+         *      
+         *      Most of the upgrades will be abilities with upgrade trees, and most normal upgrades will not just be stat boosts other than fire speed
+         *      
+         *      
          *      remember, sprite's positions are in the middle of the sprite
          *      
          *      **DONE**
          *      deal with upgrade class later (rn it's only a copy of powerup with 0 differences) {Do now}
          *      actually, make upgrade a class with a button and upgrade. Basically, the entire upgrade is in this class.
          *      **DONE**
-         *      
-         *          rn, the gui and its buttons will be in the main class just so I can first make them work
          *          
          *          **DONE**
          *          have it pick 3 random upgrades and place them with a certain amount of pixels in between
@@ -171,9 +181,8 @@ namespace Asteroid
          *          spawn the text and image using the main button position
          *          call the button inside of the upgrade to check for presses
          *          set position and upgradebutton position from game1
-         *          **DONE**
-         *          
          *          have abilities have upgrade trees in forms of list, and have the current prog as an int
+         *          **DONE**
          *          
          *          
          *      have a button class;        {FINISHED}
@@ -183,11 +192,7 @@ namespace Asteroid
          *              a function that detects if it's held
          *              a function that detects when it's released
          *              an update function that checks all of the above at once
-         *      
-         *      if there are less than 3 possible upgrades to get, the game will close.
-         *          i shouldn't need to change this since I should have enough upgrades that there is no way for the player to run out
-         *      
-         *      convert powerups into gun upgrades
+         *              
          *      
          *      make a "you are an idiot" upgrade that, when chosen, replaces the asteroids, ufos, background, and all other upgrades into "you are a idiot"
          *          do this at home, and have them be in different sizes so that they can actually replace
@@ -228,13 +233,16 @@ namespace Asteroid
             nones.Clear();
 
             Upgrade None1 = new Upgrade(baseNone.Position, baseNone.StatType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
-                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color);
+               baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, 
+               baseNone.ProgressionList, baseNone.ProgressionLevel, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color);
 
             Upgrade None2 = new Upgrade(baseNone.Position, baseNone.StatType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
-                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color);
+               baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4,
+               baseNone.ProgressionList, baseNone.ProgressionLevel, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color);
 
             Upgrade None3 = new Upgrade(baseNone.Position, baseNone.StatType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
-                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color);
+               baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4,
+               baseNone.ProgressionList, baseNone.ProgressionLevel, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color);
 
             nones.Add(None1);
             nones.Add(None2);
@@ -299,38 +307,47 @@ namespace Asteroid
             UpgradeChoice3 = new Button(new Vector2(675, 240), UpgradeSlot, 0, 1, Color.White);
             UpgradeChoiceList = new Button[] { UpgradeChoice1, UpgradeChoice2, UpgradeChoice3 };
 
+
+            //Upgrade Stuff (each description row can fit around 19-20 characters, tested with capital A's)
+
             TestUpgrade1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test1",
-                "I dunno", "man V1", "(TESTING)", "", Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
+                "I dunno", "man V1", "(TESTING)", "", null, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade1);
 
             TestUpgrade2 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test2",
-                "I dunno", "man V2", "(TESTING)", "", Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
+                "I dunno", "man V2", "(TESTING)", "", null, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade2);
 
             TestUpgrade3 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test3",
-                "I dunno", "man V3", "(TESTING)", "", Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
+                "I dunno", "man V3", "(TESTING)", "", null, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade3);
 
             TestUpgrade4 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test4",
-                "I dunno", "man V4", "(TESTING)", "", Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
+                "I dunno", "man V4", "(TESTING)", "", null, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
             PossibleUpgrades.Add(TestUpgrade4);
 
-            TestUpgrade5 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test5",
-                "I dunno", "man V5", "(TESTING)", "", Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
-            PossibleUpgrades.Add(TestUpgrade5);
+            ShotSpeedUp1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.ShotSpeedUp1, AbilityUpgradeType.None, "Shot Speed+",
+                "Reduces the time", "between shots to", "one second.", "", ShotSpeedProgHolder, 1, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
+            PossibleUpgrades.Add(ShotSpeedUp1);
+            ShotSpeedProgHolder.Add(ShotSpeedUp1);
 
-            TestUpgrade6 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test6",
-                "I dunno", "man V6", "(TESTING)", "", Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
-            PossibleUpgrades.Add(TestUpgrade6);
+            ShotSpeedUp2 = new Upgrade(new Vector2(0, 0), StatUpgradeType.ShotSpeedUp1, AbilityUpgradeType.None, "Shot Speed++",
+                "Reduces the time", "between shots to", "three quarters of", "a second.", ShotSpeedProgHolder, 2, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
+            ShotSpeedProgHolder.Add(ShotSpeedUp2);
+
+            ShotSpeedUp3 = new Upgrade(new Vector2(0, 0), StatUpgradeType.ShotSpeedUp1, AbilityUpgradeType.None, "Shot Speed+++",
+                "Reduces the time", "between shots to", "half a second.", "", ShotSpeedProgHolder, 3, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
+            ShotSpeedProgHolder.Add(ShotSpeedUp3);
 
             None = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.None, "Cold Treasure",
-                "We will not", "become stronger.", "", "", Content.Load<Texture2D>("UpgradeImages/Cold Treasure"), 0, 1 / 1, Color.White);
+                "We will not", "become stronger.", "", "", null, 0, Content.Load<Texture2D>("UpgradeImages/Cold Treasure"), 0, 1 / 1, Color.White);
 
             NoneRefresh(NoneHolder, None);
 
             UpgradeSkip = new Button(new Vector2(width - 47, height - 13), SkipUpgrade, 0, 1, Color.White);
 
 
+            //Upgrade Stuff
 
 
             // TODO: use this.Content to load your game content here
@@ -495,7 +512,7 @@ namespace Asteroid
                 if (!UpgradeSkip.wasClicked)
                 {
                     UpgradesToDraw[i].UpgradeButton.Update(mouseState, lastMouseState);
-                    UpgradesToDraw[i].WhenSelected(PossibleUpgrades, ActiveUpgrades, null, 0);
+                    UpgradesToDraw[i].WhenSelected(PossibleUpgrades, ActiveUpgrades);
                 }
             }
 
@@ -767,6 +784,34 @@ namespace Asteroid
             {
                 lives++;
             }
+
+            //Upgrade Effect Code (definitly replace the bloody 'if elses' in the future)
+
+
+
+            if (ShotSpeedUp1.isActive==true && ShotSpeedUp1.inEffect==false)
+            {
+                defaultShotTimer = new TimeSpan(0, 0, 0, 1, 0);
+                reserveDefaultShotTimer = defaultShotTimer;
+                ShotSpeedUp1.inEffect = true;
+            }
+            else if (ShotSpeedUp2.isActive==true && ShotSpeedUp2.inEffect==false)
+            {
+                defaultShotTimer = new TimeSpan(0, 0, 0, 0, 750);
+                reserveDefaultShotTimer = defaultShotTimer;
+                ShotSpeedUp2.inEffect = true;
+            }
+            else if (ShotSpeedUp3.isActive==true && ShotSpeedUp3.inEffect==false)
+            {
+                defaultShotTimer = new TimeSpan(0, 0, 0, 0, 500);
+                reserveDefaultShotTimer = defaultShotTimer;
+                ShotSpeedUp3.inEffect = true;
+            }
+
+
+
+            //Upgrade Effect Code
+
 
             // TODO: Add your update logic here
 
