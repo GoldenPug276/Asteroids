@@ -27,7 +27,7 @@ namespace Asteroid
 
         public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability,
             string name, string descrip1, string descrip2, string descrip3, string descrip4, List<Upgrade> progList, int progLevel,
-            Texture2D image, float rot, float scale, Color color) : base(position, image, rot, scale, color)
+            Texture2D image, float rot, float scale, Color color, bool active) : base(position, image, rot, scale, color)
         {
             Position = position;
             StatType = statype;
@@ -43,6 +43,7 @@ namespace Asteroid
             Rotation = rot;
             Scale = scale;
             Color = color;
+            isActive = active;
         }
 
         /*
@@ -81,13 +82,26 @@ namespace Asteroid
         }
         */
 
-        public void WhenSelected(List<Upgrade> possibleUpgrades, List<Upgrade> activeUpgrades)
+        public void WhenSelected(List<Upgrade> possibleUpgrades, List<Upgrade> activeUpgrades, List<Upgrade> activeAbilities)
         {
             if (UpgradeButton.wasClicked)
             {
                 Position = new Vector2(-500, -500);
                 UpgradeButton.isActive = false;
                 isActive = true;
+
+
+                if (StatType!=Game1.StatUpgradeType.None && AbilityType==Game1.AbilityUpgradeType.None)
+                {
+                    activeUpgrades.Add(new Upgrade(Position, StatType, AbilityType, UpgradeName, UpgradeDescription1, UpgradeDescription2, UpgradeDescription3, UpgradeDescription4,
+                        ProgressionList, ProgressionLevel, UpgradeImage, Rotation, Scale, Color, true));
+                }
+                else if (AbilityType!=Game1.AbilityUpgradeType.None && StatType==Game1.StatUpgradeType.None)
+                {
+                    activeAbilities.Add(new Upgrade(Position, StatType, AbilityType, UpgradeName, UpgradeDescription1, UpgradeDescription2, UpgradeDescription3, UpgradeDescription4,
+                        ProgressionList, ProgressionLevel, UpgradeImage, Rotation, Scale, Color, true));
+                }
+
 
                 if (ProgressionList != null && ProgressionLevel < ProgressionList.Count)
                 {

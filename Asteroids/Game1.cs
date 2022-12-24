@@ -39,7 +39,9 @@ namespace Asteroid
         public enum AbilityUpgradeType
         {
             None = 0,
-
+            Warp = 1,
+            Machine = 2,
+            Laser = 3
         }
         List<Upgrade> PossibleUpgrades = new List<Upgrade>();
         List<Upgrade> UpgradesToDraw = new List<Upgrade>();
@@ -53,7 +55,6 @@ namespace Asteroid
         Upgrade TestUpgrade1;
         Upgrade TestUpgrade2;
         Upgrade TestUpgrade3;
-        Upgrade TestUpgrade4;
         Upgrade None;
         Button UpgradeSkip;
 
@@ -62,12 +63,24 @@ namespace Asteroid
         Upgrade ShotSpeedUp3;
         List<Upgrade> ShotSpeedProgHolder = new List<Upgrade>();
 
+        Upgrade Warp;
+
+        string GunInEffect;
+        Upgrade MachineGun;
+        TimeSpan MachineGunShotTimer = new TimeSpan(0, 0, 0, 0, 150);
+        TimeSpan reserveMachineGunShotTimer = new TimeSpan(0, 0, 0, 0, 150);
+        Upgrade Laser;
+        TimeSpan LaserShotTimer = new TimeSpan(0, 0, 0, 0, 600);
+        TimeSpan reserveLaserShotTimer = new TimeSpan(0, 0, 0, 0, 600);
+
         Powerup machine;
         Bullet machineShot;
         Powerup laser;
         Bullet laserShot;
         Texture2D[] powerDamages;
         List<Powerup> powerups = new List<Powerup>();
+
+
 
         Button UpgradeChoice1;
         Button UpgradeChoice2;
@@ -156,11 +169,22 @@ namespace Asteroid
          *                          actually, make a temporary upgrade that will make the defaultShotTimer lower and give it a tree of 3 total upgrades (might not keep these)
          *                          if i keep this, i'll make this shot speed increase all shots rather than just the default {NOT DONE}
          *                  
-         *                  after that, make the machine gun into an ability and test it {TRY NOW}
+         *                  actually, first make upgrades sort into an "activeUpgrades" and "activeAbilities" list
+         *                      we'll keep at least the "activeUpgrades" as a visual thing and maybe use activeAbilities
+         *                  
+         *                  after that, make the machine gun into an ability and test it {DONE}
          *                      have fancy little text on the side that says what weapon you have and allow switching
          *                      I can attempt to do this by making an ability class that is mostly a copy of powerup to test machine, then replace powerup with ability
+         *                          have weapon swaping be done via scroll wheel in main class
+         *                          
+         *                  ok, so the weapons can switch via number bar, also there is no special ability class, just use upgrade
          *                      
-         *                  convert powerups into gun upgrades once I have made machine gun work
+         *                  convert powerups into gun upgrades once I have made machine gun work {DONE}
+         *                  
+         *                  clean up the old powerup code since it is no longer neccesary {DOING}
+         *                  
+         *                  since the temporary powerups became permanent upgrades, nerf them a bit {AFTER}
+         *                      give the new "warp" ability a cooldown of around 3 seconds
          *                  
          *                  come up with a better way of checking if an upgrade has been collected that isn't "else ifs"
          *      
@@ -234,15 +258,15 @@ namespace Asteroid
 
             Upgrade None1 = new Upgrade(baseNone.Position, baseNone.StatType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, 
-               baseNone.ProgressionList, baseNone.ProgressionLevel, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color);
+               baseNone.ProgressionList, baseNone.ProgressionLevel, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
 
             Upgrade None2 = new Upgrade(baseNone.Position, baseNone.StatType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4,
-               baseNone.ProgressionList, baseNone.ProgressionLevel, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color);
+               baseNone.ProgressionList, baseNone.ProgressionLevel, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
 
             Upgrade None3 = new Upgrade(baseNone.Position, baseNone.StatType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4,
-               baseNone.ProgressionList, baseNone.ProgressionLevel, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color);
+               baseNone.ProgressionList, baseNone.ProgressionLevel, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
 
             nones.Add(None1);
             nones.Add(None2);
@@ -311,36 +335,44 @@ namespace Asteroid
             //Upgrade Stuff (each description row can fit around 19-20 characters, tested with capital A's)
 
             TestUpgrade1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test1",
-                "I dunno", "man V1", "(TESTING)", "", null, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
+                "I dunno", "man V1", "(TESTING)", "", null, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(TestUpgrade1);
 
             TestUpgrade2 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test2",
-                "I dunno", "man V2", "(TESTING)", "", null, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
+                "I dunno", "man V2", "(TESTING)", "", null, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(TestUpgrade2);
 
             TestUpgrade3 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test3",
-                "I dunno", "man V3", "(TESTING)", "", null, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
+                "I dunno", "man V3", "(TESTING)", "", null, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(TestUpgrade3);
 
-            TestUpgrade4 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test4",
-                "I dunno", "man V4", "(TESTING)", "", null, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
-            PossibleUpgrades.Add(TestUpgrade4);
+            Warp = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Warp, "Warp",
+                "Right-click to warp", "to a random point", "on screen. Gain 0.4", "seconds of i-frames.", null, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+            PossibleUpgrades.Add(Warp);
 
             ShotSpeedUp1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.ShotSpeedUp1, AbilityUpgradeType.None, "Shot Speed+",
-                "Reduces the time", "between shots to", "one second.", "", ShotSpeedProgHolder, 1, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
+                "Reduces the time", "between shots to", "one second.", "", ShotSpeedProgHolder, 1, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(ShotSpeedUp1);
             ShotSpeedProgHolder.Add(ShotSpeedUp1);
 
             ShotSpeedUp2 = new Upgrade(new Vector2(0, 0), StatUpgradeType.ShotSpeedUp1, AbilityUpgradeType.None, "Shot Speed++",
-                "Reduces the time", "between shots to", "three quarters of", "a second.", ShotSpeedProgHolder, 2, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
+                "Reduces the time", "between shots to", "three quarters of", "a second.", ShotSpeedProgHolder, 2, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             ShotSpeedProgHolder.Add(ShotSpeedUp2);
 
             ShotSpeedUp3 = new Upgrade(new Vector2(0, 0), StatUpgradeType.ShotSpeedUp1, AbilityUpgradeType.None, "Shot Speed+++",
-                "Reduces the time", "between shots to", "half a second.", "", ShotSpeedProgHolder, 3, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White);
+                "Reduces the time", "between shots to", "half a second.", "", ShotSpeedProgHolder, 3, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             ShotSpeedProgHolder.Add(ShotSpeedUp3);
 
+            MachineGun = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Machine, "Machine Gun",
+                "Gives you a rapid-", "-firing machine gun.", "", "", null, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+            PossibleUpgrades.Add(MachineGun);
+
+            Laser = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Laser, "Laser",
+                "Gives you piercing", "laser gun.", "", "", null, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+            PossibleUpgrades.Add(Laser);
+
             None = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.None, "Cold Treasure",
-                "We will not", "become stronger.", "", "", null, 0, Content.Load<Texture2D>("UpgradeImages/Cold Treasure"), 0, 1 / 1, Color.White);
+                "We will not", "become stronger.", "", "", null, 0, Content.Load<Texture2D>("UpgradeImages/Cold Treasure"), 0, 1 / 1, Color.White, false);
 
             NoneRefresh(NoneHolder, None);
 
@@ -392,37 +424,41 @@ namespace Asteroid
 
             ship.Move(keyboardState);
 
-            machine.ShotTimer -= gameTime.ElapsedGameTime;
-            laser.ShotTimer -= gameTime.ElapsedGameTime;
+            MachineGunShotTimer -= gameTime.ElapsedGameTime;
+            LaserShotTimer -= gameTime.ElapsedGameTime;
             defaultShotTimer -= gameTime.ElapsedGameTime;
 
             if (mouseState.LeftButton == ButtonState.Pressed)
             {
-                if (machine.isActive && machine.ShotTimer <= TimeSpan.Zero)
+                if (MachineGun.isActive && MachineGun.inEffect && MachineGunShotTimer<=TimeSpan.Zero)
                 {
-                    shots.Add(Bullet.BulletTypeCopy(machine.ProjectileShot, ship.Position, ship.Rotation));
+                    shots.Add(Bullet.BulletTypeCopy(machineShot, ship.Position, ship.Rotation));
                 }
-                else if (laser.isActive && laser.ShotTimer <= TimeSpan.Zero)
+                else if (Laser.isActive && Laser.inEffect && LaserShotTimer<=TimeSpan.Zero)
                 {
-                    shots.Add(Bullet.BulletTypeCopy(laser.ProjectileShot, ship.Position, ship.Rotation));
+                    shots.Add(Bullet.BulletTypeCopy(laserShot, ship.Position, ship.Rotation));
                 }
-                else if (defaultShotTimer <= TimeSpan.Zero || lastMouseState.LeftButton == ButtonState.Released)
+                else if (defaultShotTimer<=TimeSpan.Zero || lastMouseState.LeftButton==ButtonState.Released)
                 {
-                    shots.Add(Bullet.BulletTypeCopy(defaultShot, ship.Position, ship.Rotation));
+                    if (!MachineGun.inEffect && !Laser.inEffect)
+                    {
+                        shots.Add(Bullet.BulletTypeCopy(defaultShot, ship.Position, ship.Rotation));
+                    }
                 }
             }
-            if (mouseState.RightButton == ButtonState.Pressed && lastMouseState.RightButton == ButtonState.Released)
+            if (mouseState.RightButton==ButtonState.Pressed && lastMouseState.RightButton==ButtonState.Released && Warp.isActive)
             {
                 ship.Position = new Vector2(rand.Next(0, width), rand.Next(0, height));
+                iFrames = new TimeSpan(0, 0, 0, 0, 400);
             }
 
-            if (machine.ShotTimer <= TimeSpan.Zero)
+            if (MachineGunShotTimer <= TimeSpan.Zero)
             {
-                machine.ShotTimer = machine.reserveShotTimer;
+                MachineGunShotTimer = reserveMachineGunShotTimer;
             }
-            if (laser.ShotTimer <= TimeSpan.Zero)
+            if (LaserShotTimer <= TimeSpan.Zero)
             {
-                laser.ShotTimer = laser.reserveShotTimer;
+                LaserShotTimer = reserveLaserShotTimer;
             }
             if (defaultShotTimer <= TimeSpan.Zero)
             {
@@ -512,7 +548,7 @@ namespace Asteroid
                 if (!UpgradeSkip.wasClicked)
                 {
                     UpgradesToDraw[i].UpgradeButton.Update(mouseState, lastMouseState);
-                    UpgradesToDraw[i].WhenSelected(PossibleUpgrades, ActiveUpgrades);
+                    UpgradesToDraw[i].WhenSelected(PossibleUpgrades, ActiveUpgrades, ActiveAbilities);
                 }
             }
 
@@ -654,7 +690,11 @@ namespace Asteroid
                             asteroids.RemoveAt(i);
                         }
 
-                        shots.RemoveAt(j);
+                        if (shots[j].Image!=laserShot.Image)
+                        {
+                            shots.RemoveAt(j);
+                        }
+
                         break;
                     }
                 }
@@ -712,7 +752,10 @@ namespace Asteroid
                         }
 
                         UFOs.RemoveAt(i);
-                        shots.RemoveAt(j);
+                        if (shots[j].Image!=laserShot.Image)
+                        {
+                            shots.RemoveAt(j);
+                        }
                         break;
                     }
                 }
@@ -819,6 +862,24 @@ namespace Asteroid
             }
             */
 
+            if (keyboardState.IsKeyDown(Keys.D1) && lastKeyboardState.IsKeyUp(Keys.D1))
+            {
+                GunInEffect = "";
+                MachineGun.inEffect = false;
+                Laser.inEffect = false;
+            }
+            else if (keyboardState.IsKeyDown(Keys.D2) && lastKeyboardState.IsKeyUp(Keys.D2) && MachineGun.isActive)
+            {
+                GunInEffect = "Machine Gun";
+                MachineGun.inEffect = true;
+                Laser.inEffect = false;
+            }
+            else if (keyboardState.IsKeyDown(Keys.D3) && lastKeyboardState.IsKeyUp(Keys.D3) && Laser.isActive)
+            {
+                GunInEffect = "Laser";
+                MachineGun.inEffect = false;
+                Laser.inEffect = true;
+            }
 
             //Upgrade Effect Code
 
@@ -881,6 +942,8 @@ namespace Asteroid
                 _spriteBatch.DrawString(font, $"{powerups[i].leType.ToString()}: {Math.Round(powerups[i].Duration.TotalMilliseconds)}",
                     new Vector2(10, 50 + (i * 20)), Color.DarkGray);
             }
+
+            _spriteBatch.DrawString(font, $"{GunInEffect}", new Vector2(10, 50), Color.DarkGray);
 
 
             for (int i = 0; i < UpgradesToDraw.Count; i++)
