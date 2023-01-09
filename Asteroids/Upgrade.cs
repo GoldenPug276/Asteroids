@@ -24,14 +24,36 @@ namespace Asteroid
         public string UpgradeDescription4;
         public List<Upgrade> ProgressionList;
         public int ProgressionLevel;
+        public TimeSpan Cooldown;
+        private TimeSpan ReserveCooldown;
+        public int EnergyUse;
+        public Rectangle energyTotal;
+        public Rectangle energyRemaining;
+        private TimeSpan energyRegen = TimeSpan.FromMilliseconds(250);
+        private TimeSpan reserveEnergyRegen = TimeSpan.FromMilliseconds(250);
+        public float EnergyGainMultiplier = 1;
 
         public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability,
-            string name, string descrip1, string descrip2, string descrip3, string descrip4, List<Upgrade> progList, int progLevel,
+            string name, string descrip1, string descrip2, string descrip3, string descrip4, List<Upgrade> progList, int progLevel, TimeSpan cool, int energy,
             Texture2D image, float rot, float scale, Color color, bool active) : base(position, image, rot, scale, color)
         {
             Position = position;
             StatType = statype;
             AbilityType = ability;
+
+            if (StatType==Game1.StatUpgradeType.None)
+            {
+                if (AbilityType!=Game1.AbilityUpgradeType.None && AbilityType<Game1.AbilityUpgradeType.Warp)
+                {
+                    energyTotal = new Rectangle(10, 70, 100, 20);
+                }
+                else if (AbilityType>=Game1.AbilityUpgradeType.Warp)
+                {
+                    //normal ability cooldown code
+                }
+            }
+            energyRemaining = energyTotal;
+
             UpgradeName = name;
             UpgradeDescription1 = descrip1;
             UpgradeDescription2 = descrip2;
@@ -39,6 +61,9 @@ namespace Asteroid
             UpgradeDescription4 = descrip4;
             ProgressionList = progList;
             ProgressionLevel = progLevel;
+            Cooldown = cool;
+            ReserveCooldown = cool;
+            EnergyUse = energy;
             UpgradeImage = image;
             Rotation = rot;
             Scale = scale;
@@ -93,13 +118,13 @@ namespace Asteroid
 
                 if (StatType!=Game1.StatUpgradeType.None && AbilityType==Game1.AbilityUpgradeType.None)
                 {
-                    activeUpgrades.Add(new Upgrade(Position, StatType, AbilityType, UpgradeName, UpgradeDescription1, UpgradeDescription2, UpgradeDescription3, UpgradeDescription4,
-                        ProgressionList, ProgressionLevel, UpgradeImage, Rotation, Scale, Color, true));
+                    activeUpgrades.Add(new Upgrade(Position, StatType, AbilityType, UpgradeName, UpgradeDescription1, UpgradeDescription2, UpgradeDescription3, 
+                        UpgradeDescription4, ProgressionList, ProgressionLevel, Cooldown, EnergyUse, UpgradeImage, Rotation, Scale, Color, true));
                 }
                 else if (AbilityType!=Game1.AbilityUpgradeType.None && StatType==Game1.StatUpgradeType.None)
                 {
-                    activeAbilities.Add(new Upgrade(Position, StatType, AbilityType, UpgradeName, UpgradeDescription1, UpgradeDescription2, UpgradeDescription3, UpgradeDescription4,
-                        ProgressionList, ProgressionLevel, UpgradeImage, Rotation, Scale, Color, true));
+                    activeAbilities.Add(new Upgrade(Position, StatType, AbilityType, UpgradeName, UpgradeDescription1, UpgradeDescription2, UpgradeDescription3,
+                        UpgradeDescription4, ProgressionList, ProgressionLevel, Cooldown, EnergyUse, UpgradeImage, Rotation, Scale, Color, true));
                 }
 
 
@@ -114,6 +139,28 @@ namespace Asteroid
         {
             Position = new Vector2(-500, -500);
             isActive = false;
+        }
+
+        public void CooldownRefresh()
+        {
+            if (Cooldown<=TimeSpan.Zero)
+            {
+                Cooldown = ReserveCooldown;
+            }
+        }
+
+        public void AbilityUse()
+        {
+            energyRemaining.Width -= EnergyUse;
+        }
+        public void AbilityUpdate(TimeSpan ElapsedGameTime)
+        {
+            energyRegen -= ElapsedGameTime;
+            if (energyRegen<=TimeSpan.Zero && energyRemaining.Width<100)
+            {
+                energyRemaining.Width++;
+                energyRegen = reserveEnergyRegen * EnergyGainMultiplier;
+            }
         }
 
         public void Draw(SpriteFont title, SpriteFont desc, SpriteBatch sb)
