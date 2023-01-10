@@ -48,6 +48,7 @@ namespace Asteroid
         List<Upgrade> UpgradesToDraw = new List<Upgrade>();
         List<Upgrade> ActiveUpgrades = new List<Upgrade>();
         List<Upgrade> ActiveAbilities = new List<Upgrade>();
+        List<Upgrade> ActiveGuns = new List<Upgrade>();
         List<Upgrade> NoneHolder = new List<Upgrade>();
 
         bool UpgradeChosen = false;
@@ -191,11 +192,16 @@ namespace Asteroid
          *                                  it appears below the gun name
          *                                  the energy rectangles need to be private
          *                                  
+         *                                  energy works, but needs changes as listed below
+         *                                  
          *                                  rightt now, energy gain isn't smooth
-         *                                  also, since they nowuse energy, remove the shot timers for the special guns
+         *                                  also, since they now use energy, remove the shot timers for the special guns
          *                                      rework the shot timer upgrades to increase energy gain rather than reduce shot timer for special guns
          *                                  
-         *                                  for now, the energy is always active for laser, change after making it work
+         *                                      will need to get better system for seeing active gun, rn i can have the draw detect a gun but i want to have a list for easier access
+         *                                          will make an array that holds the collected guns, so cycling with mouse will work and i cna use class to cycle
+         *                                              at the time of writing have an unused gun array, go from there
+         *                                          
          *                                  for now, the guns check for energy before firing, change this after making it work
          *                                  
          *                                  after this, make a temp ability that uses the energy bar, and use the powerup code to make different meters stack
@@ -449,6 +455,7 @@ namespace Asteroid
                 if (MachineGun.isActive && MachineGun.inEffect && MachineGunShotTimer<=TimeSpan.Zero)
                 {
                     shots.Add(Bullet.BulletTypeCopy(machineShot, ship.Position, ship.Rotation));
+                    MachineGun.AbilityUse();
                 }
                 else if (Laser.isActive && Laser.inEffect && LaserShotTimer<=TimeSpan.Zero && Laser.energyRemaining.Width>=33)
                 {
@@ -971,8 +978,8 @@ namespace Asteroid
             }
 
             _spriteBatch.DrawString(font, $"{GunInEffect}", new Vector2(10, 50), Color.DarkGray);
-            _spriteBatch.DrawRectangle(Laser.energyTotal, Color.DarkGray);
-            _spriteBatch.DrawRectangle(Laser.energyRemaining, Color.DarkGray, 10);
+            MachineGun.EnergyDraw(_spriteBatch);
+            Laser.EnergyDraw(_spriteBatch);
 
 
             for (int i = 0; i < UpgradesToDraw.Count; i++)

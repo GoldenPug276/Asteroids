@@ -1,10 +1,12 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
 using MonoGame.Extended.BitmapFonts;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Windows.ApplicationModel.VoiceCommands;
 
 namespace Asteroid
 {
@@ -27,11 +29,15 @@ namespace Asteroid
         public TimeSpan Cooldown;
         private TimeSpan ReserveCooldown;
         public int EnergyUse;
-        public Rectangle energyTotal;
-        public Rectangle energyRemaining;
-        private TimeSpan energyRegen = TimeSpan.FromMilliseconds(250);
-        private TimeSpan reserveEnergyRegen = TimeSpan.FromMilliseconds(250);
+        public RectangleF energyTotal;
+        public RectangleF energyRemaining;
+        private RectangleF movingEnergy;
+        private int energyMoveIf = -1;
+        private TimeSpan energyRegen = TimeSpan.FromMilliseconds(125.5);
+        private TimeSpan reserveEnergyRegen = TimeSpan.FromMilliseconds(125.5);
         public float EnergyGainMultiplier = 1;
+
+        private bool isGun = false;
 
         public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability,
             string name, string descrip1, string descrip2, string descrip3, string descrip4, List<Upgrade> progList, int progLevel, TimeSpan cool, int energy,
@@ -46,6 +52,7 @@ namespace Asteroid
                 if (AbilityType!=Game1.AbilityUpgradeType.None && AbilityType<Game1.AbilityUpgradeType.Warp)
                 {
                     energyTotal = new Rectangle(10, 70, 100, 20);
+                    isGun = true;
                 }
                 else if (AbilityType>=Game1.AbilityUpgradeType.Warp)
                 {
@@ -53,6 +60,7 @@ namespace Asteroid
                 }
             }
             energyRemaining = energyTotal;
+            movingEnergy = energyRemaining;
 
             UpgradeName = name;
             UpgradeDescription1 = descrip1;
@@ -152,14 +160,36 @@ namespace Asteroid
         public void AbilityUse()
         {
             energyRemaining.Width -= EnergyUse;
+            movingEnergy.Width -= EnergyUse;
         }
         public void AbilityUpdate(TimeSpan ElapsedGameTime)
         {
             energyRegen -= ElapsedGameTime;
             if (energyRegen<=TimeSpan.Zero && energyRemaining.Width<100)
             {
-                energyRemaining.Width++;
+                if (energyMoveIf > 0)
+                {
+                    energyRemaining.Width++;
+                    energyMoveIf *= -1;
+                }
+                else if (energyMoveIf < 0)
+                {
+                    movingEnergy.Width++;
+                    energyMoveIf *= -1;
+                }
                 energyRegen = reserveEnergyRegen * EnergyGainMultiplier;
+            }
+        }
+
+        public void GunSwap(KeyboardState currentState, KeyboardState lastState, Keys key, string gunName, string currentName)
+        {
+            if (currentState.IsKeyDown(Keys.D1) && lastState.IsKeyUp(Keys.D1))
+            {
+
+            }
+            else if (currentState.IsKeyDown(key) && lastState.IsKeyUp(key) && isActive)
+            {
+
             }
         }
 
@@ -175,6 +205,15 @@ namespace Asteroid
             sb.DrawString(desc, UpgradeDescription2, new Vector2(Position.X - 115, Position.Y + 16), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
             sb.DrawString(desc, UpgradeDescription3, new Vector2(Position.X - 115, Position.Y + 36), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
             sb.DrawString(desc, UpgradeDescription4, new Vector2(Position.X - 115, Position.Y + 56), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
+        }
+        public void EnergyDraw(SpriteBatch sb)
+        {
+            if (inEffect)
+            {
+                sb.DrawRectangle(energyTotal, Color.DarkGray);
+                sb.FillRectangle(energyRemaining, Color.DarkGray);
+                sb.FillRectangle(movingEnergy, Color.Lerp(Color.DarkGray, Color.Transparent, 0.5f));
+            }
         }
     }
 }
