@@ -49,6 +49,7 @@ namespace Asteroid
         List<Upgrade> ActiveUpgrades = new List<Upgrade>();
         List<Upgrade> ActiveAbilities = new List<Upgrade>();
         List<Upgrade> ActiveGuns = new List<Upgrade>();
+        int CurrentActiveGunIndex = 0;
         List<Upgrade> NoneHolder = new List<Upgrade>();
 
         bool UpgradeChosen = false;
@@ -75,9 +76,7 @@ namespace Asteroid
         TimeSpan reserveLaserShotTimer = new TimeSpan(0, 0, 0, 0, 600);
 
         Powerup machine;
-        Bullet machineShot;
         Powerup laser;
-        Bullet laserShot;
         Texture2D[] powerDamages;
         List<Powerup> powerups = new List<Powerup>();
 
@@ -204,9 +203,11 @@ namespace Asteroid
          *                                          
          *                                  for now, the guns check for energy before firing, change this after making it work
          *                                  
-         *                                  after this, make a temp ability that uses the energy bar, and use the powerup code to make different meters stack
+         *                                  HAVE FINISHED EERYTHING ABOVE THIS
+         *                                  
+         *                                  after this, make a temp ability that uses the energy bar, and use the powerup code to make different meters stack {AFTER}
          *                      
-         *                  clean up the old powerup code since it is no longer neccesary {AFTER}
+         *                  clean up the old powerup code since it is no longer neccesary {FIRST}
          *                  
          *                  come up with a better way of checking if an upgrade has been collected that isn't "else ifs"
          *      
@@ -332,15 +333,7 @@ namespace Asteroid
 
             defaultShot = new Bullet(new Vector2(-20, -20), shotVelocity, Content.Load<Texture2D>("ShipAndShots/Shot"), 0, 1 / 1f, Color.White);
             UFOShot = new Bullet(new Vector2(-20, -20), 5, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White);
-            machineShot = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, Content.Load<Texture2D>("ShipAndShots/MachineShot"), 0, 1 / 1f, Color.White);
-            laserShot = new Bullet(new Vector2(-20, -20), shotVelocity * 1.5f, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White);
-
-            powerDamages = new Texture2D[] { Content.Load<Texture2D>("Hit 0"), Content.Load<Texture2D>("Hit 4"), Content.Load<Texture2D>("Hit 3"),
-                Content.Load<Texture2D>("Hit 2"), Content.Load<Texture2D>("Hit 1"), Content.Load<Texture2D>("Hit 0") };
-            machine = new Powerup(new Vector2(-50, -50), Powerup.Type.Machine, TimeSpan.FromMilliseconds(3500), TimeSpan.FromMilliseconds(4000), new TimeSpan(0, 0, 0, 0, 100),
-                powerDamages, machineShot, 60, Content.Load<Texture2D>("MachineGunPower"), 0, 1 / 1f, Color.Aqua);
-            laser = new Powerup(new Vector2(-60, -60), Powerup.Type.Laser, TimeSpan.FromMilliseconds(1500), TimeSpan.FromMilliseconds(2000), new TimeSpan(0, 0, 0, 0, 200),
-                powerDamages, laserShot, 40, Content.Load<Texture2D>("LaserPower"), 0, 1 / 1f, Color.Yellow);
+            
 
             level = new Level(5, 1, 0, 0, TimeSpan.FromMilliseconds(20000), 100, 5, 1);
 
@@ -391,6 +384,9 @@ namespace Asteroid
                 "Gives you piercing", "laser gun.", "(Num-bar 3)", "", null, 0, BurnerTime, 33, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(Laser);
 
+            MachineGun.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, Content.Load<Texture2D>("ShipAndShots/MachineShot"), 0, 1 / 1f, Color.White);
+            Laser.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.5f, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White);
+
             None = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.None, "Cold Treasure",
                 "We will not", "become stronger.", "", "", null, 0, BurnerTime, 0, Content.Load<Texture2D>("UpgradeImages/Cold Treasure"), 0, 1 / 1, Color.White, false);
 
@@ -398,8 +394,23 @@ namespace Asteroid
 
             UpgradeSkip = new Button(new Vector2(width - 47, height - 13), SkipUpgrade, 0, 1, Color.White);
 
+            ActiveGuns.Add(None);
+
 
             //Upgrade Stuff
+
+
+
+            //code to erase
+
+            powerDamages = new Texture2D[] { Content.Load<Texture2D>("Hit 0"), Content.Load<Texture2D>("Hit 4"), Content.Load<Texture2D>("Hit 3"),
+                Content.Load<Texture2D>("Hit 2"), Content.Load<Texture2D>("Hit 1"), Content.Load<Texture2D>("Hit 0") };
+            machine = new Powerup(new Vector2(-50, -50), Powerup.Type.Machine, TimeSpan.FromMilliseconds(3500), TimeSpan.FromMilliseconds(4000), new TimeSpan(0, 0, 0, 0, 100),
+    powerDamages, MachineGun.GunBullet, 60, Content.Load<Texture2D>("MachineGunPower"), 0, 1 / 1f, Color.Aqua);
+            laser = new Powerup(new Vector2(-60, -60), Powerup.Type.Laser, TimeSpan.FromMilliseconds(1500), TimeSpan.FromMilliseconds(2000), new TimeSpan(0, 0, 0, 0, 200),
+                powerDamages, Laser.GunBullet, 40, Content.Load<Texture2D>("LaserPower"), 0, 1 / 1f, Color.Yellow);
+
+
 
 
             // TODO: use this.Content to load your game content here
@@ -448,26 +459,24 @@ namespace Asteroid
             LaserShotTimer -= gameTime.ElapsedGameTime;
             defaultShotTimer -= gameTime.ElapsedGameTime;
 
+            MachineGun.AbilityUpdate(gameTime.ElapsedGameTime);
             Laser.AbilityUpdate(gameTime.ElapsedGameTime);
 
             if (mouseState.LeftButton == ButtonState.Pressed)
             {
-                if (MachineGun.isActive && MachineGun.inEffect && MachineGunShotTimer<=TimeSpan.Zero)
+                if (MachineGun.WillGunShoot(MachineGunShotTimer)==true)
                 {
-                    shots.Add(Bullet.BulletTypeCopy(machineShot, ship.Position, ship.Rotation));
+                    shots.Add(Bullet.BulletTypeCopy(MachineGun.GunBullet, ship.Position, ship.Rotation));
                     MachineGun.AbilityUse();
                 }
-                else if (Laser.isActive && Laser.inEffect && LaserShotTimer<=TimeSpan.Zero && Laser.energyRemaining.Width>=33)
+                else if (Laser.WillGunShoot(LaserShotTimer)==true)
                 {
-                    shots.Add(Bullet.BulletTypeCopy(laserShot, ship.Position, ship.Rotation));
+                    shots.Add(Bullet.BulletTypeCopy(Laser.GunBullet, ship.Position, ship.Rotation));
                     Laser.AbilityUse();
                 }
-                else if (defaultShotTimer<=TimeSpan.Zero || lastMouseState.LeftButton==ButtonState.Released)
+                else if ((defaultShotTimer<=TimeSpan.Zero||lastMouseState.LeftButton==ButtonState.Released) && CurrentActiveGunIndex==0)
                 {
-                    if (!MachineGun.inEffect && !Laser.inEffect)
-                    {
-                        shots.Add(Bullet.BulletTypeCopy(defaultShot, ship.Position, ship.Rotation));
-                    }
+                    shots.Add(Bullet.BulletTypeCopy(defaultShot, ship.Position, ship.Rotation));
                 }
             }
 
@@ -605,6 +614,11 @@ namespace Asteroid
                             {
                                 PossibleUpgrades.Remove(UpgradesToDraw[j]);
                             }
+
+                            if (UpgradesToDraw[j].isGun)
+                            {
+                                ActiveGuns.Add(UpgradesToDraw[j]);
+                            }
                         }
                     }
                     broken = true;
@@ -709,7 +723,7 @@ namespace Asteroid
                             asteroids.RemoveAt(i);
                         }
 
-                        if (shots[j].Image!=laserShot.Image)
+                        if (shots[j].Image!=Laser.GunBullet.Image)
                         {
                             shots.RemoveAt(j);
                         }
@@ -771,7 +785,7 @@ namespace Asteroid
                         }
 
                         UFOs.RemoveAt(i);
-                        if (shots[j].Image!=laserShot.Image)
+                        if (shots[j].Image!=Laser.GunBullet.Image)
                         {
                             shots.RemoveAt(j);
                         }
@@ -881,6 +895,61 @@ namespace Asteroid
             }
             */
 
+
+            for (int i = 0; i < ActiveGuns.Count; i++)
+            {
+                bool swapped = false;
+
+                if (keyboardState.IsKeyDown(Keys.D1+i) && lastKeyboardState.IsKeyUp(Keys.D1+i))
+                {
+                    swapped = true;
+                }
+                if (mouseState.ScrollWheelValue>lastMouseState.ScrollWheelValue)
+                {
+                    i = CurrentActiveGunIndex;
+                    if (i+1==ActiveGuns.Count)
+                    {
+                        i = 0;
+                    }
+                    else
+                    {
+                        i++;
+                    }
+                    swapped = true;
+                }
+                if (mouseState.ScrollWheelValue<lastMouseState.ScrollWheelValue)
+                {
+                    i = CurrentActiveGunIndex;
+                    if (i==0)
+                    {
+                        i = ActiveGuns.Count - 1;
+                    }
+                    else
+                    {
+                        i--;
+                    }
+                    swapped = true;
+                }
+
+                if (swapped)
+                {
+                    CurrentActiveGunIndex = i;
+
+                    if (i!=0) { GunInEffect = ActiveGuns[i].UpgradeName; ActiveGuns[i].inEffect = true; }
+                    else { GunInEffect = "Default"; }
+
+                    for (int j = 1; j < ActiveGuns.Count; j++)
+                    {
+                        if (j != i)
+                        {
+                            ActiveGuns[j].inEffect = false;
+                        }
+                    }
+                    break;
+                }
+
+            }
+            /*
             if (keyboardState.IsKeyDown(Keys.D1) && lastKeyboardState.IsKeyUp(Keys.D1))
             {
                 GunInEffect = "Default";
@@ -899,7 +968,7 @@ namespace Asteroid
                 MachineGun.inEffect = false;
                 Laser.inEffect = true;
             }
-
+            */
 
             //Upgrade Effect Code
 

@@ -28,6 +28,7 @@ namespace Asteroid
         public int ProgressionLevel;
         public TimeSpan Cooldown;
         private TimeSpan ReserveCooldown;
+        public Bullet GunBullet;
         public int EnergyUse;
         public RectangleF energyTotal;
         public RectangleF energyRemaining;
@@ -37,7 +38,7 @@ namespace Asteroid
         private TimeSpan reserveEnergyRegen = TimeSpan.FromMilliseconds(125.5);
         public float EnergyGainMultiplier = 1;
 
-        private bool isGun = false;
+        public bool isGun = false;
 
         public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability,
             string name, string descrip1, string descrip2, string descrip3, string descrip4, List<Upgrade> progList, int progLevel, TimeSpan cool, int energy,
@@ -57,6 +58,7 @@ namespace Asteroid
                 else if (AbilityType>=Game1.AbilityUpgradeType.Warp)
                 {
                     //normal ability cooldown code
+                    isGun = false;
                 }
             }
             energyRemaining = energyTotal;
@@ -135,7 +137,6 @@ namespace Asteroid
                         UpgradeDescription4, ProgressionList, ProgressionLevel, Cooldown, EnergyUse, UpgradeImage, Rotation, Scale, Color, true));
                 }
 
-
                 if (ProgressionList != null && ProgressionLevel < ProgressionList.Count)
                 {
                     possibleUpgrades.Add(ProgressionList[ProgressionLevel]);
@@ -181,16 +182,16 @@ namespace Asteroid
             }
         }
 
-        public void GunSwap(KeyboardState currentState, KeyboardState lastState, Keys key, string gunName, string currentName)
+        public bool WillGunShoot(TimeSpan shotTimer)
         {
-            if (currentState.IsKeyDown(Keys.D1) && lastState.IsKeyUp(Keys.D1))
-            {
+            bool fire = false;
 
-            }
-            else if (currentState.IsKeyDown(key) && lastState.IsKeyUp(key) && isActive)
+            if (isActive && inEffect && shotTimer <= TimeSpan.Zero && energyRemaining.Width >= EnergyUse)
             {
-
+                fire = true;
             }
+
+            return fire;
         }
 
         public void Draw(SpriteFont title, SpriteFont desc, SpriteBatch sb)
