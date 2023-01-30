@@ -26,8 +26,6 @@ namespace Asteroid
         public string UpgradeDescription4;
         public List<Upgrade> ProgressionList;
         public int ProgressionLevel;
-        public TimeSpan Cooldown;
-        private TimeSpan ReserveCooldown;
         public Bullet GunBullet;
         public int EnergyUse;
         public RectangleF energyTotal;
@@ -41,7 +39,7 @@ namespace Asteroid
         public bool isGun = false;
 
         public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability,
-            string name, string descrip1, string descrip2, string descrip3, string descrip4, List<Upgrade> progList, int progLevel, TimeSpan cool, int energy,
+            string name, string descrip1, string descrip2, string descrip3, string descrip4, List<Upgrade> progList, int progLevel, int energy,
             Texture2D image, float rot, float scale, Color color, bool active) : base(position, image, rot, scale, color)
         {
             Position = position;
@@ -58,6 +56,8 @@ namespace Asteroid
                 else if (AbilityType>=Game1.AbilityUpgradeType.Warp)
                 {
                     //normal ability cooldown code
+                    //will be at the bottom left, code is temp for now
+                    energyTotal = new Rectangle(10, 400, 100, 20);
                     isGun = false;
                 }
             }
@@ -71,8 +71,6 @@ namespace Asteroid
             UpgradeDescription4 = descrip4;
             ProgressionList = progList;
             ProgressionLevel = progLevel;
-            Cooldown = cool;
-            ReserveCooldown = cool;
             EnergyUse = energy;
             UpgradeImage = image;
             Rotation = rot;
@@ -129,12 +127,12 @@ namespace Asteroid
                 if (StatType!=Game1.StatUpgradeType.None && AbilityType==Game1.AbilityUpgradeType.None)
                 {
                     activeUpgrades.Add(new Upgrade(Position, StatType, AbilityType, UpgradeName, UpgradeDescription1, UpgradeDescription2, UpgradeDescription3, 
-                        UpgradeDescription4, ProgressionList, ProgressionLevel, Cooldown, EnergyUse, UpgradeImage, Rotation, Scale, Color, true));
+                        UpgradeDescription4, ProgressionList, ProgressionLevel, EnergyUse, UpgradeImage, Rotation, Scale, Color, true));
                 }
                 else if (AbilityType!=Game1.AbilityUpgradeType.None && StatType==Game1.StatUpgradeType.None)
                 {
                     activeAbilities.Add(new Upgrade(Position, StatType, AbilityType, UpgradeName, UpgradeDescription1, UpgradeDescription2, UpgradeDescription3,
-                        UpgradeDescription4, ProgressionList, ProgressionLevel, Cooldown, EnergyUse, UpgradeImage, Rotation, Scale, Color, true));
+                        UpgradeDescription4, ProgressionList, ProgressionLevel, EnergyUse, UpgradeImage, Rotation, Scale, Color, true));
                 }
 
                 if (ProgressionList != null && ProgressionLevel < ProgressionList.Count)
@@ -148,14 +146,6 @@ namespace Asteroid
         {
             Position = new Vector2(-500, -500);
             isActive = false;
-        }
-
-        public void CooldownRefresh()
-        {
-            if (Cooldown<=TimeSpan.Zero)
-            {
-                Cooldown = ReserveCooldown;
-            }
         }
 
         public void AbilityUse()
@@ -178,7 +168,7 @@ namespace Asteroid
                     movingEnergy.Width++;
                     energyMoveIf *= -1;
                 }
-                energyRegen = reserveEnergyRegen * EnergyGainMultiplier;
+                energyRegen = reserveEnergyRegen / EnergyGainMultiplier;
             }
         }
 
@@ -194,6 +184,18 @@ namespace Asteroid
             return fire;
         }
 
+        public bool WillAbilityGetUsed()
+        {
+            bool use = false;
+
+            if (isActive && energyRemaining.Width >= EnergyUse)
+            {
+                use = true;
+            }
+
+            return use;
+        }
+
         public void Draw(SpriteFont title, SpriteFont desc, SpriteBatch sb)
         {
             UpgradeButton.Draw(sb);
@@ -202,14 +204,14 @@ namespace Asteroid
 
             sb.DrawString(title, UpgradeName, new Vector2(Position.X - 90, Position.Y - 224), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
 
-            sb.DrawString(desc, UpgradeDescription1, new Vector2(Position.X - 115, Position.Y - 4), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
-            sb.DrawString(desc, UpgradeDescription2, new Vector2(Position.X - 115, Position.Y + 16), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
-            sb.DrawString(desc, UpgradeDescription3, new Vector2(Position.X - 115, Position.Y + 36), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
-            sb.DrawString(desc, UpgradeDescription4, new Vector2(Position.X - 115, Position.Y + 56), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
+            sb.DrawString(desc, UpgradeDescription1, new Vector2(Position.X - 120, Position.Y - 4), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
+            sb.DrawString(desc, UpgradeDescription2, new Vector2(Position.X - 120, Position.Y + 16), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
+            sb.DrawString(desc, UpgradeDescription3, new Vector2(Position.X - 120, Position.Y + 36), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
+            sb.DrawString(desc, UpgradeDescription4, new Vector2(Position.X - 120, Position.Y + 56), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
         }
         public void EnergyDraw(SpriteBatch sb)
         {
-            if (inEffect)
+            if ((isGun && inEffect)||(!isGun && isActive))
             {
                 sb.DrawRectangle(energyTotal, Color.DarkGray);
                 sb.FillRectangle(energyRemaining, Color.DarkGray);

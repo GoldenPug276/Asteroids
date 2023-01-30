@@ -5,6 +5,7 @@ using MonoGame.Extended;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 
 
@@ -75,11 +76,12 @@ namespace Asteroid
         TimeSpan LaserShotTimer = new TimeSpan(0, 0, 0, 0, 600);
         TimeSpan reserveLaserShotTimer = new TimeSpan(0, 0, 0, 0, 600);
 
+        /*  Old Powerup Code, Archived
         Powerup machine;
         Powerup laser;
         Texture2D[] powerDamages;
         List<Powerup> powerups = new List<Powerup>();
-
+        */
 
 
         Button UpgradeChoice1;
@@ -181,7 +183,7 @@ namespace Asteroid
          *                      
          *                  convert powerups into gun upgrades once I have made machine gun work {DONE}
          *                  
-         *                  since the temporary powerups became permanent upgrades, nerf them a bit {DOING}
+         *                  since the temporary powerups became permanent upgrades, nerf them a bit {DONE}
          *                      since i can't be bothered to do this, reset them to their original states, but first do this:
          *                          give them an energy bar like in megaman, where using a weapon takes energy that regenerates after time
          *                          
@@ -195,7 +197,7 @@ namespace Asteroid
          *                                  
          *                                  rightt now, energy gain isn't smooth
          *                                  also, since they now use energy, remove the shot timers for the special guns
-         *                                      rework the shot timer upgrades to increase energy gain rather than reduce shot timer for special guns
+         *                                      rework the shot timer upgrades to increase energy gain rather than reduce shot timer for special guns {DONE}
          *                                  
          *                                      will need to get better system for seeing active gun, rn i can have the draw detect a gun but i want to have a list for easier access
          *                                          will make an array that holds the collected guns, so cycling with mouse will work and i cna use class to cycle
@@ -205,9 +207,12 @@ namespace Asteroid
          *                                  
          *                                  HAVE FINISHED EERYTHING ABOVE THIS
          *                                  
-         *                                  after this, make a temp ability that uses the energy bar, and use the powerup code to make different meters stack {AFTER}
+         *                                  after this, make a temp ability that uses the energy bar, and use the powerup code to make different meters stack {DOING}
+         *                                      actually, for this, give the warp an energy bar
+         *                                      warp with energy works, use the powerup vode now to make stacking {NOW}
+         *                                          you will be able to differentiate via color corrospondence, don't bother with this yet
          *                      
-         *                  clean up the old powerup code since it is no longer neccesary {FIRST}
+         *                  clean up the old powerup code since it is no longer neccesary {has been archived}
          *                  
          *                  come up with a better way of checking if an upgrade has been collected that isn't "else ifs"
          *      
@@ -283,15 +288,15 @@ namespace Asteroid
 
             Upgrade None1 = new Upgrade(baseNone.Position, baseNone.StatType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, 
-               baseNone.ProgressionList, baseNone.ProgressionLevel, baseNone.Cooldown, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
+               baseNone.ProgressionList, baseNone.ProgressionLevel, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
 
             Upgrade None2 = new Upgrade(baseNone.Position, baseNone.StatType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4,
-               baseNone.ProgressionList, baseNone.ProgressionLevel, baseNone.Cooldown, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
+               baseNone.ProgressionList, baseNone.ProgressionLevel, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
 
             Upgrade None3 = new Upgrade(baseNone.Position, baseNone.StatType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4,
-               baseNone.ProgressionList, baseNone.ProgressionLevel, baseNone.Cooldown, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
+               baseNone.ProgressionList, baseNone.ProgressionLevel, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
 
             nones.Add(None1);
             nones.Add(None2);
@@ -349,46 +354,46 @@ namespace Asteroid
             UpgradeChoiceList = new Button[] { UpgradeChoice1, UpgradeChoice2, UpgradeChoice3 };
 
 
-            //Upgrade Stuff (each description row can fit around 19-20 characters, tested with capital A's)
+            //Upgrade Stuff (each description row can fit around 20-21 characters, tested with capital A's)
 
             TestUpgrade1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test1",
-                "I dunno", "man V1", "(TESTING)", "", null, 0, BurnerTime, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                "I dunno", "man V1", "(TESTING)", "", null, 0, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(TestUpgrade1);
 
             TestUpgrade2 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test2",
-                "I dunno", "man V2", "(TESTING)", "", null, 0, BurnerTime, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                "I dunno", "man V2", "(TESTING)", "", null, 0, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(TestUpgrade2);
 
             Warp = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Warp, "Warp",
-                "Right-click to warp", "to a random point", "on screen. Gain 0.4", "seconds of i-frames.", null, 0, TimeSpan.FromSeconds(3), 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                "Right-click to warp", "to a random point", "on screen. Gain 0.4", "seconds of i-frames.", null, 0, 99, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(Warp);
 
             ShotSpeedUp1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.ShotSpeedUp1, AbilityUpgradeType.None, "Shot Speed+",
-                "Reduces the time", "between shots to", "one second.", "", ShotSpeedProgHolder, 1, BurnerTime, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                "Reduces the time bet-", "-ween default shots", "and increases special", "gun energy gain.", ShotSpeedProgHolder, 1, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(ShotSpeedUp1);
             ShotSpeedProgHolder.Add(ShotSpeedUp1);
 
             ShotSpeedUp2 = new Upgrade(new Vector2(0, 0), StatUpgradeType.ShotSpeedUp1, AbilityUpgradeType.None, "Shot Speed++",
-                "Reduces the time", "between shots to", "three quarters of", "a second.", ShotSpeedProgHolder, 2, BurnerTime, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                "Reduces the time bet-", "-ween default shots", "and increases special", "gun energy gain more.", ShotSpeedProgHolder, 2, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             ShotSpeedProgHolder.Add(ShotSpeedUp2);
 
             ShotSpeedUp3 = new Upgrade(new Vector2(0, 0), StatUpgradeType.ShotSpeedUp1, AbilityUpgradeType.None, "Shot Speed+++",
-                "Reduces the time", "between shots to", "half a second.", "", ShotSpeedProgHolder, 3, BurnerTime, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                "You can now shoot", "really fast and", "really often.", "", ShotSpeedProgHolder, 3, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             ShotSpeedProgHolder.Add(ShotSpeedUp3);
 
             MachineGun = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Machine, "Machine Gun",
-                "Gives you a rapid-", "-firing machine gun.", "(Num-bar 2)", "", null, 0, BurnerTime, 7, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                "Gives you a rapid-", "-firing machine gun.", "", "", null, 0, 7, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(MachineGun);
 
             Laser = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Laser, "Laser",
-                "Gives you piercing", "laser gun.", "(Num-bar 3)", "", null, 0, BurnerTime, 33, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                "Gives you piercing", "laser gun.", "", "", null, 0, 33, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(Laser);
 
             MachineGun.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, Content.Load<Texture2D>("ShipAndShots/MachineShot"), 0, 1 / 1f, Color.White);
             Laser.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.5f, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White);
 
             None = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.None, "Cold Treasure",
-                "We will not", "become stronger.", "", "", null, 0, BurnerTime, 0, Content.Load<Texture2D>("UpgradeImages/Cold Treasure"), 0, 1 / 1, Color.White, false);
+                "We will not", "become stronger.", "", "", null, 0, 0, Content.Load<Texture2D>("UpgradeImages/Cold Treasure"), 0, 1 / 1, Color.White, false);
 
             NoneRefresh(NoneHolder, None);
 
@@ -401,17 +406,15 @@ namespace Asteroid
 
 
 
-            //code to erase
-
-            powerDamages = new Texture2D[] { Content.Load<Texture2D>("Hit 0"), Content.Load<Texture2D>("Hit 4"), Content.Load<Texture2D>("Hit 3"),
-                Content.Load<Texture2D>("Hit 2"), Content.Load<Texture2D>("Hit 1"), Content.Load<Texture2D>("Hit 0") };
+            /*  Old Powerup Code, Archived
+            powerDamages = new Texture2D[] { Content.Load<Texture2D>("PowerUp Images (ARCHIVE)/Hit 0"), Content.Load<Texture2D>("PowerUp Images (ARCHIVE)/Hit 4"), 
+                Content.Load<Texture2D>("PowerUp Images (ARCHIVE)/Hit 3"), Content.Load<Texture2D>("PowerUp Images (ARCHIVE)/Hit 2"), 
+                Content.Load<Texture2D>("PowerUp Images (ARCHIVE)/Hit 1"), Content.Load<Texture2D>("PowerUp Images (ARCHIVE)/Hit 0") };
             machine = new Powerup(new Vector2(-50, -50), Powerup.Type.Machine, TimeSpan.FromMilliseconds(3500), TimeSpan.FromMilliseconds(4000), new TimeSpan(0, 0, 0, 0, 100),
-    powerDamages, MachineGun.GunBullet, 60, Content.Load<Texture2D>("MachineGunPower"), 0, 1 / 1f, Color.Aqua);
+                powerDamages, MachineGun.GunBullet, 60, Content.Load<Texture2D>("PowerUp Images (ARCHIVE)/MachineGunPower"), 0, 1 / 1f, Color.Aqua);
             laser = new Powerup(new Vector2(-60, -60), Powerup.Type.Laser, TimeSpan.FromMilliseconds(1500), TimeSpan.FromMilliseconds(2000), new TimeSpan(0, 0, 0, 0, 200),
-                powerDamages, Laser.GunBullet, 40, Content.Load<Texture2D>("LaserPower"), 0, 1 / 1f, Color.Yellow);
-
-
-
+                powerDamages, Laser.GunBullet, 40, Content.Load<Texture2D>("PowerUp Images (ARCHIVE)/LaserPower"), 0, 1 / 1f, Color.Yellow);
+            */
 
             // TODO: use this.Content to load your game content here
         }
@@ -444,6 +447,7 @@ namespace Asteroid
                 UFOs.Clear();
             }
 
+            /*  Old Powerup Code, Archived
             machine.Update(gameTime.ElapsedGameTime, shots);
             machine.IsInBounds(playSpace);
             laser.Update(gameTime.ElapsedGameTime, shots);
@@ -452,6 +456,7 @@ namespace Asteroid
             powerups.Clear();
             if (machine.isActive) { powerups.Add(machine); }
             if (laser.isActive) { powerups.Add(laser); }
+            */
 
             ship.Move(keyboardState);
 
@@ -662,10 +667,12 @@ namespace Asteroid
 
                 if (!IsBulletInBounds(shots, i, playSpace))
                 {
+                    /*  Old Powerup Code, Archived
                     if (!machine.WhenShot(shots, i))
                     {
                         laser.WhenShot(shots, i);
                     }
+                    */
                 }
             }
             for (int i = 0; i < enemyShots.Count; i++)
@@ -694,7 +701,7 @@ namespace Asteroid
                 {
                     if (asteroids[i].Hitbox.Intersects(shots[j].Hitbox))
                     {
-                        machine.Spawned(asteroids[i].Position, new Vector2(rand.Next(1, 4), rand.Next(1, 4)), asteroids[i].leSize);
+                        //Archived PowerUp Code: machine.Spawned(asteroids[i].Position, new Vector2(rand.Next(1, 4), rand.Next(1, 4)), asteroids[i].leSize);
 
                         if (asteroids[i].leSize == Size.LeChonk)
                         {
@@ -773,7 +780,7 @@ namespace Asteroid
                 {
                     if (UFOs[i].Hitbox.Intersects(shots[j].Hitbox))
                     {
-                        laser.Spawned(UFOs[i].Position, new Vector2(rand.Next(1, 3), rand.Next(1, 3)), UFOs[i].leSize);
+                        //Archived PowerUp Code: laser.Spawned(UFOs[i].Position, new Vector2(rand.Next(1, 3), rand.Next(1, 3)), UFOs[i].leSize);
 
                         if (UFOs[i].leSize == Size.Normal)
                         {
@@ -869,6 +876,8 @@ namespace Asteroid
                 if (ShotSpeedProgHolder[i].isActive && !ShotSpeedProgHolder[i].inEffect)
                 {
                     reserveDefaultShotTimer -= new TimeSpan(0, 0, 0, 0, 250);
+                    MachineGun.EnergyGainMultiplier += 0.5f;
+                    Laser.EnergyGainMultiplier += 0.5f;
                     ShotSpeedProgHolder[i].inEffect = true;
                     break;
                 }
@@ -975,12 +984,13 @@ namespace Asteroid
             //Ability Effect Code
 
 
-            Warp.Cooldown -= gameTime.ElapsedGameTime;
-            if (mouseState.RightButton==ButtonState.Pressed && lastMouseState.RightButton==ButtonState.Released && Warp.isActive && Warp.Cooldown<=TimeSpan.Zero)
+            Warp.AbilityUpdate(gameTime.ElapsedGameTime);
+            if (mouseState.RightButton==ButtonState.Pressed && lastMouseState.RightButton==ButtonState.Released && Warp.WillAbilityGetUsed())
             {
                 ship.Position = new Vector2(rand.Next(0, width), rand.Next(0, height));
                 iFrames = new TimeSpan(0, 0, 0, 0, 400);
-                Warp.CooldownRefresh();
+                Warp.EnergyGainMultiplier = 8.25f;
+                Warp.AbilityUse();
             }
 
 
@@ -1037,6 +1047,7 @@ namespace Asteroid
 
             _spriteBatch.DrawString(font, $"Level: {level.LevelNum}", new Vector2(width - 150, 10), Color.DarkGray);
 
+            /* Old Powerup Code, Archived (Use the code bellow to help make energy bars stack)
             machine.Draw(_spriteBatch);
             laser.Draw(_spriteBatch);
 
@@ -1045,10 +1056,18 @@ namespace Asteroid
                 _spriteBatch.DrawString(font, $"{powerups[i].leType.ToString()}: {Math.Round(powerups[i].Duration.TotalMilliseconds)}",
                     new Vector2(10, 50 + (i * 20)), Color.DarkGray);
             }
+            */
 
             _spriteBatch.DrawString(font, $"{GunInEffect}", new Vector2(10, 50), Color.DarkGray);
+            /*
+            for (int i = 0; i < ActiveAbilities.Count; i++)
+            {
+                ActiveAbilities[i].EnergyDraw(_spriteBatch);
+            }
+            */
             MachineGun.EnergyDraw(_spriteBatch);
             Laser.EnergyDraw(_spriteBatch);
+            Warp.EnergyDraw(_spriteBatch);
 
 
             for (int i = 0; i < UpgradesToDraw.Count; i++)
