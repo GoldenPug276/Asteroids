@@ -6,7 +6,6 @@ using MonoGame.Extended.BitmapFonts;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Windows.ApplicationModel.VoiceCommands;
 
 namespace Asteroid
 {
@@ -46,14 +45,14 @@ namespace Asteroid
             StatType = statype;
             AbilityType = ability;
 
-            if (StatType==Game1.StatUpgradeType.None)
+            if (StatType == Game1.StatUpgradeType.None)
             {
-                if (AbilityType!=Game1.AbilityUpgradeType.None && AbilityType<Game1.AbilityUpgradeType.Warp)
+                if (AbilityType != Game1.AbilityUpgradeType.None && AbilityType < Game1.AbilityUpgradeType.Warp)
                 {
                     energyTotal = new Rectangle(10, 70, 100, 20);
                     isGun = true;
                 }
-                else if (AbilityType>=Game1.AbilityUpgradeType.Warp)
+                else if (AbilityType >= Game1.AbilityUpgradeType.Warp)
                 {
                     //normal ability cooldown code
                     //will be at the bottom left, code is temp for now
@@ -79,43 +78,7 @@ namespace Asteroid
             isActive = active;
         }
 
-        /*
-        public void Update(TimeSpan gameTime, List<Bullet> shots)
-        {
-            Position = new Vector2(Position.X + Velocity.X, Position.Y + Velocity.Y);
-            bool reset = false;
-            if (!isActive)
-            {
-                DespawnTime -= gameTime;
-                if (DespawnTime<=TimeSpan.Zero)
-                {
-                    reset = true;
-                    DespawnTime = reserveDespawnTime;
-                    isSpawned = false;
-                }
-            }
-            else
-            {
-                Duration -= gameTime;
-                if (Duration<=TimeSpan.Zero)
-                {
-                    reset = true;
-                    Duration = reserveDuration;
-                    isActive = false;
-                    shots.Clear();
-                }
-            }
-            if (reset)
-            {
-                Position = new Vector2(-20, -20);
-                Velocity.X = -50;
-                Velocity.Y = -50;
-                Durability = 1;
-            }
-        }
-        */
-
-        public void WhenSelected(List<Upgrade> possibleUpgrades, List<Upgrade> activeUpgrades, List<Upgrade> activeAbilities)
+        public void WhenSelected(List<Upgrade> possibleUpgrades, List<Upgrade> activeUpgrades, List<Upgrade> activeAbilities, List<Upgrade> activeGuns)
         {
             if (UpgradeButton.wasClicked)
             {
@@ -124,15 +87,14 @@ namespace Asteroid
                 isActive = true;
 
 
-                if (StatType!=Game1.StatUpgradeType.None && AbilityType==Game1.AbilityUpgradeType.None)
+                if (StatType != Game1.StatUpgradeType.None && AbilityType == Game1.AbilityUpgradeType.None)
                 {
-                    activeUpgrades.Add(new Upgrade(Position, StatType, AbilityType, UpgradeName, UpgradeDescription1, UpgradeDescription2, UpgradeDescription3, 
-                        UpgradeDescription4, ProgressionList, ProgressionLevel, EnergyUse, UpgradeImage, Rotation, Scale, Color, true));
+                    activeUpgrades.Add(this);
                 }
-                else if (AbilityType!=Game1.AbilityUpgradeType.None && StatType==Game1.StatUpgradeType.None)
+                else if (AbilityType != Game1.AbilityUpgradeType.None && StatType == Game1.StatUpgradeType.None)
                 {
-                    activeAbilities.Add(new Upgrade(Position, StatType, AbilityType, UpgradeName, UpgradeDescription1, UpgradeDescription2, UpgradeDescription3,
-                        UpgradeDescription4, ProgressionList, ProgressionLevel, EnergyUse, UpgradeImage, Rotation, Scale, Color, true));
+                    if (isGun) { activeGuns.Add(this); }
+                    else { activeAbilities.Add(this); }
                 }
 
                 if (ProgressionList != null && ProgressionLevel < ProgressionList.Count)
@@ -141,7 +103,7 @@ namespace Asteroid
                 }
             }
         }
-        
+
         public void Skipped()
         {
             Position = new Vector2(-500, -500);
@@ -156,7 +118,7 @@ namespace Asteroid
         public void AbilityUpdate(TimeSpan ElapsedGameTime)
         {
             energyRegen -= ElapsedGameTime;
-            if (energyRegen<=TimeSpan.Zero && energyRemaining.Width<100)
+            if (energyRegen <= TimeSpan.Zero && energyRemaining.Width < 100)
             {
                 if (energyMoveIf > 0)
                 {
@@ -196,6 +158,35 @@ namespace Asteroid
             return use;
         }
 
+        public void AbilityEnergyStack(List<Upgrade> upgrades, int i)
+        {
+            int count = upgrades.Count;
+
+            int value = count - i;
+            if (count==0)
+            {
+                value = 0;
+            }
+
+            energyTotal.Y = 450 - (25 * value);
+            energyRemaining.Y = 450 - (25 * value);
+            movingEnergy.Y = 450 - (25 * value);
+
+            //energyTotal.Y = 450 - (25 * i);
+            //energyRemaining.Y = 450 - (25 * i);
+            //movingEnergy.Y = 450 - (25 * i);
+
+            /*
+            for (int i = 0; i < upgrades.Count; i++)
+            {
+                if (upgrades[i]==this)
+                {
+
+                }
+            }
+            */
+        }
+
         public void Draw(SpriteFont title, SpriteFont desc, SpriteBatch sb)
         {
             UpgradeButton.Draw(sb);
@@ -211,7 +202,7 @@ namespace Asteroid
         }
         public void EnergyDraw(SpriteBatch sb)
         {
-            if ((isGun && inEffect)||(!isGun && isActive))
+            if ((isGun && inEffect) || (!isGun && isActive))
             {
                 sb.DrawRectangle(energyTotal, Color.DarkGray);
                 sb.FillRectangle(energyRemaining, Color.DarkGray);

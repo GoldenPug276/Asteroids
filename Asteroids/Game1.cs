@@ -43,7 +43,8 @@ namespace Asteroid
             None = 0,
             Machine = 1,
             Laser = 2,
-            Warp = 4
+            Warp = 4,
+            Test = 5
         }
         List<Upgrade> PossibleUpgrades = new List<Upgrade>();
         List<Upgrade> UpgradesToDraw = new List<Upgrade>();
@@ -56,8 +57,8 @@ namespace Asteroid
         bool UpgradeChosen = false;
         int UpgradeTime = 0;
 
-        Upgrade TestUpgrade1;
-        Upgrade TestUpgrade2;
+        Upgrade TestUpgrade;
+        Upgrade TestAbility;
         Upgrade None;
         Button UpgradeSkip;
 
@@ -207,10 +208,16 @@ namespace Asteroid
          *                                  
          *                                  HAVE FINISHED EERYTHING ABOVE THIS
          *                                  
-         *                                  after this, make a temp ability that uses the energy bar, and use the powerup code to make different meters stack {DOING}
+         *                                  after this, make a temp ability that uses the energy bar, and use the powerup code to make different meters stack {DONE}
          *                                      actually, for this, give the warp an energy bar
-         *                                      warp with energy works, use the powerup vode now to make stacking {NOW}
          *                                          you will be able to differentiate via color corrospondence, don't bother with this yet
+         *                                              try to do this by making the "color" of the upgrade into the energy bar and maybe upgrade name color {AFTER}
+         *                                  
+         *                                  made warp with energy and made energy bars stack, making a test upgrade to see if it works {DONE}
+         *                                  i have decided to make upgrades start at the bottom and then get moved up from new upgrades
+         *                                      after finishing this, make an actual upgrade and remove the "test" parameter, though do this after the colors {AFTER THAT}
+         *                                      there's a weird bug with the powerup stack that makes it not update for some reason. fix this whilst fixing he problem it was trying to fix and color code at home
+         *                                      or is it fixed, i have no clue
          *                      
          *                  clean up the old powerup code since it is no longer neccesary {has been archived}
          *                  
@@ -287,7 +294,7 @@ namespace Asteroid
             nones.Clear();
 
             Upgrade None1 = new Upgrade(baseNone.Position, baseNone.StatType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
-               baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, 
+               baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4,
                baseNone.ProgressionList, baseNone.ProgressionLevel, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
 
             Upgrade None2 = new Upgrade(baseNone.Position, baseNone.StatType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
@@ -338,7 +345,7 @@ namespace Asteroid
 
             defaultShot = new Bullet(new Vector2(-20, -20), shotVelocity, Content.Load<Texture2D>("ShipAndShots/Shot"), 0, 1 / 1f, Color.White);
             UFOShot = new Bullet(new Vector2(-20, -20), 5, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White);
-            
+
 
             level = new Level(5, 1, 0, 0, TimeSpan.FromMilliseconds(20000), 100, 5, 1);
 
@@ -356,13 +363,13 @@ namespace Asteroid
 
             //Upgrade Stuff (each description row can fit around 20-21 characters, tested with capital A's)
 
-            TestUpgrade1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test1",
+            TestUpgrade = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test Upgrade",
                 "I dunno", "man V1", "(TESTING)", "", null, 0, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
-            PossibleUpgrades.Add(TestUpgrade1);
+            PossibleUpgrades.Add(TestUpgrade);
 
-            TestUpgrade2 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test2",
-                "I dunno", "man V2", "(TESTING)", "", null, 0, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
-            PossibleUpgrades.Add(TestUpgrade2);
+            TestAbility = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Test, "Test Ability",
+                "I dunno", "man V2", "(TESTING)", "(Z Key, 50 energy)", null, 0, 50, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+            PossibleUpgrades.Add(TestAbility);
 
             Warp = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Warp, "Warp",
                 "Right-click to warp", "to a random point", "on screen. Gain 0.4", "seconds of i-frames.", null, 0, 99, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
@@ -469,17 +476,17 @@ namespace Asteroid
 
             if (mouseState.LeftButton == ButtonState.Pressed)
             {
-                if (MachineGun.WillGunShoot(MachineGunShotTimer)==true)
+                if (MachineGun.WillGunShoot(MachineGunShotTimer) == true)
                 {
                     shots.Add(Bullet.BulletTypeCopy(MachineGun.GunBullet, ship.Position, ship.Rotation));
                     MachineGun.AbilityUse();
                 }
-                else if (Laser.WillGunShoot(LaserShotTimer)==true)
+                else if (Laser.WillGunShoot(LaserShotTimer) == true)
                 {
                     shots.Add(Bullet.BulletTypeCopy(Laser.GunBullet, ship.Position, ship.Rotation));
                     Laser.AbilityUse();
                 }
-                else if ((defaultShotTimer<=TimeSpan.Zero||lastMouseState.LeftButton==ButtonState.Released) && CurrentActiveGunIndex==0)
+                else if ((defaultShotTimer <= TimeSpan.Zero || lastMouseState.LeftButton == ButtonState.Released) && CurrentActiveGunIndex == 0)
                 {
                     shots.Add(Bullet.BulletTypeCopy(defaultShot, ship.Position, ship.Rotation));
                 }
@@ -506,7 +513,7 @@ namespace Asteroid
             if (asteroids.Count == 0 && UFOs.Count == 0 && level.Finished ||
                 keyboardState.IsKeyDown(Keys.OemCloseBrackets) && lastKeyboardState.IsKeyUp(Keys.OemCloseBrackets))
             {
-                if (UpgradeTime<1)
+                if (UpgradeTime < 1)
                 {
                     for (int i = 0; i < 3; i++)
                     {
@@ -523,7 +530,7 @@ namespace Asteroid
                             UpgradesToDraw.Add(PossibleUpgrades[rand.Next(0, PossibleUpgrades.Count)]);
                         }
 
-                        if (i!=0 && !none)
+                        if (i != 0 && !none)
                         {
                             for (int j = 0; j < UpgradesToDraw.Count - 1; j++)
                             {
@@ -551,7 +558,7 @@ namespace Asteroid
 
                 UpgradeTime++;
             }
-            if (UpgradeChosen==true)
+            if (UpgradeChosen == true)
             {
                 level.GlobalSpawnTimer = level.reserveSpawnTimer;
                 if (level.LevelNum == 10)
@@ -581,7 +588,7 @@ namespace Asteroid
                 if (!UpgradeSkip.wasClicked)
                 {
                     UpgradesToDraw[i].UpgradeButton.Update(mouseState, lastMouseState);
-                    UpgradesToDraw[i].WhenSelected(PossibleUpgrades, ActiveUpgrades, ActiveAbilities);
+                    UpgradesToDraw[i].WhenSelected(PossibleUpgrades, ActiveUpgrades, ActiveAbilities, ActiveGuns);
                 }
             }
 
@@ -611,18 +618,13 @@ namespace Asteroid
                         }
                         else
                         {
-                            if (UpgradesToDraw[j]==None)
+                            if (UpgradesToDraw[j] == None)
                             {
                                 UpgradesToDraw[j].isActive = false;
                             }
                             else
                             {
                                 PossibleUpgrades.Remove(UpgradesToDraw[j]);
-                            }
-
-                            if (UpgradesToDraw[j].isGun)
-                            {
-                                ActiveGuns.Add(UpgradesToDraw[j]);
                             }
                         }
                     }
@@ -730,7 +732,7 @@ namespace Asteroid
                             asteroids.RemoveAt(i);
                         }
 
-                        if (shots[j].Image!=Laser.GunBullet.Image)
+                        if (shots[j].Image != Laser.GunBullet.Image)
                         {
                             shots.RemoveAt(j);
                         }
@@ -753,7 +755,7 @@ namespace Asteroid
                     asteroids[i].Rotation += 0.01f;
                 }
 
-                asteroids[i].Position = new Vector2(asteroids[i].Position.X + (float)Math.Sin(asteroids[i].Rotation) + asteroids[i].Velocity.X, 
+                asteroids[i].Position = new Vector2(asteroids[i].Position.X + (float)Math.Sin(asteroids[i].Rotation) + asteroids[i].Velocity.X,
                     asteroids[i].Position.Y - (float)Math.Cos(asteroids[i].Rotation) + asteroids[i].Velocity.Y);
 
                 asteroids[i].IsInBounds(playSpace);
@@ -792,7 +794,7 @@ namespace Asteroid
                         }
 
                         UFOs.RemoveAt(i);
-                        if (shots[j].Image!=Laser.GunBullet.Image)
+                        if (shots[j].Image != Laser.GunBullet.Image)
                         {
                             shots.RemoveAt(j);
                         }
@@ -909,14 +911,14 @@ namespace Asteroid
             {
                 bool swapped = false;
 
-                if (keyboardState.IsKeyDown(Keys.D1+i) && lastKeyboardState.IsKeyUp(Keys.D1+i))
+                if (keyboardState.IsKeyDown(Keys.D1 + i) && lastKeyboardState.IsKeyUp(Keys.D1 + i))
                 {
                     swapped = true;
                 }
-                if (mouseState.ScrollWheelValue>lastMouseState.ScrollWheelValue)
+                if (mouseState.ScrollWheelValue > lastMouseState.ScrollWheelValue)
                 {
                     i = CurrentActiveGunIndex;
-                    if (i+1==ActiveGuns.Count)
+                    if (i + 1 == ActiveGuns.Count)
                     {
                         i = 0;
                     }
@@ -926,10 +928,10 @@ namespace Asteroid
                     }
                     swapped = true;
                 }
-                if (mouseState.ScrollWheelValue<lastMouseState.ScrollWheelValue)
+                if (mouseState.ScrollWheelValue < lastMouseState.ScrollWheelValue)
                 {
                     i = CurrentActiveGunIndex;
-                    if (i==0)
+                    if (i == 0)
                     {
                         i = ActiveGuns.Count - 1;
                     }
@@ -944,7 +946,7 @@ namespace Asteroid
                 {
                     CurrentActiveGunIndex = i;
 
-                    if (i!=0) { GunInEffect = ActiveGuns[i].UpgradeName; ActiveGuns[i].inEffect = true; }
+                    if (i != 0) { GunInEffect = ActiveGuns[i].UpgradeName; ActiveGuns[i].inEffect = true; }
                     else { GunInEffect = "Default"; }
 
                     for (int j = 1; j < ActiveGuns.Count; j++)
@@ -985,7 +987,7 @@ namespace Asteroid
 
 
             Warp.AbilityUpdate(gameTime.ElapsedGameTime);
-            if (mouseState.RightButton==ButtonState.Pressed && lastMouseState.RightButton==ButtonState.Released && Warp.WillAbilityGetUsed())
+            if (mouseState.RightButton == ButtonState.Pressed && lastMouseState.RightButton == ButtonState.Released && Warp.WillAbilityGetUsed())
             {
                 ship.Position = new Vector2(rand.Next(0, width), rand.Next(0, height));
                 iFrames = new TimeSpan(0, 0, 0, 0, 400);
@@ -993,6 +995,12 @@ namespace Asteroid
                 Warp.AbilityUse();
             }
 
+            TestAbility.AbilityUpdate(gameTime.ElapsedGameTime);
+            if (keyboardState.IsKeyDown(Keys.Z) && lastKeyboardState.IsKeyUp(Keys.Z) && TestAbility.WillAbilityGetUsed())
+            {
+                TestAbility.EnergyGainMultiplier = 10;
+                TestAbility.AbilityUse();
+            }
 
             //Ability Effect Code
 
@@ -1047,7 +1055,7 @@ namespace Asteroid
 
             _spriteBatch.DrawString(font, $"Level: {level.LevelNum}", new Vector2(width - 150, 10), Color.DarkGray);
 
-            /* Old Powerup Code, Archived (Use the code bellow to help make energy bars stack)
+            /* Old Powerup Code, Archived
             machine.Draw(_spriteBatch);
             laser.Draw(_spriteBatch);
 
@@ -1059,15 +1067,16 @@ namespace Asteroid
             */
 
             _spriteBatch.DrawString(font, $"{GunInEffect}", new Vector2(10, 50), Color.DarkGray);
-            /*
+            
             for (int i = 0; i < ActiveAbilities.Count; i++)
             {
+                ActiveAbilities[i].AbilityEnergyStack(ActiveUpgrades, i);
                 ActiveAbilities[i].EnergyDraw(_spriteBatch);
             }
-            */
-            MachineGun.EnergyDraw(_spriteBatch);
-            Laser.EnergyDraw(_spriteBatch);
-            Warp.EnergyDraw(_spriteBatch);
+            for (int i = 0; i < ActiveGuns.Count; i++)
+            {
+                ActiveGuns[i].EnergyDraw(_spriteBatch);
+            }
 
 
             for (int i = 0; i < UpgradesToDraw.Count; i++)
