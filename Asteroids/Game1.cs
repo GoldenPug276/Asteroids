@@ -33,10 +33,13 @@ namespace Asteroid
         public enum StatUpgradeType
         {
             None = 0,
-            Test = 1,
-            ShotSpeedUp1 = 2,
-            ShotSpeedUp2 = 3,
-            ShotSpeedUp3 = 4
+            Test = 0,
+            ShotSpeedUp1 = 1,
+            ShotSpeedUp2 = 2,
+            ShotSpeedUp3 = 3,
+            Drones1 = 4,
+            Drones2 = 5,
+            Drones3 = 6
         }
         public enum AbilityUpgradeType
         {
@@ -44,7 +47,11 @@ namespace Asteroid
             Machine = 1,
             Laser = 2,
             Warp = 4,
-            Test = 5
+            Test = 0,
+            Shield1 = 5,
+            Shield2 = 6,
+            Shield3 = 7,
+            ShieldUltimate = 8
         }
         List<Upgrade> PossibleUpgrades = new List<Upgrade>();
         List<Upgrade> UpgradesToDraw = new List<Upgrade>();
@@ -69,7 +76,8 @@ namespace Asteroid
 
         Upgrade Warp;
 
-        string GunInEffect = "Default";
+        string GunInEffectName = "Default";
+        Color GunInEffectColor = Color.DarkGray;
         Upgrade MachineGun;
         TimeSpan MachineGunShotTimer = new TimeSpan(0, 0, 0, 0, 150);
         TimeSpan reserveMachineGunShotTimer = new TimeSpan(0, 0, 0, 0, 150);
@@ -125,23 +133,17 @@ namespace Asteroid
         Rectangle UFOMovementSpace;
         Rectangle UFOShotArea;
 
-        /*TO-DO:      
-         * Make different gun powerups
-         *      examples being: machine gun, laser, and bombs
-         *                  I think that the wa spawning is done should work like so:
-         *                  each different thing can spawn in a powerup
-         *                  the harder it was to take out, the higher the chance of it spawning a powerup, done via a multiplier
-         *                  certain powerups can only come from some things (only ufos can spawn lasers, etc.)
-         *                          ok, so they now can spawn at any time, tho you'll have to manually ask them if you know what i mena
-         *                          now i need to make sure that they can only spawn from specific things, but you do that when more powers made
-         *      
-         *      make bomb powerup
-         *      
-         *      
-         *      make others
-         *      
-         *      PRIORITY DOWN HERE
-         *      
+        /*TO-DO:
+         ******************************************************OLD ARCHIVED POWERUP TO-DO********************************************************************
+         * Make different gun powerups                                                                                                                      *
+         *      examples being: machine gun, laser, and bombs                                                                                               *
+         *                  I think that the wa spawning is done should work like so:                                                                       *
+         *                  each different thing can spawn in a powerup                                                                                     *
+         *                  the harder it was to take out, the higher the chance of it spawning a powerup, done via a multiplier                            *
+         *                  certain powerups can only come from some things (only ufos can spawn lasers, etc.)                                              *
+         *                          ok, so they now can spawn at any time, tho you'll have to manually ask them if you know what i mean                     *
+         *                          now i need to make sure that they can only spawn from specific things, but you do that when more powers made            *
+         ******************************************************OLD ARCHIVED POWERUP TO-DO********************************************************************
          *      
          *      so by dumbass thought of maybe making this a rougelike; i hate myself but i want to
          *          have some unlockable abilities with meters and cooldowns and upgrades
@@ -150,89 +152,12 @@ namespace Asteroid
          *              som ability ideas: timestop, time erase, time rewind, screen nuke
          *                  i'll need to make the powerups into weapon upgrades that can be swapped to
          *                  
-         *      so first, i'll have to design an upgrade menu in-between levels where you can pick up or skip upgrades
+         *      so first, i'll have to design an upgrade menu in-between levels where you can pick up or skip upgrades {DONE}
          *          (use as reference: https://progameguides.com/wp-content/uploads/2022/06/roblox-hours-vitality-1024x576.jpg)
-         *          made a slot asset
          *      
-         *      
-         *      make the gui work with its conditions; buttons are active by default rn for testing
-         *          rn, make a gui that shows up and detects which choice is pressed
-         *      ok, it does that
-         *      
-         *              ok, made a gui with working buttons
-         *                  first, make the upgrades and their spots random, cuz right now it's the same upgrade in the same spot {DONE}
-         *                  now, work on making the gui appear when a level is cleared {DONE}
-         *                  
-         *                  at home, make chosen upgrades get removed from bank and make the gui appearing between levels work {DONE}
-         *                  
-         *                  make a "none" upgrade with a "noneUpgrade" list {DONE}
-         *                  
-         *                  after that, make temporary upgrades that do shit {MOSTLY DONE}
-         *                      try to do this with movement speed; the type will dictate the stat changes, for movement speed, try to do x/1000 for changes
-         *                          actually, make a temporary upgrade that will make the defaultShotTimer lower and give it a tree of 3 total upgrades (might not keep these)
-         *                          if i keep this, i'll make this shot speed increase all shots rather than just the default {NOT DONE}
-         *                  
-         *                  actually, first make upgrades sort into an "activeUpgrades" and "activeAbilities" list
-         *                      we'll keep at least the "activeUpgrades" as a visual thing and maybe use activeAbilities
-         *                  
-         *                  after that, make the machine gun into an ability and test it {DONE}
-         *                      have fancy little text on the side that says what weapon you have and allow switching
-         *                      I can attempt to do this by making an ability class that is mostly a copy of powerup to test machine, then replace powerup with ability
-         *                          have weapon swaping be done via scroll wheel in main class
-         *                          
-         *                  ok, so the weapons can switch via number bar, also there is no special ability class, just use upgrade
-         *                      
-         *                  convert powerups into gun upgrades once I have made machine gun work {DONE}
-         *                  
-         *                  since the temporary powerups became permanent upgrades, nerf them a bit {DONE}
-         *                      since i can't be bothered to do this, reset them to their original states, but first do this:
-         *                          give them an energy bar like in megaman, where using a weapon takes energy that regenerates after time
-         *                          
-         *                                  have energy bar as a rectangle for now
-         *                                  it always has a length of 100, and each weapon has a specific amount of energy used per shot
-         *                                  regenerate 4 energy a second smoothly
-         *                                  it appears below the gun name
-         *                                  the energy rectangles need to be private
-         *                                  
-         *                                  energy works, but needs changes as listed below
-         *                                  
-         *                                  rightt now, energy gain isn't smooth
-         *                                  also, since they now use energy, remove the shot timers for the special guns
-         *                                      rework the shot timer upgrades to increase energy gain rather than reduce shot timer for special guns {DONE}
-         *                                  
-         *                                      will need to get better system for seeing active gun, rn i can have the draw detect a gun but i want to have a list for easier access
-         *                                          will make an array that holds the collected guns, so cycling with mouse will work and i cna use class to cycle
-         *                                              at the time of writing have an unused gun array, go from there
-         *                                          
-         *                                  for now, the guns check for energy before firing, change this after making it work
-         *                                  
-         *                                  HAVE FINISHED EERYTHING ABOVE THIS
-         *                                  
-         *                                  after this, make a temp ability that uses the energy bar, and use the powerup code to make different meters stack {DONE}
-         *                                      actually, for this, give the warp an energy bar
-         *                                          you will be able to differentiate via color corrospondence, don't bother with this yet
-         *                                              try to do this by making the "color" of the upgrade into the energy bar and maybe upgrade name color {AFTER}
-         *                                  
-         *                                  made warp with energy and made energy bars stack, making a test upgrade to see if it works {DONE}
-         *                                  i have decided to make upgrades start at the bottom and then get moved up from new upgrades
-         *                                      after finishing this, make an actual upgrade and remove the "test" parameter, though do this after the colors {AFTER THAT}
-         *                                      there's a weird bug with the powerup stack that makes it not update for some reason. fix this whilst fixing he problem it was trying to fix and color code at home
-         *                                      or is it fixed, i have no clue
-         *                      
-         *                  clean up the old powerup code since it is no longer neccesary {has been archived}
-         *                  
-         *                  come up with a better way of checking if an upgrade has been collected that isn't "else ifs"
-         *      
-         *      
-         *      CLEAN THIS SOON
-         *      
-         *      Most of the upgrades will be abilities with upgrade trees, and most normal upgrades will not just be stat boosts other than fire speed
-         *      
-         *      
-         *      remember, sprite's positions are in the middle of the sprite
          *      
          *      **DONE**
-         *      deal with upgrade class later (rn it's only a copy of powerup with 0 differences) {Do now}
+         *      deal with upgrade class later (rn it's only a copy of powerup with 0 differences)
          *      actually, make upgrade a class with a button and upgrade. Basically, the entire upgrade is in this class.
          *      **DONE**
          *          
@@ -246,20 +171,83 @@ namespace Asteroid
          *          **DONE**
          *          
          *          
-         *      have a button class;        {FINISHED}
+         *      have a button class;    {FINISHED}
          *          inherits from sprite
          *          has these funstions:
          *              a function that detects when it's clicked on
          *              a function that detects if it's held
          *              a function that detects when it's released
          *              an update function that checks all of the above at once
-         *              
+         *      
+         *      
+         *      **DONE**
+         *      first, make the upgrades and their spots random, cuz right now it's the same upgrade in the same spot
+         *      now, work on making the gui appear when a level is cleared
+         *      at home, make chosen upgrades get removed from bank and make the gui appearing between levels work
+         *      make a "none" upgrade with a "noneUpgrade" list
+         *      after that, make temporary upgrades that do shit
+         *      actually, first make upgrades sort into an "activeUpgrades" and "activeAbilities" list
+         *      **DONE**
+         *      
+         *      
+         *      after that, make the machine gun into an ability and test it    {FINISHED}
+         *          have fancy little text on the side that says what weapon you have and allow switching
+         *          have weapon swaping be done via scroll wheel and num-bar  
+         *              convert powerups into gun upgrades
+         *      
+         *      
+         *      instead of nerfing the now permanent guns, do the following;   {FINISHED}
+         *          give them an energy bar like in megaman, where using a weapon takes energy that regenerates after time
+         *              have energy bar as a rectangle for now
+         *              it always has a length of 100, and each weapon has a specific amount of energy used per shot
+         *              regenerate 4 energy a second smoothly by default
+         *              it appears below the gun name
+         *          abilities use the same energy, but the position of the bar is different and the energy gain usually hasa multiplier
+         *      
+         *      make the energy bar smoother {DONE}
+         *      
+         *      clean up the old powerup code since it is no longer neccesary {has been archived}
+         *      
+         *      
+         *      **DONE**
+         *      make a temp ability to test energy
+         *      give warp energy rather than a cooldown
+         *      make energy bars stack using old powerup code (starts at the bottom and new abilities push old ones up)
+         *      color code powerup enregy bars by making the upgrade title, energy bar color, and gun name color the "Color" variable of the upgrade
+         *      **DONE**
+         *      
+         *      
+         *      replace the "test" upgarde amd ability with actual ones and remove the "test" parameter
+         *      
+         *          make the test upgrade into a drone that circles around the ship and shoots special bullets
+         *          its progression is for fire rate and drone amount
+         *              Progress and thoughts on this:
+         *              Have made the types but haven't removed the Test
+         *                  the drones should be stuck to specific areas near the ship and they should turn to face what they shoot at
+         *              a
+         *          
+         *          make the test ability into a shield that, when held, surrounds the ship and protects from all damage whilst draining energy, but you cannot shoot out of it
+         *          its progression is for time it can be up, but the last upgrade lets you sacrifice that speed and turn it into a fire orb that melts enemies
+         *              Progress and thoughts on this:
+         *              Have made the types but haven't removed the Test
+         *      
+         *      
+         *      (Next Thing)
+         *      
+         *      
+         *      
+         *      THIS WILL BE DONE AT EITHER A LATER DATE OR WHEN I HAVE TIME AT HOME
          *      
          *      make a "you are an idiot" upgrade that, when chosen, replaces the asteroids, ufos, background, and all other upgrades into "you are a idiot"
          *          do this at home, and have them be in different sizes so that they can actually replace
          *          also have them alternate
          *              for now, before this is done, the test upgrades are "you are an idiot"
-         *      
+         *
+         *
+         * Have a better way of checking if an upgrade has been collected rthaer than just infinite "else ifs"
+         * A lot of of the upgrades will be abilities with upgrade trees, and most normal upgrades will not just be stat boosts other than fire speed
+         * Remember to decrease the difficulty and the insta-death part of level 10
+         * 
          * Make particles
          * Make actual death animations
          */
@@ -277,6 +265,8 @@ namespace Asteroid
          * Upgrade images have to have a resolution of 110 x 88 to fit correctly in the spot
          * 
          * I have made seperate folders in the "Content" folder to hold specific image groups
+         * 
+         * Sprite Positions are in the middle of the Sprite rather than the upper right corner
          */
 
         bool IsBulletInBounds(List<Bullet> bullets, int i, Rectangle playSpace)
@@ -372,7 +362,7 @@ namespace Asteroid
             PossibleUpgrades.Add(TestAbility);
 
             Warp = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Warp, "Warp",
-                "Right-click to warp", "to a random point", "on screen. Gain 0.4", "seconds of i-frames.", null, 0, 99, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                "Right-click to warp", "to a random point", "on screen. Gain 0.4", "seconds of i-frames.", null, 0, 99, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.DarkGray, false);
             PossibleUpgrades.Add(Warp);
 
             ShotSpeedUp1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.ShotSpeedUp1, AbilityUpgradeType.None, "Shot Speed+",
@@ -389,11 +379,11 @@ namespace Asteroid
             ShotSpeedProgHolder.Add(ShotSpeedUp3);
 
             MachineGun = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Machine, "Machine Gun",
-                "Gives you a rapid-", "-firing machine gun.", "", "", null, 0, 7, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                "Gives you a rapid-", "-firing machine gun.", "", "", null, 0, 7, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.DarkSlateGray, false);
             PossibleUpgrades.Add(MachineGun);
 
             Laser = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Laser, "Laser",
-                "Gives you piercing", "laser gun.", "", "", null, 0, 33, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                "Gives you piercing", "laser gun.", "", "", null, 0, 33, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.Red, false);
             PossibleUpgrades.Add(Laser);
 
             MachineGun.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, Content.Load<Texture2D>("ShipAndShots/MachineShot"), 0, 1 / 1f, Color.White);
@@ -946,8 +936,8 @@ namespace Asteroid
                 {
                     CurrentActiveGunIndex = i;
 
-                    if (i != 0) { GunInEffect = ActiveGuns[i].UpgradeName; ActiveGuns[i].inEffect = true; }
-                    else { GunInEffect = "Default"; }
+                    if (i != 0) { GunInEffectName = ActiveGuns[i].UpgradeName; GunInEffectColor = ActiveGuns[i].Color; ActiveGuns[i].inEffect = true; }
+                    else { GunInEffectName = "Default"; GunInEffectColor = Color.DarkGray; }
 
                     for (int j = 1; j < ActiveGuns.Count; j++)
                     {
@@ -1066,11 +1056,11 @@ namespace Asteroid
             }
             */
 
-            _spriteBatch.DrawString(font, $"{GunInEffect}", new Vector2(10, 50), Color.DarkGray);
-            
+            _spriteBatch.DrawString(font, $"{GunInEffectName}", new Vector2(10, 50), GunInEffectColor);
+
             for (int i = 0; i < ActiveAbilities.Count; i++)
             {
-                ActiveAbilities[i].AbilityEnergyStack(ActiveUpgrades, i);
+                ActiveAbilities[i].AbilityEnergyStack(ActiveAbilities, i);
                 ActiveAbilities[i].EnergyDraw(_spriteBatch);
             }
             for (int i = 0; i < ActiveGuns.Count; i++)

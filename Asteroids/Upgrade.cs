@@ -163,14 +163,14 @@ namespace Asteroid
             int count = upgrades.Count;
 
             int value = count - i;
-            if (count==0)
+            if (count == 0)
             {
                 value = 0;
             }
 
-            energyTotal.Y = 450 - (25 * value);
-            energyRemaining.Y = 450 - (25 * value);
-            movingEnergy.Y = 450 - (25 * value);
+            energyTotal.Y = 475 - (25 * value);
+            energyRemaining.Y = 475 - (25 * value);
+            movingEnergy.Y = 475 - (25 * value);
 
             //energyTotal.Y = 450 - (25 * i);
             //energyRemaining.Y = 450 - (25 * i);
@@ -193,7 +193,7 @@ namespace Asteroid
 
             sb.Draw(UpgradeImage, new Vector2(Position.X - 62, Position.Y - 173), null, Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
 
-            sb.DrawString(title, UpgradeName, new Vector2(Position.X - 90, Position.Y - 224), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
+            sb.DrawString(title, UpgradeName, new Vector2(Position.X - 90, Position.Y - 224), Color, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
 
             sb.DrawString(desc, UpgradeDescription1, new Vector2(Position.X - 120, Position.Y - 4), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
             sb.DrawString(desc, UpgradeDescription2, new Vector2(Position.X - 120, Position.Y + 16), Color.White, Rotation, new Vector2(0, 0), Scale, SpriteEffects.None, 0);
@@ -204,9 +204,9 @@ namespace Asteroid
         {
             if ((isGun && inEffect) || (!isGun && isActive))
             {
-                sb.DrawRectangle(energyTotal, Color.DarkGray);
-                sb.FillRectangle(energyRemaining, Color.DarkGray);
-                sb.FillRectangle(movingEnergy, Color.Lerp(Color.DarkGray, Color.Transparent, 0.5f));
+                sb.DrawRectangle(energyTotal, Color);
+                sb.FillRectangle(energyRemaining, Color);
+                sb.FillRectangle(movingEnergy, Color.Lerp(Color, Color.Transparent, 0.5f));
             }
         }
     }
