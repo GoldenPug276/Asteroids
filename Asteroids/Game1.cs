@@ -51,7 +51,7 @@ namespace Asteroid
             Shield1 = 5,
             Shield2 = 6,
             Shield3 = 7,
-            ShieldUltimate = 8
+            ShieldFinal = 8
         }
         List<Upgrade> PossibleUpgrades = new List<Upgrade>();
         List<Upgrade> UpgradesToDraw = new List<Upgrade>();
@@ -73,8 +73,19 @@ namespace Asteroid
         Upgrade ShotSpeedUp2;
         Upgrade ShotSpeedUp3;
         List<Upgrade> ShotSpeedProgHolder = new List<Upgrade>();
+        Upgrade Drones1;
+        Upgrade Drones2;
+        Upgrade Drones3;
+        TimeSpan DronesShotTimer = new TimeSpan(0, 0, 0, 5, 0);
+        TimeSpan reserveDronesShotTimer = new TimeSpan(0, 0, 0, 5, 0);
+        List<Upgrade> DroneProgHolder = new List<Upgrade>();
 
         Upgrade Warp;
+        Upgrade Shield1;
+        Upgrade Shield2;
+        Upgrade Shield3;
+        Upgrade ShieldFinal;
+        List<Upgrade> ShieldProgHolder = new List<Upgrade>();
 
         string GunInEffectName = "Default";
         Color GunInEffectColor = Color.DarkGray;
@@ -217,20 +228,26 @@ namespace Asteroid
          *      **DONE**
          *      
          *      
-         *      replace the "test" upgarde amd ability with actual ones and remove the "test" parameter
+         *      replace the "test" upgarde amd ability with actual ones and remove the "test" parameter. we will start with the ability
          *      
          *          make the test upgrade into a drone that circles around the ship and shoots special bullets
          *          its progression is for fire rate and drone amount
          *              Progress and thoughts on this:
          *              Have made the types but haven't removed the Test
-         *                  the drones should be stuck to specific areas near the ship and they should turn to face what they shoot at
+         *              Made the sprites
+         *              Made the "Upgrade" upgrades and the shot timer (starts at 5 seconds)
+         *                  the drones should be stuck to specific areas near the ship and they should turn to face what they shoot at. they shoot machine gun bullet
          *              a
          *          
          *          make the test ability into a shield that, when held, surrounds the ship and protects from all damage whilst draining energy, but you cannot shoot out of it
          *          its progression is for time it can be up, but the last upgrade lets you sacrifice that speed and turn it into a fire orb that melts enemies
          *              Progress and thoughts on this:
          *              Have made the types but haven't removed the Test
-         *      
+         *              Made the sprites
+         *              Made the "Upgrade" upgrades
+         *                  make sure abilities with trees work with energy, since they might now. also, the color changes with final
+         *              a
+         *              
          *      
          *      (Next Thing)
          *      
@@ -244,7 +261,7 @@ namespace Asteroid
          *              for now, before this is done, the test upgrades are "you are an idiot"
          *
          *
-         * Have a better way of checking if an upgrade has been collected rthaer than just infinite "else ifs"
+         * Have a better way of checking if an upgrade has been collected rather than just infinite "else ifs"
          * A lot of of the upgrades will be abilities with upgrade trees, and most normal upgrades will not just be stat boosts other than fire speed
          * Remember to decrease the difficulty and the insta-death part of level 10
          * 
@@ -361,9 +378,32 @@ namespace Asteroid
                 "I dunno", "man V2", "(TESTING)", "(Z Key, 50 energy)", null, 0, 50, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(TestAbility);
 
+                //Abilities
+
             Warp = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Warp, "Warp",
                 "Right-click to warp", "to a random point", "on screen. Gain 0.4", "seconds of i-frames.", null, 0, 99, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.DarkGray, false);
             PossibleUpgrades.Add(Warp);
+
+            Shield1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Shield1, "Shield",
+                "Press Z to activate", "a shield that", "protects you from", "all damage.", ShieldProgHolder, 1, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+            PossibleUpgrades.Add(Shield1);
+            ShieldProgHolder.Add(Shield1);
+
+            Shield2 = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Shield2, "Shield+",
+                "You can have the", "shield active for", "longer.", "", ShieldProgHolder, 2, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+            ShieldProgHolder.Add(Shield2);
+
+            Shield3 = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Shield3, "Shield++",
+                "You can have the", "shield active for", "almost forever.", "", ShieldProgHolder, 3, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+            ShieldProgHolder.Add(Shield3);
+
+            ShieldFinal = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.ShieldFinal, "Shield Final",
+                "Coat your shield in", "fire, reverting its", "length but melting", "all touched enemies.", ShieldProgHolder, 4, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.OrangeRed, false);
+            ShieldProgHolder.Add(ShieldFinal);
+
+            //Abilities
+
+            //Upgrades
 
             ShotSpeedUp1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.ShotSpeedUp1, AbilityUpgradeType.None, "Shot Speed+",
                 "Reduces the time bet-", "-ween default shots", "and increases special", "gun energy gain.", ShotSpeedProgHolder, 1, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
@@ -378,6 +418,23 @@ namespace Asteroid
                 "You can now shoot", "really fast and", "really often.", "", ShotSpeedProgHolder, 3, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             ShotSpeedProgHolder.Add(ShotSpeedUp3);
 
+            Drones1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Drones1, AbilityUpgradeType.None, "Drones",
+                "Gain a drone that", "stays near you and", "shoots enemies for", "every 5 seconds.", DroneProgHolder, 1, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+            PossibleUpgrades.Add(Drones1);
+            DroneProgHolder.Add(Drones1);
+
+            Drones2 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Drones2, AbilityUpgradeType.None, "Drones+",
+                "Gain an additional", "drone. Your drones", "shoot every 3 sec.", "", DroneProgHolder, 2, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+            DroneProgHolder.Add(Drones2);
+
+            Drones3 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Drones3, AbilityUpgradeType.None, "Drones++",
+                "Gain one more drone.", "Your drones shoot", "every 1.5 seconds.", "", DroneProgHolder, 3, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+            DroneProgHolder.Add(Drones3);
+
+            //Upgrades
+
+            //Guns
+
             MachineGun = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Machine, "Machine Gun",
                 "Gives you a rapid-", "-firing machine gun.", "", "", null, 0, 7, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.DarkSlateGray, false);
             PossibleUpgrades.Add(MachineGun);
@@ -388,6 +445,8 @@ namespace Asteroid
 
             MachineGun.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, Content.Load<Texture2D>("ShipAndShots/MachineShot"), 0, 1 / 1f, Color.White);
             Laser.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.5f, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White);
+
+                //Guns
 
             None = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.None, "Cold Treasure",
                 "We will not", "become stronger.", "", "", null, 0, 0, Content.Load<Texture2D>("UpgradeImages/Cold Treasure"), 0, 1 / 1, Color.White, false);
