@@ -163,7 +163,7 @@ namespace Asteroid
          *              som ability ideas: timestop, time erase, time rewind, screen nuke
          *                  i'll need to make the powerups into weapon upgrades that can be swapped to
          *                  
-         *      so first, i'll have to design an upgrade menu in-between levels where you can pick up or skip upgrades {DONE}
+         *      so first, i'll have to design an upgrade menu in-between levels where you can pick up or skip upgrades *DONE*
          *          (use as reference: https://progameguides.com/wp-content/uploads/2022/06/roblox-hours-vitality-1024x576.jpg)
          *      
          *      
@@ -182,7 +182,7 @@ namespace Asteroid
          *          **DONE**
          *          
          *          
-         *      have a button class;    {FINISHED}
+         *      have a button class;    *FINISHED*
          *          inherits from sprite
          *          has these funstions:
          *              a function that detects when it's clicked on
@@ -201,13 +201,13 @@ namespace Asteroid
          *      **DONE**
          *      
          *      
-         *      after that, make the machine gun into an ability and test it    {FINISHED}
+         *      after that, make the machine gun into an ability and test it    *FINISHED*
          *          have fancy little text on the side that says what weapon you have and allow switching
          *          have weapon swaping be done via scroll wheel and num-bar  
          *              convert powerups into gun upgrades
          *      
          *      
-         *      instead of nerfing the now permanent guns, do the following;   {FINISHED}
+         *      instead of nerfing the now permanent guns, do the following;   *FINISHED*
          *          give them an energy bar like in megaman, where using a weapon takes energy that regenerates after time
          *              have energy bar as a rectangle for now
          *              it always has a length of 100, and each weapon has a specific amount of energy used per shot
@@ -215,7 +215,7 @@ namespace Asteroid
          *              it appears below the gun name
          *          abilities use the same energy, but the position of the bar is different and the energy gain usually hasa multiplier
          *      
-         *      make the energy bar smoother {DONE}
+         *      make the energy bar smoother *DONE*
          *      
          *      clean up the old powerup code since it is no longer neccesary {has been archived}
          *      
@@ -240,14 +240,18 @@ namespace Asteroid
          *              a
          *          
          *          make the test ability into a shield that, when held, surrounds the ship and protects from all damage whilst draining energy, but you cannot shoot out of it
-         *          its progression is for time it can be up, but the last upgrade lets you sacrifice that speed and turn it into a fire orb that melts enemies
+         *          its progression is for time it can be up/energy regen, but the last upgrade lets you sacrifice that speed and turn it into a fire orb that melts enemies
          *              Progress and thoughts on this:
          *              Have made the types but haven't removed the Test
          *              Made the sprites
          *              Made the "Upgrade" upgrades
-         *                  make sure abilities with trees work with energy, since they might now. also, the color changes with final
+         *              Made the upgrade drain energy; it uses 1 energy per active frame, and each upgrade increases energy regen speed
+         *              Make the effect; remember, can't shoot while active, protects from damage
+         *                  a
          *              a
          *              
+         *      make Upgrade remove the previous levels of abilities from the activeAbilities when picking the next level *DONE*
+         *      make quick energy regen possible by having high energyGainMultiplier's lead to more energy being added at once *DONE*
          *      
          *      (Next Thing)
          *      
@@ -385,20 +389,20 @@ namespace Asteroid
             PossibleUpgrades.Add(Warp);
 
             Shield1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Shield1, "Shield",
-                "Press Z to activate", "a shield that", "protects you from", "all damage.", ShieldProgHolder, 1, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                "Hold Z to activate", "a shield that", "protects you from", "all damage.", ShieldProgHolder, 1, 1, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(Shield1);
             ShieldProgHolder.Add(Shield1);
 
             Shield2 = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Shield2, "Shield+",
-                "You can have the", "shield active for", "longer.", "", ShieldProgHolder, 2, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                "You can have the", "shield active for", "longer.", "", ShieldProgHolder, 2, 1, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             ShieldProgHolder.Add(Shield2);
 
             Shield3 = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Shield3, "Shield++",
-                "You can have the", "shield active for", "almost forever.", "", ShieldProgHolder, 3, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                "You can have the", "shield active for", "almost forever.", "", ShieldProgHolder, 3, 1, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             ShieldProgHolder.Add(Shield3);
 
             ShieldFinal = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.ShieldFinal, "Shield Final",
-                "Coat your shield in", "fire, reverting its", "length but melting", "all touched enemies.", ShieldProgHolder, 4, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.OrangeRed, false);
+                "Coat your shield in", "fire, reverting its", "length but melting", "all touched enemies.", ShieldProgHolder, 4, 24, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.OrangeRed, false);
             ShieldProgHolder.Add(ShieldFinal);
 
             //Abilities
@@ -1044,10 +1048,36 @@ namespace Asteroid
                 Warp.AbilityUse();
             }
 
+            for (int i = 0; i < ShieldProgHolder.Count; i++)
+            {
+                if (ShieldProgHolder[i].isActive)
+                {
+                    ShieldProgHolder[i].AbilityUpdate(gameTime.ElapsedGameTime);
+                    if (keyboardState.IsKeyDown(Keys.Z) && ShieldProgHolder[i].WillAbilityGetUsed())
+                    {
+                        int energyGainMultiplier = 5;
+                        if (i==1) { energyGainMultiplier = 10; }
+                        if (i==2) { energyGainMultiplier = 18; }
+                        if (i==3) { energyGainMultiplier = 7; }
+                        ShieldProgHolder[i].EnergyGainMultiplier = energyGainMultiplier;
+                        ShieldProgHolder[i].AbilityUse();
+                        ShieldProgHolder[i].inEffect = true;
+                    }
+                    else
+                    {
+                        ShieldProgHolder[i].inEffect = false;
+                    }
+                    break;
+                }
+            }
+
+
+
+
             TestAbility.AbilityUpdate(gameTime.ElapsedGameTime);
             if (keyboardState.IsKeyDown(Keys.Z) && lastKeyboardState.IsKeyUp(Keys.Z) && TestAbility.WillAbilityGetUsed())
             {
-                TestAbility.EnergyGainMultiplier = 10;
+                TestAbility.EnergyGainMultiplier = 3;
                 TestAbility.AbilityUse();
             }
 

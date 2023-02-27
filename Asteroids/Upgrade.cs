@@ -54,8 +54,6 @@ namespace Asteroid
                 }
                 else if (AbilityType >= Game1.AbilityUpgradeType.Warp)
                 {
-                    //normal ability cooldown code
-                    //will be at the bottom left, code is temp for now
                     energyTotal = new Rectangle(10, 400, 100, 20);
                     isGun = false;
                 }
@@ -97,9 +95,18 @@ namespace Asteroid
                     else { activeAbilities.Add(this); }
                 }
 
-                if (ProgressionList != null && ProgressionLevel < ProgressionList.Count)
+                if (ProgressionList != null)
                 {
-                    possibleUpgrades.Add(ProgressionList[ProgressionLevel]);
+                    if (ProgressionLevel < ProgressionList.Count)
+                    {
+                        possibleUpgrades.Add(ProgressionList[ProgressionLevel]);
+                    }
+                    if (ProgressionLevel>1)
+                    {
+                        ProgressionList[ProgressionLevel - 2].inEffect = false;
+                        ProgressionList[ProgressionLevel - 2].isActive = false;
+                        activeAbilities.Remove(ProgressionList[ProgressionLevel - 2]);
+                    }
                 }
             }
         }
@@ -117,17 +124,27 @@ namespace Asteroid
         }
         public void AbilityUpdate(TimeSpan ElapsedGameTime)
         {
+            float energyGain;
+            if (EnergyGainMultiplier<10)
+            {
+                energyGain = 1;
+            }
+            else
+            {
+                energyGain = EnergyGainMultiplier / 10;
+            }
+
             energyRegen -= ElapsedGameTime;
             if (energyRegen <= TimeSpan.Zero && energyRemaining.Width < 100)
             {
                 if (energyMoveIf > 0)
                 {
-                    energyRemaining.Width++;
+                    energyRemaining.Width += energyGain;
                     energyMoveIf *= -1;
                 }
                 else if (energyMoveIf < 0)
                 {
-                    movingEnergy.Width++;
+                    movingEnergy.Width += energyGain;
                     energyMoveIf *= -1;
                 }
                 energyRegen = reserveEnergyRegen / EnergyGainMultiplier;
