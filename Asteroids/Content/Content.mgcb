@@ -279,7 +279,7 @@
 /processorParam:TextureFormat=Color
 /build:UpgradeImages/UpgradeSlot.png
 
-#begin Upgrades/drone.png
+#begin Upgrades/Drone.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -289,9 +289,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Upgrades/drone.png
+/build:Upgrades/Drone.png
 
-#begin Upgrades/shield.png
+#begin Upgrades/Shield.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -301,7 +301,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Upgrades/shield.png
+/build:Upgrades/Shield.png
 
 #begin UpgradeTitleFont.spritefont
 /importer:FontDescriptionImporter

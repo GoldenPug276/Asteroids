@@ -26,7 +26,7 @@ namespace Asteroid
         public List<Upgrade> ProgressionList;
         public int ProgressionLevel;
         public Bullet GunBullet;
-        public int EnergyUse;
+        public float EnergyUse;
         public RectangleF energyTotal;
         public RectangleF energyRemaining;
         private RectangleF movingEnergy;
@@ -38,7 +38,7 @@ namespace Asteroid
         public bool isGun = false;
 
         public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability,
-            string name, string descrip1, string descrip2, string descrip3, string descrip4, List<Upgrade> progList, int progLevel, int energy,
+            string name, string descrip1, string descrip2, string descrip3, string descrip4, List<Upgrade> progList, int progLevel, float energy,
             Texture2D image, float rot, float scale, Color color, bool active) : base(position, image, rot, scale, color)
         {
             Position = position;
@@ -101,7 +101,7 @@ namespace Asteroid
                     {
                         possibleUpgrades.Add(ProgressionList[ProgressionLevel]);
                     }
-                    if (ProgressionLevel>1)
+                    if (ProgressionLevel > 1)
                     {
                         ProgressionList[ProgressionLevel - 2].inEffect = false;
                         ProgressionList[ProgressionLevel - 2].isActive = false;
@@ -125,7 +125,7 @@ namespace Asteroid
         public void AbilityUpdate(TimeSpan ElapsedGameTime)
         {
             float energyGain;
-            if (EnergyGainMultiplier<10)
+            if (EnergyGainMultiplier < 10)
             {
                 energyGain = 1;
             }
