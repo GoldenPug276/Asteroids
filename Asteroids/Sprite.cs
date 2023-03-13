@@ -10,6 +10,7 @@ namespace Asteroid
     {
         public Vector2 Position;
         public Texture2D Image { get; set; }
+        public Texture2D DisplayImage { get; set; }
         public float Scale { get; set; }
         public virtual Vector2 Origin { get; }
         public float Rotation { get; set; }
@@ -38,7 +39,16 @@ namespace Asteroid
         public virtual void Draw(SpriteBatch sb)
         {
             //sb.Draw(Image, Hitbox, Color);
-            sb.Draw(Image, Position, null, Color, Rotation, Origin, Scale, SpriteEffects.None, 0);
+
+            Texture2D pic = Image;
+            Vector2 origin = Origin;
+            if (DisplayImage!=null) 
+            {
+                pic = DisplayImage;
+                origin = new Vector2(DisplayImage.Width / 2, DisplayImage.Height / 2);
+            }
+
+            sb.Draw(pic, Position, null, Color, Rotation, origin, Scale, SpriteEffects.None, 0);
         }
 
     }

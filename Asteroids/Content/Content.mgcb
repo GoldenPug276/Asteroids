@@ -303,6 +303,18 @@
 /processorParam:TextureFormat=Color
 /build:Upgrades/Shield.png
 
+#begin Upgrades/ShieldHitbox.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Upgrades/ShieldHitbox.png
+
 #begin UpgradeTitleFont.spritefont
 /importer:FontDescriptionImporter
 /processor:FontDescriptionProcessor

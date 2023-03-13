@@ -47,7 +47,6 @@ namespace Asteroid
             Machine = 1,
             Laser = 2,
             Warp = 4,
-            Test = 0,
             Shield1 = 5,
             Shield2 = 6,
             Shield3 = 7,
@@ -65,7 +64,6 @@ namespace Asteroid
         int UpgradeTime = 0;
 
         Upgrade TestUpgrade;
-        Upgrade TestAbility;
         Upgrade None;
         Button UpgradeSkip;
 
@@ -86,6 +84,7 @@ namespace Asteroid
         Upgrade Shield3;
         Upgrade ShieldFinal;
         Sprite ShieldSprite;
+        bool ShieldFinalActive = false;
         List<Upgrade> ShieldProgHolder = new List<Upgrade>();
 
         string GunInEffectName = "Default";
@@ -230,7 +229,9 @@ namespace Asteroid
          *      **DONE**
          *      
          *      
-         *      replace the "test" upgarde amd ability with actual ones and remove the "test" parameter. we will start with the ability
+         *      replace the "test" upgarde amd ability with actual ones and remove the "test" parameter.
+         *          Ability Done
+         *          Upgrade not Done
          *      
          *          make the test upgrade into a drone that circles around the ship and shoots special bullets
          *          its progression is for fire rate and drone amount
@@ -250,20 +251,24 @@ namespace Asteroid
          *              Made the upgrade drain energy; it uses 1 energy per active frame, and each upgrade increases energy regen speed
          *              Made the shield texture into a Sprite
          *              Made the shield display when inEffect; also slightly changed the texture and capitalized it and the drone
-         *              Make the effect; remember, can't shoot while active, protects from damage
-         *                  Made the effect for regular shield, not Final yet
-         *              a
-         *                  a
-         *              a
-         *              
+         *              Made the effect; remember, can't shoot while active, protects from damage
+         *                  Before continuing, make the hit detection for the asteroids and ufos better (likely a function that takes either shot or hitbox and reacts) *DOING*
+         *              Removed the Test value
+         *      
+         *                                                          {{remove individual dones below when done with the test removal}}
+         *      **DOING** (things done during the above task) 
          *      make Upgrade remove the previous levels of abilities from the activeAbilities when picking the next level *DONE*
          *      make quick energy regen possible by having high energyGainMultiplier's lead to more energy being added at once *DONE*
          *      make a function in Upgrade that lets you add an image to draw/thing to add to the screen when in effect (like abilitiy effect or upgrade thing) *SOMEWHAT DONE*
          *          actually, for this, just have manual draws since these will often need specific information from the Game1
          *          the draw might get cluttered up with this, so I will make sure to have a specific spot for it
          *      make an extra variable called CanShoot that will determine if you are able to fire, mainly used for a shield *DONE*
-         *      make it so that if you hold the button for a held ability and you run out of energy, you have to let go of the button to use it again *LATER*
+         *      make it so that if you run out of energy while holding a held ability, the bar's color changes and you need at least 33 energy to use it again *LATER*
          *          can likely do this with a variable in the Upgrade class that changes when WillAbilityGetUsed returns false
+         *      
+         *      add a parameter to Sprite that lets you visually change the Sprite if you want to (null by default, needs seperate assignment) *DONE*
+         *          use this to make better hitboxes in the future
+         *      **DOING**
          *      
          *      (Next Thing)
          *      
@@ -302,6 +307,28 @@ namespace Asteroid
          * Sprite Positions are in the middle of the Sprite rather than the upper right corner
          */
 
+        bool EnemyCollisionDetection(Rectangle checkedHitbox, List<Bullet> bullets, Rectangle hitbox) //doing
+        {
+            bool yesOrNo = false;
+
+            if (bullets != null)
+            {
+                for (int i = 0; i < bullets.Count; i++)
+                {
+                    if (checkedHitbox.Intersects(bullets[i].Hitbox))
+                    {
+                        yesOrNo = true;
+                        //extra stuff
+                    }
+                }
+            }
+            else
+            {
+
+            }
+
+            return yesOrNo;
+        }
         bool IsBulletInBounds(List<Bullet> bullets, int i, Rectangle playSpace)
         {
             bool removed = false;
@@ -390,10 +417,6 @@ namespace Asteroid
                 "I dunno", "man V1", "(TESTING)", "", null, 0, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(TestUpgrade);
 
-            TestAbility = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Test, "Test Ability",
-                "I dunno", "man V2", "(TESTING)", "(Z Key, 50 energy)", null, 0, 50, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
-            PossibleUpgrades.Add(TestAbility);
-
             //Abilities
 
             Warp = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Warp, "Warp",
@@ -404,7 +427,8 @@ namespace Asteroid
                 "Hold Z to activate", "a shield that", "protects you from", "all damage.", ShieldProgHolder, 1, 1, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(Shield1);
             ShieldProgHolder.Add(Shield1);
-            ShieldSprite = new Sprite(new Vector2(0, 0), Content.Load<Texture2D>("Upgrades/Shield"), 0, 1 / 1f, Color.White);
+            ShieldSprite = new Sprite(new Vector2(0, 0), Content.Load<Texture2D>("Upgrades/ShieldHitbox"), 0, 1 / 1f, Color.White);
+            ShieldSprite.DisplayImage = Content.Load<Texture2D>("Upgrades/Shield");
 
             Shield2 = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Shield2, "Shield+",
                 "You can have the", "shield active for", "longer.", "", ShieldProgHolder, 2, 1, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
@@ -807,6 +831,12 @@ namespace Asteroid
                     }
                 }
 
+                if (asteroids[i].Hitbox.Intersects(ShieldSprite.Hitbox) && ShieldFinalActive)
+                {
+                    asteroids.RemoveAt(i);
+                    break;
+                }
+
                 if (i >= asteroids.Count)
                 {
                     break;
@@ -866,6 +896,12 @@ namespace Asteroid
                         }
                         break;
                     }
+                }
+
+                if (UFOs[i].Hitbox.Intersects(ShieldSprite.Hitbox) && ShieldFinalActive)
+                {
+                    UFOs.RemoveAt(i);
+                    break;
                 }
 
                 if (i >= UFOs.Count)
@@ -1081,6 +1117,7 @@ namespace Asteroid
                     {
                         ShieldProgHolder[i].inEffect = false;
                         CanShoot = true;
+                        ShieldFinalActive = false;
                     }
                     break;
                 }
@@ -1090,25 +1127,16 @@ namespace Asteroid
             {
                 if (ShieldProgHolder[i].inEffect)
                 {
-                    if (i<ShieldFinal.ProgressionLevel-1)
+                    if (iFrames <= TimeSpan.FromMilliseconds(20)) 
                     {
                         iFrames = TimeSpan.FromMilliseconds(20);
                     }
-                    else
+
+                    if (i == ShieldFinal.ProgressionLevel - 1)
                     {
-                        iFrames = TimeSpan.FromMilliseconds(20);
-                        //add the melting
+                        ShieldFinalActive = true;
                     }
                 }
-            }
-
-
-
-            TestAbility.AbilityUpdate(gameTime.ElapsedGameTime);
-            if (keyboardState.IsKeyDown(Keys.Z) && lastKeyboardState.IsKeyUp(Keys.Z) && TestAbility.WillAbilityGetUsed())
-            {
-                TestAbility.EnergyGainMultiplier = 3;
-                TestAbility.AbilityUse();
             }
 
             //Ability Effect Code
@@ -1193,14 +1221,14 @@ namespace Asteroid
 
             for (int i = 0; i < ActiveAbilities.Count; i++)
             {
-                if ((ActiveAbilities[i]==Shield1||ActiveAbilities[i]==Shield2||ActiveAbilities[i]==Shield3) && ActiveAbilities[i].inEffect)
+                if ((ActiveAbilities[i] == Shield1 || ActiveAbilities[i] == Shield2 || ActiveAbilities[i] == Shield3) && ActiveAbilities[i].inEffect)
                 {
                     ShieldSprite.Position.X = ship.Position.X;
                     ShieldSprite.Position.Y = ship.Position.Y;
                     ShieldSprite.Rotation = ship.Rotation;
                     ShieldSprite.Draw(_spriteBatch);
                 }
-                else if (ActiveAbilities[i]==ShieldFinal && ActiveAbilities[i].inEffect)
+                else if (ActiveAbilities[i] == ShieldFinal && ActiveAbilities[i].inEffect)
                 {
                     ShieldSprite.Position.X = ship.Position.X;
                     ShieldSprite.Position.Y = ship.Position.Y;
