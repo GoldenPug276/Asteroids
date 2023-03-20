@@ -84,8 +84,9 @@ namespace Asteroid
         Upgrade Shield3;
         Upgrade ShieldFinal;
         Sprite ShieldSprite;
-        bool ShieldFinalActive = false;
         List<Upgrade> ShieldProgHolder = new List<Upgrade>();
+
+        List<Rectangle> ExtraHitboxes = new List<Rectangle>();
 
         string GunInEffectName = "Default";
         Color GunInEffectColor = Color.DarkGray;
@@ -94,8 +95,8 @@ namespace Asteroid
         TimeSpan MachineGunShotTimer = new TimeSpan(0, 0, 0, 0, 150);
         TimeSpan reserveMachineGunShotTimer = new TimeSpan(0, 0, 0, 0, 150);
         Upgrade Laser;
-        TimeSpan LaserShotTimer = new TimeSpan(0, 0, 0, 0, 600);
-        TimeSpan reserveLaserShotTimer = new TimeSpan(0, 0, 0, 0, 600);
+        TimeSpan LaserShotTimer = new TimeSpan(0, 0, 0, 0, 300);
+        TimeSpan reserveLaserShotTimer = new TimeSpan(0, 0, 0, 0, 300);
 
         /*  Old Powerup Code, Archived
         Powerup machine;
@@ -240,6 +241,7 @@ namespace Asteroid
          *              Made the sprites
          *              Made the "Upgrade" upgrades and the shot timer (starts at 5 seconds)
          *                  the drones should be stuck to specific areas near the ship and they should turn to face what they shoot at. they shoot machine gun bullets
+         *                  either make a seperate shots list for them or just be lazy and add to the ship's shots
          *              a
          *          
          *          make the test ability into a shield that, when held, surrounds the ship and protects from all damage whilst draining energy, but you cannot shoot out of it
@@ -252,7 +254,9 @@ namespace Asteroid
          *              Made the shield texture into a Sprite
          *              Made the shield display when inEffect; also slightly changed the texture and capitalized it and the drone
          *              Made the effect; remember, can't shoot while active, protects from damage
-         *                  Before continuing, make the hit detection for the asteroids and ufos better (likely a function that takes either shot or hitbox and reacts) *DOING*
+         *                  Before continuing, make the hit detection for the asteroids and ufos better (likely a function that takes either shot or hitbox and reacts) *DONE*
+         *                  Pretty horrid and basic, but it works
+         *                  Uses a Hitbox List that holds potential colliders, then removes them if they are unactive (like activating adds, deactivating removes)
          *              Removed the Test value
          *      
          *                                                          {{remove individual dones below when done with the test removal}}
@@ -263,11 +267,13 @@ namespace Asteroid
          *          actually, for this, just have manual draws since these will often need specific information from the Game1
          *          the draw might get cluttered up with this, so I will make sure to have a specific spot for it
          *      make an extra variable called CanShoot that will determine if you are able to fire, mainly used for a shield *DONE*
-         *      make it so that if you run out of energy while holding a held ability, the bar's color changes and you need at least 33 energy to use it again *LATER*
-         *          can likely do this with a variable in the Upgrade class that changes when WillAbilityGetUsed returns false
-         *      
          *      add a parameter to Sprite that lets you visually change the Sprite if you want to (null by default, needs seperate assignment) *DONE*
          *          use this to make better hitboxes in the future
+         *      
+         *      clean up the code a bit; changes will mostly be using foreach instead of for(every one) and replacing variables in bool functions with returns *DOING*
+         *      
+         *      make it so that if you run out of energy while holding a held ability, the bar's color changes and you need at least 33 energy to use it again *NEXT*
+         *          can likely do this with a variable in the Upgrade class that changes when WillAbilityGetUsed returns false
          *      **DOING**
          *      
          *      (Next Thing)
@@ -307,37 +313,43 @@ namespace Asteroid
          * Sprite Positions are in the middle of the Sprite rather than the upper right corner
          */
 
-        bool EnemyCollisionDetection(Rectangle checkedHitbox, List<Bullet> bullets, Rectangle hitbox) //doing
+        bool EnemyCollisionDetection(Rectangle checkedHitbox, List<Bullet> bullets, List<Rectangle> hitboxes)
         {
-            bool yesOrNo = false;
-
             if (bullets != null)
             {
-                for (int i = 0; i < bullets.Count; i++)
+                foreach (Bullet bullet in bullets)
                 {
-                    if (checkedHitbox.Intersects(bullets[i].Hitbox))
+                    if (checkedHitbox.Intersects(bullet.Hitbox))
                     {
-                        yesOrNo = true;
-                        //extra stuff
+                        if (bullet.Image != Laser.GunBullet.Image)
+                        {
+                            bullets.Remove(bullet);
+                        }
+                        return true;
+                    }
+                }
+
+            }
+
+            if (hitboxes != null)
+            {
+                foreach(Rectangle hitbox in hitboxes)
+                {
+                    if (checkedHitbox.Intersects(hitbox))
+                    {
+                        return true;
                     }
                 }
             }
-            else
-            {
 
-            }
-
-            return yesOrNo;
+            return false;
         }
-        bool IsBulletInBounds(List<Bullet> bullets, int i, Rectangle playSpace)
+        void IsBulletInBounds(List<Bullet> bullets, int i, Rectangle playSpace)
         {
-            bool removed = false;
             if (!playSpace.Contains(bullets[i].Position))
             {
                 bullets.RemoveAt(i);
-                removed = true;
             }
-            return removed;
         }
         void NoneRefresh(List<Upgrade> nones, Upgrade baseNone)
         {
@@ -757,15 +769,17 @@ namespace Asteroid
             {
                 shots[i].Move();
 
+                IsBulletInBounds(shots, i, playSpace);
+
+                /*  Old Powerup Code, Archived
                 if (!IsBulletInBounds(shots, i, playSpace))
                 {
-                    /*  Old Powerup Code, Archived
                     if (!machine.WhenShot(shots, i))
                     {
                         laser.WhenShot(shots, i);
                     }
-                    */
                 }
+                */
             }
             for (int i = 0; i < enemyShots.Count; i++)
             {
@@ -789,51 +803,37 @@ namespace Asteroid
 
             for (int i = 0; i < asteroids.Count; i++)
             {
-                for (int j = 0; j < shots.Count; j++)
+                if (EnemyCollisionDetection(asteroids[i].Hitbox, shots, ExtraHitboxes))
                 {
-                    if (asteroids[i].Hitbox.Intersects(shots[j].Hitbox))
+                    //Archived PowerUp Code: machine.Spawned(asteroids[i].Position, new Vector2(rand.Next(1, 4), rand.Next(1, 4)), asteroids[i].leSize);
+
+                    if (asteroids[i].leSize == Size.LeChonk)
                     {
-                        //Archived PowerUp Code: machine.Spawned(asteroids[i].Position, new Vector2(rand.Next(1, 4), rand.Next(1, 4)), asteroids[i].leSize);
-
-                        if (asteroids[i].leSize == Size.LeChonk)
-                        {
-                            score += 10;
-                            asteroids[i].leSize++;
-                            asteroids[i].Image = SmallAsteroid;
-                            asteroids[i].Velocity = new Vector2(asteroids[i].Velocity.X * (largeAsteroidVelocity / smallAsteroidVelocity),
-                                asteroids[i].Velocity.Y * (largeAsteroidVelocity / smallAsteroidVelocity));
-                            asteroids.Add(new Asteroid(new Vector2(asteroids[i].Position.X + 60, asteroids[i].Position.Y),
-                                new Vector2(-asteroids[i].Velocity.X * 2, -asteroids[i].Velocity.Y * 2), SmallAsteroid, 0, 1 / 1f, Color.White, Size.Normal));
-                        }
-                        else if (asteroids[i].leSize == Size.Normal)
-                        {
-                            score += 30;
-                            asteroids[i].leSize++;
-                            asteroids[i].Image = TinyAsteroid;
-                            asteroids[i].Velocity = new Vector2(asteroids[i].Velocity.X * (smallAsteroidVelocity / tinyAsteroidVelocity),
-                                asteroids[i].Velocity.Y * (smallAsteroidVelocity / tinyAsteroidVelocity));
-                            asteroids.Add(new Asteroid(new Vector2(asteroids[i].Position.X + 25, asteroids[i].Position.Y),
-                                new Vector2(-asteroids[i].Velocity.X * 2, -asteroids[i].Velocity.Y * 2), TinyAsteroid, 0, 1 / 1f, Color.White, Size.Baby));
-                        }
-                        else if (asteroids[i].leSize == Size.Baby)
-                        {
-                            score += 50;
-
-                            asteroids.RemoveAt(i);
-                        }
-
-                        if (shots[j].Image != Laser.GunBullet.Image)
-                        {
-                            shots.RemoveAt(j);
-                        }
-
-                        break;
+                        score += 10;
+                        asteroids[i].leSize++;
+                        asteroids[i].Image = SmallAsteroid;
+                        asteroids[i].Velocity = new Vector2(asteroids[i].Velocity.X * (largeAsteroidVelocity / smallAsteroidVelocity),
+                            asteroids[i].Velocity.Y * (largeAsteroidVelocity / smallAsteroidVelocity));
+                        asteroids.Add(new Asteroid(new Vector2(asteroids[i].Position.X + 60, asteroids[i].Position.Y),
+                            new Vector2(-asteroids[i].Velocity.X * 2, -asteroids[i].Velocity.Y * 2), SmallAsteroid, 0, 1 / 1f, Color.White, Size.Normal));
                     }
-                }
+                    else if (asteroids[i].leSize == Size.Normal)
+                    {
+                        score += 30;
+                        asteroids[i].leSize++;
+                        asteroids[i].Image = TinyAsteroid;
+                        asteroids[i].Velocity = new Vector2(asteroids[i].Velocity.X * (smallAsteroidVelocity / tinyAsteroidVelocity),
+                            asteroids[i].Velocity.Y * (smallAsteroidVelocity / tinyAsteroidVelocity));
+                        asteroids.Add(new Asteroid(new Vector2(asteroids[i].Position.X + 25, asteroids[i].Position.Y),
+                            new Vector2(-asteroids[i].Velocity.X * 2, -asteroids[i].Velocity.Y * 2), TinyAsteroid, 0, 1 / 1f, Color.White, Size.Baby));
+                    }
+                    else if (asteroids[i].leSize == Size.Baby)
+                    {
+                        score += 50;
 
-                if (asteroids[i].Hitbox.Intersects(ShieldSprite.Hitbox) && ShieldFinalActive)
-                {
-                    asteroids.RemoveAt(i);
+                        asteroids.RemoveAt(i);
+                    }
+
                     break;
                 }
 
@@ -874,33 +874,21 @@ namespace Asteroid
 
             for (int i = 0; i < UFOs.Count; i++)
             {
-                for (int j = 0; j < shots.Count; j++)
+                if (EnemyCollisionDetection(UFOs[i].Hitbox, shots, ExtraHitboxes))
                 {
-                    if (UFOs[i].Hitbox.Intersects(shots[j].Hitbox))
+                    //Archived PowerUp Code: laser.Spawned(UFOs[i].Position, new Vector2(rand.Next(1, 3), rand.Next(1, 3)), UFOs[i].leSize);
+
+                    if (UFOs[i].leSize == Size.Normal)
                     {
-                        //Archived PowerUp Code: laser.Spawned(UFOs[i].Position, new Vector2(rand.Next(1, 3), rand.Next(1, 3)), UFOs[i].leSize);
-
-                        if (UFOs[i].leSize == Size.Normal)
-                        {
-                            score += 100;
-                        }
-                        else if (UFOs[i].leSize == Size.Baby)
-                        {
-                            score += 200;
-                        }
-
-                        UFOs.RemoveAt(i);
-                        if (shots[j].Image != Laser.GunBullet.Image)
-                        {
-                            shots.RemoveAt(j);
-                        }
-                        break;
+                        score += 100;
                     }
-                }
+                    else if (UFOs[i].leSize == Size.Baby)
+                    {
+                        score += 200;
+                    }
 
-                if (UFOs[i].Hitbox.Intersects(ShieldSprite.Hitbox) && ShieldFinalActive)
-                {
                     UFOs.RemoveAt(i);
+
                     break;
                 }
 
@@ -1117,7 +1105,7 @@ namespace Asteroid
                     {
                         ShieldProgHolder[i].inEffect = false;
                         CanShoot = true;
-                        ShieldFinalActive = false;
+                        ExtraHitboxes.Remove(ShieldSprite.Hitbox);
                     }
                     break;
                 }
@@ -1134,7 +1122,7 @@ namespace Asteroid
 
                     if (i == ShieldFinal.ProgressionLevel - 1)
                     {
-                        ShieldFinalActive = true;
+                        ExtraHitboxes.Add(ShieldSprite.Hitbox);
                     }
                 }
             }

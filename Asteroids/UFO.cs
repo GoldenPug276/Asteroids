@@ -77,15 +77,14 @@ namespace Asteroid
         }
         public bool Update(TimeSpan gameTime)
         {
-            bool a = false;
             ShotTimer -= gameTime;
 
             if (ShotTimer<=TimeSpan.Zero)
             {
-                a = true;
+                return true;
             }
 
-            return a;
+            return false;
         }
     }
 }

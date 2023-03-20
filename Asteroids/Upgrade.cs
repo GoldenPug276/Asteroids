@@ -153,26 +153,20 @@ namespace Asteroid
 
         public bool WillGunShoot(TimeSpan shotTimer)
         {
-            bool fire = false;
-
             if (isActive && inEffect && shotTimer <= TimeSpan.Zero && energyRemaining.Width >= EnergyUse)
             {
-                fire = true;
+                return true;
             }
-
-            return fire;
+            return false;
         }
 
         public bool WillAbilityGetUsed()
         {
-            bool use = false;
-
             if (isActive && energyRemaining.Width >= EnergyUse)
             {
-                use = true;
+                return true;
             }
-
-            return use;
+            return false;
         }
 
         public void AbilityEnergyStack(List<Upgrade> upgrades, int i)
