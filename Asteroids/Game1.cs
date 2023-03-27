@@ -689,6 +689,8 @@ namespace Asteroid
             {
                 if (!UpgradeSkip.wasClicked)
                 {
+                for (int i = 0; i < UpgradesToDraw.Count; i++)
+                {
                     UpgradesToDraw[i].UpgradeButton.Update(mouseState, lastMouseState);
                     UpgradesToDraw[i].WhenSelected(PossibleUpgrades, ActiveUpgrades, ActiveAbilities, ActiveGuns);
                 }
