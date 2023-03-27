@@ -36,6 +36,8 @@ namespace Asteroid
         public float EnergyGainMultiplier = 1;
 
         public bool isGun = false;
+        private bool usedThisFrame = false;
+        private bool usedLastFrame = false;
 
         public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability,
             string name, string descrip1, string descrip2, string descrip3, string descrip4, List<Upgrade> progList, int progLevel, float energy,
@@ -122,8 +124,12 @@ namespace Asteroid
             energyRemaining.Width -= EnergyUse;
             movingEnergy.Width -= EnergyUse;
         }
+
         public void AbilityUpdate(TimeSpan ElapsedGameTime)
         {
+            usedLastFrame = usedThisFrame;
+            usedThisFrame = false;
+
             float energyGain;
             if (EnergyGainMultiplier < 10)
             {
@@ -153,20 +159,24 @@ namespace Asteroid
 
         public bool WillGunShoot(TimeSpan shotTimer)
         {
-            if (isActive && inEffect && shotTimer <= TimeSpan.Zero && energyRemaining.Width >= EnergyUse)
+            if (isActive && inEffect && shotTimer <= TimeSpan.Zero && energyRemaining.Width >= EnergyUse) { usedThisFrame = true; return true; }
+
+            if (usedLastFrame && energyRemaining.Width < EnergyUse)
             {
-                return true;
+                energyTotal.X += 10;
             }
             return false;
         }
-
         public bool WillAbilityGetUsed()
         {
-            if (isActive && energyRemaining.Width >= EnergyUse)
-            {
-                return true;
-            }
+            if (isActive && energyRemaining.Width >= EnergyUse) { usedThisFrame = true; return true; }
+
             return false;
+        }
+
+        public void AbilityOverheat()
+        {
+
         }
 
         public void AbilityEnergyStack(List<Upgrade> upgrades, int i)

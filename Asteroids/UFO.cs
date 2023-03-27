@@ -79,10 +79,7 @@ namespace Asteroid
         {
             ShotTimer -= gameTime;
 
-            if (ShotTimer<=TimeSpan.Zero)
-            {
-                return true;
-            }
+            if (ShotTimer<=TimeSpan.Zero) { return true; }
 
             return false;
         }

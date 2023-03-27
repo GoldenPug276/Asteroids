@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-
+using Windows.UI.Notifications;
 
 namespace Asteroid
 {
@@ -29,6 +29,7 @@ namespace Asteroid
         SpriteFont upgradeTitleFont;
         SpriteFont upgradeDescFont;
         TimeSpan BurnerTime = new TimeSpan(0, 0, 0, 0, 1);
+        int counter = 0;
 
         public enum StatUpgradeType
         {
@@ -270,10 +271,11 @@ namespace Asteroid
          *      add a parameter to Sprite that lets you visually change the Sprite if you want to (null by default, needs seperate assignment) *DONE*
          *          use this to make better hitboxes in the future
          *      
-         *      clean up the code a bit; changes will mostly be using foreach instead of for(every one) and replacing variables in bool functions with returns *DOING*
+         *      clean up the code a bit; changes will mostly be using foreach instead of for(every one) and replacing variables in bool functions with returns *DONE*
          *      
-         *      make it so that if you run out of energy while holding a held ability, the bar's color changes and you need at least 33 energy to use it again *NEXT*
+         *      make it so if you run out of energy while holding an ability, the bar's color changes and you need at least 33 energy to use it again (like an overheat) *DOING*
          *          can likely do this with a variable in the Upgrade class that changes when WillAbilityGetUsed returns false
+         *          is being done via an overheat that checks if the ability was used last frame and if it was + out of energy, activate overheat
          *      **DOING**
          *      
          *      (Next Thing)
@@ -335,21 +337,19 @@ namespace Asteroid
             {
                 foreach(Rectangle hitbox in hitboxes)
                 {
-                    if (checkedHitbox.Intersects(hitbox))
-                    {
-                        return true;
-                    }
+                    if (checkedHitbox.Intersects(hitbox)) { return true; }
                 }
             }
 
             return false;
         }
-        void IsBulletInBounds(List<Bullet> bullets, int i, Rectangle playSpace)
+        bool IsBulletInBounds(List<Bullet> bullets, int i, Rectangle playSpace)
         {
             if (!playSpace.Contains(bullets[i].Position))
             {
-                bullets.RemoveAt(i);
+                bullets.RemoveAt(i); return false;
             }
+            return true;
         }
         void NoneRefresh(List<Upgrade> nones, Upgrade baseNone)
         {
@@ -685,14 +685,12 @@ namespace Asteroid
             //Upgrade Code
 
             UpgradeSkip.Update(mouseState, lastMouseState);
-            for (int i = 0; i < UpgradesToDraw.Count; i++)
+            if (!UpgradeSkip.wasClicked)
             {
-                if (!UpgradeSkip.wasClicked)
+                foreach (var upgrade in UpgradesToDraw)
                 {
-                for (int i = 0; i < UpgradesToDraw.Count; i++)
-                {
-                    UpgradesToDraw[i].UpgradeButton.Update(mouseState, lastMouseState);
-                    UpgradesToDraw[i].WhenSelected(PossibleUpgrades, ActiveUpgrades, ActiveAbilities, ActiveGuns);
+                    upgrade.UpgradeButton.Update(mouseState, lastMouseState);
+                    upgrade.WhenSelected(PossibleUpgrades, ActiveUpgrades, ActiveAbilities, ActiveGuns);
                 }
             }
 
@@ -702,10 +700,10 @@ namespace Asteroid
                 if (UpgradeSkip.wasClicked)
                 {
                     tempPress = "skipped";
-                    for (int j = 0; j < UpgradesToDraw.Count; j++)
+                    foreach (var upgrade in UpgradesToDraw)
                     {
-                        UpgradesToDraw[j].Skipped();
-                        UpgradesToDraw[j].UpgradeButton.wasClicked = false;
+                        upgrade.Skipped();
+                        upgrade.UpgradeButton.wasClicked = false;
                     }
                     broken = true;
                 }
@@ -767,11 +765,11 @@ namespace Asteroid
                 ship.Color = Color.White;
             }
 
-            for (int i = 0; i < shots.Count; i++)
+            foreach (var shot in shots)
             {
-                shots[i].Move();
+                shot.Move();
 
-                IsBulletInBounds(shots, i, playSpace);
+                if (!IsBulletInBounds(shots, counter, playSpace)) { break; }
 
                 /*  Old Powerup Code, Archived
                 if (!IsBulletInBounds(shots, i, playSpace))
@@ -782,14 +780,15 @@ namespace Asteroid
                     }
                 }
                 */
-            }
-            for (int i = 0; i < enemyShots.Count; i++)
+                counter++;
+            } counter = 0;
+            foreach (var enemyShot in enemyShots)
             {
-                enemyShots[i].Move();
+                enemyShot.Move();
 
-                if (ship.Hitbox.Intersects(enemyShots[i].Hitbox))
+                if (ship.Hitbox.Intersects(enemyShot.Hitbox))
                 {
-                    enemyShots.RemoveAt(i);
+                    enemyShots.Remove(enemyShot);
                     if (iFrames <= TimeSpan.Zero)
                     {
                         ship.Position = playSpace.Center.ToVector2();
@@ -800,65 +799,65 @@ namespace Asteroid
                     break;
                 }
 
-                IsBulletInBounds(enemyShots, i, playSpace);
-            }
+                if (!IsBulletInBounds(enemyShots, counter, playSpace)) { break; } counter++;
+            } counter = 0;
 
-            for (int i = 0; i < asteroids.Count; i++)
+            foreach (var asteroid in asteroids)
             {
-                if (EnemyCollisionDetection(asteroids[i].Hitbox, shots, ExtraHitboxes))
+                if (EnemyCollisionDetection(asteroid.Hitbox, shots, ExtraHitboxes))
                 {
                     //Archived PowerUp Code: machine.Spawned(asteroids[i].Position, new Vector2(rand.Next(1, 4), rand.Next(1, 4)), asteroids[i].leSize);
 
-                    if (asteroids[i].leSize == Size.LeChonk)
+                    if (asteroid.leSize == Size.LeChonk)
                     {
                         score += 10;
-                        asteroids[i].leSize++;
-                        asteroids[i].Image = SmallAsteroid;
-                        asteroids[i].Velocity = new Vector2(asteroids[i].Velocity.X * (largeAsteroidVelocity / smallAsteroidVelocity),
-                            asteroids[i].Velocity.Y * (largeAsteroidVelocity / smallAsteroidVelocity));
-                        asteroids.Add(new Asteroid(new Vector2(asteroids[i].Position.X + 60, asteroids[i].Position.Y),
-                            new Vector2(-asteroids[i].Velocity.X * 2, -asteroids[i].Velocity.Y * 2), SmallAsteroid, 0, 1 / 1f, Color.White, Size.Normal));
+                        asteroid.leSize++;
+                        asteroid.Image = SmallAsteroid;
+                        asteroid.Velocity = new Vector2(asteroid.Velocity.X * (largeAsteroidVelocity / smallAsteroidVelocity),
+                            asteroid.Velocity.Y * (largeAsteroidVelocity / smallAsteroidVelocity));
+                        asteroids.Add(new Asteroid(new Vector2(asteroid.Position.X + 60, asteroid.Position.Y),
+                            new Vector2(-asteroid.Velocity.X * 2, -asteroid.Velocity.Y * 2), SmallAsteroid, 0, 1 / 1f, Color.White, Size.Normal));
                     }
-                    else if (asteroids[i].leSize == Size.Normal)
+                    else if (asteroid.leSize == Size.Normal)
                     {
                         score += 30;
-                        asteroids[i].leSize++;
-                        asteroids[i].Image = TinyAsteroid;
-                        asteroids[i].Velocity = new Vector2(asteroids[i].Velocity.X * (smallAsteroidVelocity / tinyAsteroidVelocity),
-                            asteroids[i].Velocity.Y * (smallAsteroidVelocity / tinyAsteroidVelocity));
-                        asteroids.Add(new Asteroid(new Vector2(asteroids[i].Position.X + 25, asteroids[i].Position.Y),
-                            new Vector2(-asteroids[i].Velocity.X * 2, -asteroids[i].Velocity.Y * 2), TinyAsteroid, 0, 1 / 1f, Color.White, Size.Baby));
+                        asteroid.leSize++;
+                        asteroid.Image = TinyAsteroid;
+                        asteroid.Velocity = new Vector2(asteroid.Velocity.X * (smallAsteroidVelocity / tinyAsteroidVelocity),
+                            asteroid.Velocity.Y * (smallAsteroidVelocity / tinyAsteroidVelocity));
+                        asteroids.Add(new Asteroid(new Vector2(asteroid.Position.X + 25, asteroid.Position.Y),
+                            new Vector2(-asteroid.Velocity.X * 2, -asteroid.Velocity.Y * 2), TinyAsteroid, 0, 1 / 1f, Color.White, Size.Baby));
                     }
-                    else if (asteroids[i].leSize == Size.Baby)
+                    else if (asteroid.leSize == Size.Baby)
                     {
                         score += 50;
 
-                        asteroids.RemoveAt(i);
+                        asteroids.Remove(asteroid);
                     }
 
                     break;
                 }
 
-                if (i >= asteroids.Count)
+                if (counter >= asteroids.Count)
                 {
                     break;
                 }
 
-                if (asteroids[i].leSize == Size.LeChonk)
+                if (asteroid.leSize == Size.LeChonk)
                 {
-                    asteroids[i].Rotation += 0.005f;
+                    asteroid.Rotation += 0.005f;
                 }
                 else
                 {
-                    asteroids[i].Rotation += 0.01f;
+                    asteroid.Rotation += 0.01f;
                 }
 
-                asteroids[i].Position = new Vector2(asteroids[i].Position.X + (float)Math.Sin(asteroids[i].Rotation) + asteroids[i].Velocity.X,
-                    asteroids[i].Position.Y - (float)Math.Cos(asteroids[i].Rotation) + asteroids[i].Velocity.Y);
+                asteroid.Position = new Vector2(asteroid.Position.X + (float)Math.Sin(asteroid.Rotation) + asteroid.Velocity.X,
+                    asteroid.Position.Y - (float)Math.Cos(asteroid.Rotation) + asteroid.Velocity.Y);
 
-                asteroids[i].IsInBounds(playSpace);
+                asteroid.IsInBounds(playSpace);
 
-                if (ship.Hitbox.Intersects(asteroids[i].Hitbox))
+                if (ship.Hitbox.Intersects(asteroid.Hitbox))
                 {
                     if (iFrames <= TimeSpan.Zero)
                     {
@@ -868,69 +867,62 @@ namespace Asteroid
                         ship.Velocity = 0;
                     }
                     //make look good later
-                }
-            }
+                } counter++;
+            } counter = 0;
 
             UFOMovementSpace = new Rectangle((int)ship.Position.X - 60, 50, 120, 60);
             UFOShotArea = new Rectangle((int)ship.Position.X - level.UFORange, (int)ship.Position.Y, level.UFORange * 2, 1);
 
-            for (int i = 0; i < UFOs.Count; i++)
+            foreach (var UFO in UFOs)
             {
-                if (EnemyCollisionDetection(UFOs[i].Hitbox, shots, ExtraHitboxes))
+                if (EnemyCollisionDetection(UFO.Hitbox, shots, ExtraHitboxes))
                 {
                     //Archived PowerUp Code: laser.Spawned(UFOs[i].Position, new Vector2(rand.Next(1, 3), rand.Next(1, 3)), UFOs[i].leSize);
 
-                    if (UFOs[i].leSize == Size.Normal)
-                    {
-                        score += 100;
-                    }
-                    else if (UFOs[i].leSize == Size.Baby)
-                    {
-                        score += 200;
-                    }
+                    score += 100 * (((int)UFO.leSize) - 1);
 
-                    UFOs.RemoveAt(i);
+                    UFOs.Remove(UFO);
 
                     break;
                 }
 
-                if (i >= UFOs.Count)
+                if (counter >= UFOs.Count)
                 {
                     break;
                 }
 
-                if (UFOs[i].Update(gameTime.ElapsedGameTime))
+                if (UFO.Update(gameTime.ElapsedGameTime))
                 {
-                    enemyShots.Add(UFOs[i].Shoot(UFOShotArea, UFOShot));
+                    enemyShots.Add(UFO.Shoot(UFOShotArea, UFOShot));
                     break;
                 }
 
-                if (UFOs[i].Position.X <= UFOMovementSpace.X)
+                if (UFO.Position.X <= UFOMovementSpace.X)
                 {
-                    UFOs[i].Velocity.X = Math.Abs(UFOs[i].Velocity.X);
+                    UFO.Velocity.X = Math.Abs(UFO.Velocity.X);
                 }
-                else if (UFOs[i].Position.X >= UFOMovementSpace.X + UFOMovementSpace.Width)
+                else if (UFO.Position.X >= UFOMovementSpace.X + UFOMovementSpace.Width)
                 {
-                    UFOs[i].Velocity.X = Math.Abs(UFOs[i].Velocity.X);
-                    UFOs[i].Velocity.X *= -1;
-                }
-
-
-                if (UFOs[i].Position.Y <= UFOMovementSpace.Y)
-                {
-                    UFOs[i].Velocity.Y = Math.Abs(UFOs[i].Velocity.Y);
-                }
-                else if (UFOs[i].Position.Y >= UFOMovementSpace.Y + UFOMovementSpace.Height)
-                {
-                    UFOs[i].Velocity.Y = Math.Abs(UFOs[i].Velocity.Y);
-                    UFOs[i].Velocity.Y *= -1;
+                    UFO.Velocity.X = Math.Abs(UFO.Velocity.X);
+                    UFO.Velocity.X *= -1;
                 }
 
-                UFOs[i].Position = new Vector2(UFOs[i].Position.X + UFOs[i].Velocity.X, UFOs[i].Position.Y + UFOs[i].Velocity.Y);
 
-                UFOs[i].IsInBounds(playSpace);
+                if (UFO.Position.Y <= UFOMovementSpace.Y)
+                {
+                    UFO.Velocity.Y = Math.Abs(UFO.Velocity.Y);
+                }
+                else if (UFO.Position.Y >= UFOMovementSpace.Y + UFOMovementSpace.Height)
+                {
+                    UFO.Velocity.Y = Math.Abs(UFO.Velocity.Y);
+                    UFO.Velocity.Y *= -1;
+                }
 
-                if (ship.Hitbox.Intersects(UFOs[i].Hitbox))
+                UFO.Position = new Vector2(UFO.Position.X + UFO.Velocity.X, UFO.Position.Y + UFO.Velocity.Y);
+
+                UFO.IsInBounds(playSpace);
+
+                if (ship.Hitbox.Intersects(UFO.Hitbox))
                 {
                     if (iFrames <= TimeSpan.Zero)
                     {
@@ -939,8 +931,8 @@ namespace Asteroid
                         iFrames = TimeSpan.FromMilliseconds(2000);
                         ship.Velocity = 0;
                     }
-                }
-            }
+                } counter++;
+            } counter = 0;
 
             ship.IsInBounds(playSpace);
 
@@ -1150,26 +1142,26 @@ namespace Asteroid
 
             _spriteBatch.Begin();
 
-            for (int i = 0; i < asteroids.Count; i++)
+            foreach (var asteroid in asteroids)
             {
-                asteroids[i].Draw(_spriteBatch);
+                asteroid.Draw(_spriteBatch);
             }
-            for (int i = 0; i < UFOs.Count; i++)
+            foreach (var UFO in UFOs)
             {
-                UFOs[i].Draw(_spriteBatch);
+                UFO.Draw(_spriteBatch);
             }
 
 
             ship.Draw(_spriteBatch);
 
-            for (int i = 0; i < shots.Count; i++)
+            foreach (var shot in shots)
             {
-                shots[i].Draw(_spriteBatch);
+                shot.Draw(_spriteBatch);
             }
 
-            for (int i = 0; i < enemyShots.Count; i++)
+            foreach (var enemyShot in enemyShots)
             {
-                enemyShots[i].Draw(_spriteBatch);
+                enemyShot.Draw(_spriteBatch);
             }
 
 
@@ -1195,30 +1187,30 @@ namespace Asteroid
 
             _spriteBatch.DrawString(font, $"{GunInEffectName}", new Vector2(10, 50), GunInEffectColor);
 
-            for (int i = 0; i < ActiveAbilities.Count; i++)
+            foreach (var ability in ActiveAbilities)
             {
-                ActiveAbilities[i].AbilityEnergyStack(ActiveAbilities, i);
-                ActiveAbilities[i].EnergyDraw(_spriteBatch);
-            }
-            for (int i = 0; i < ActiveGuns.Count; i++)
+                ability.AbilityEnergyStack(ActiveAbilities, counter);
+                ability.EnergyDraw(_spriteBatch); counter++;
+            } counter = 0;
+            foreach (var gun in ActiveGuns)
             {
-                ActiveGuns[i].EnergyDraw(_spriteBatch);
+                gun.EnergyDraw(_spriteBatch);
             }
 
 
             //Ability and Upgrade Effects
 
 
-            for (int i = 0; i < ActiveAbilities.Count; i++)
+            foreach (var ability in ActiveAbilities)
             {
-                if ((ActiveAbilities[i] == Shield1 || ActiveAbilities[i] == Shield2 || ActiveAbilities[i] == Shield3) && ActiveAbilities[i].inEffect)
+                if ((ability == Shield1 || ability == Shield2 || ability == Shield3) && ability.inEffect)
                 {
                     ShieldSprite.Position.X = ship.Position.X;
                     ShieldSprite.Position.Y = ship.Position.Y;
                     ShieldSprite.Rotation = ship.Rotation;
                     ShieldSprite.Draw(_spriteBatch);
                 }
-                else if (ActiveAbilities[i] == ShieldFinal && ActiveAbilities[i].inEffect)
+                else if (ability == ShieldFinal && ability.inEffect)
                 {
                     ShieldSprite.Position.X = ship.Position.X;
                     ShieldSprite.Position.Y = ship.Position.Y;
@@ -1232,9 +1224,9 @@ namespace Asteroid
             //Ability and Upgrade Effects
 
 
-            for (int i = 0; i < UpgradesToDraw.Count; i++)
+            foreach (var upgrade in UpgradesToDraw)
             {
-                UpgradesToDraw[i].Draw(upgradeTitleFont, upgradeDescFont, _spriteBatch);
+                upgrade.Draw(upgradeTitleFont, upgradeDescFont, _spriteBatch);
             }
             UpgradeSkip.Draw(_spriteBatch);
 
