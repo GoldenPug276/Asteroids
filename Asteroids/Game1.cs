@@ -75,6 +75,7 @@ namespace Asteroid
         Upgrade Drones1;
         Upgrade Drones2;
         Upgrade Drones3;
+        List<Ship> DroneList = new List<Ship>();
         TimeSpan DronesShotTimer = new TimeSpan(0, 0, 0, 5, 0);
         TimeSpan reserveDronesShotTimer = new TimeSpan(0, 0, 0, 5, 0);
         List<Upgrade> DroneProgHolder = new List<Upgrade>();
@@ -233,7 +234,7 @@ namespace Asteroid
          *      
          *      replace the "test" upgarde amd ability with actual ones and remove the "test" parameter.
          *          Ability Done
-         *          Upgrade not Done
+         *          Upgrade not Done (ok back to this) (turn the "to dos" into "dones" when done with them)
          *      
          *          make the test upgrade into a drone that circles around the ship and shoots special bullets
          *          its progression is for fire rate and drone amount
@@ -241,8 +242,12 @@ namespace Asteroid
          *              Have made the types but haven't removed the Test
          *              Made the sprites
          *              Made the "Upgrade" upgrades and the shot timer (starts at 5 seconds)
-         *                  the drones should be stuck to specific areas near the ship and they should turn to face what they shoot at. they shoot machine gun bullets
-         *                  either make a seperate shots list for them or just be lazy and add to the ship's shots
+         *                  The drones should be stuck to specific areas near the ship and they should turn to face what they shoot at. They shoot machine gun bullets
+         *                  Either make a seperate shots list for them or just be lazy and add to the ship's shots (probably gonna be lazy so they react the same)
+         *              Make a drone appear for the first uprade and make it stay by the ship correctly (alter position draw to make position right)
+         *                  The drones will be in a List in order to better track them. Each drone will be made as a Ship for simplicity
+         *              a
+         *                  Steal the shooting code from the UFO class and work it into the drone
          *              a
          *          
          *          make the test ability into a shield that, when held, surrounds the ship and protects from all damage whilst draining energy, but you cannot shoot out of it
@@ -255,9 +260,9 @@ namespace Asteroid
          *              Made the shield texture into a Sprite
          *              Made the shield display when inEffect; also slightly changed the texture and capitalized it and the drone
          *              Made the effect; remember, can't shoot while active, protects from damage
-         *                  Before continuing, make the hit detection for the asteroids and ufos better (likely a function that takes either shot or hitbox and reacts) *DONE*
-         *                  Pretty horrid and basic, but it works
-         *                  Uses a Hitbox List that holds potential colliders, then removes them if they are unactive (like activating adds, deactivating removes)
+         *                  Before continuing, make the hit detection for the asteroids and ufos better (likely a function that takes either shot or hitbox and reacts)
+         *                      Pretty horrid and basic, but it works
+         *                      Uses a Hitbox List that holds potential colliders, then removes them if they are unactive (like activating adds, deactivating removes)
          *              Removed the Test value
          *      
          *                                                          {{remove individual dones below when done with the test removal}}
@@ -273,7 +278,7 @@ namespace Asteroid
          *      
          *      clean up the code a bit; changes will mostly be using foreach instead of for(every one) and replacing variables in bool functions with returns *DONE*
          *      
-         *      make it so if you run out of energy while holding an ability, the bar's color changes and you need at least 33 energy to use it again (like an overheat) *DOING*
+         *      make it so if you run out of energy while holding an ability/gun, the bar's color changes and you need to regen 1/3 of it to use it again (overheat) *DONE*
          *          can likely do this with a variable in the Upgrade class that changes when WillAbilityGetUsed returns false
          *          is being done via an overheat that checks if the ability was used last frame and if it was + out of energy, activate overheat
          *      **DOING**
@@ -969,6 +974,19 @@ namespace Asteroid
                 }
             }
 
+            for (int i = 0; i < DroneProgHolder.Count; i++)
+            {
+                if (DroneProgHolder[i].isActive)
+                {
+                    DroneList.Add(new Ship(new Vector2(ship.Position.X + 10, ship.Position.Y - 5), 0, Content.Load<Texture2D>("Upgrades/Drone"), 0, 1 / 1f, Color.White));
+                    DroneProgHolder[i].inEffect = true;
+                }
+                if (DroneProgHolder[i].inEffect)
+                {
+
+                }
+            }
+
             /*
             if (ShotSpeedUp1.isActive==true && ShotSpeedUp1.inEffect==false)
             {
@@ -1200,6 +1218,14 @@ namespace Asteroid
 
             //Ability and Upgrade Effects
 
+            foreach (var upgrade in ActiveUpgrades)
+            {
+                if (upgrade == Drones1 && upgrade.inEffect)
+                {
+                    DroneList[0].Position = new Vector2(ship.Position.X + 20, ship.Position.Y - 10);
+                    DroneList[0].Draw(_spriteBatch);
+                }
+            }
 
             foreach (var ability in ActiveAbilities)
             {

@@ -38,6 +38,7 @@ namespace Asteroid
         public bool isGun = false;
         private bool usedThisFrame = false;
         private bool usedLastFrame = false;
+        public bool Overheat = false;
 
         public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability,
             string name, string descrip1, string descrip2, string descrip3, string descrip4, List<Upgrade> progList, int progLevel, float energy,
@@ -131,14 +132,8 @@ namespace Asteroid
             usedThisFrame = false;
 
             float energyGain;
-            if (EnergyGainMultiplier < 10)
-            {
-                energyGain = 1;
-            }
-            else
-            {
-                energyGain = EnergyGainMultiplier / 10;
-            }
+            if (EnergyGainMultiplier < 10) { energyGain = 1; }
+            else { energyGain = EnergyGainMultiplier / 10; }
 
             energyRegen -= ElapsedGameTime;
             if (energyRegen <= TimeSpan.Zero && energyRemaining.Width < 100)
@@ -155,28 +150,34 @@ namespace Asteroid
                 }
                 energyRegen = reserveEnergyRegen / EnergyGainMultiplier;
             }
+
+            if (Overheat && energyRemaining.Width>=energyTotal.Width/3) { Overheat = false; }
         }
 
         public bool WillGunShoot(TimeSpan shotTimer)
         {
-            if (isActive && inEffect && shotTimer <= TimeSpan.Zero && energyRemaining.Width >= EnergyUse) { usedThisFrame = true; return true; }
+            if (isActive && inEffect && shotTimer <= TimeSpan.Zero && energyRemaining.Width >= EnergyUse && !Overheat) { usedThisFrame = true; return true; }
 
             if (usedLastFrame && energyRemaining.Width < EnergyUse)
             {
-                energyTotal.X += 10;
+                Overheat = true;
+                energyRemaining.Width = 0;
+                movingEnergy.Width = 0;
             }
             return false;
         }
         public bool WillAbilityGetUsed()
         {
-            if (isActive && energyRemaining.Width >= EnergyUse) { usedThisFrame = true; return true; }
+            if (isActive && energyRemaining.Width >= EnergyUse && !Overheat) { usedThisFrame = true; return true; }
+
+            if (usedLastFrame && energyRemaining.Width < EnergyUse)
+            {
+                Overheat = true;
+                energyRemaining.Width = 0;
+                movingEnergy.Width = 0;
+            }
 
             return false;
-        }
-
-        public void AbilityOverheat()
-        {
-
         }
 
         public void AbilityEnergyStack(List<Upgrade> upgrades, int i)
@@ -184,10 +185,7 @@ namespace Asteroid
             int count = upgrades.Count;
 
             int value = count - i;
-            if (count == 0)
-            {
-                value = 0;
-            }
+            if (count == 0) { value = 0; }
 
             energyTotal.Y = 475 - (25 * value);
             energyRemaining.Y = 475 - (25 * value);
@@ -223,11 +221,14 @@ namespace Asteroid
         }
         public void EnergyDraw(SpriteBatch sb)
         {
+            Color tColor = Color;
+            if (Overheat) { tColor = Color.Red; }
+
             if ((isGun && inEffect) || (!isGun && isActive))
             {
+                sb.FillRectangle(energyRemaining, tColor);
                 sb.DrawRectangle(energyTotal, Color);
-                sb.FillRectangle(energyRemaining, Color);
-                sb.FillRectangle(movingEnergy, Color.Lerp(Color, Color.Transparent, 0.5f));
+                sb.FillRectangle(movingEnergy, Color.Lerp(tColor, Color.Transparent, 0.5f));
             }
         }
     }
