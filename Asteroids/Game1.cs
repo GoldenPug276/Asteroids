@@ -3,11 +3,13 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Windows.UI.Notifications;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Asteroid
 {
@@ -243,9 +245,17 @@ namespace Asteroid
          *              Made the sprites
          *              Made the "Upgrade" upgrades and the shot timer (starts at 5 seconds)
          *                  The drones should be stuck to specific areas near the ship and they should turn to face what they shoot at. They shoot machine gun bullets
-         *                  Either make a seperate shots list for them or just be lazy and add to the ship's shots (probably gonna be lazy so they react the same)
-         *              Make a drone appear for the first uprade and make it stay by the ship correctly (alter position draw to make position right)
+         *                  The drones' bullets are added to the ship's shots
+         *              Made a drone appear for the first uprade and make it stay by the ship correctly (alter position draw to make position right)
          *                  The drones will be in a List in order to better track them. Each drone will be made as a Ship for simplicity
+         *                  Drone1 will be made alone before the rest
+         *              Make the drone turn to a target
+         *                  After thinking about it, I have decided that the drones will just pick a target at random rather than aiming for the closest one
+         *                      First, draw a line from the drone to its target in order to see if it works, then turn to the line
+         *                          (line drawn, delete later)
+         *                      */
+                                Vector2 tempDroneTargetPosition = new Vector2(0, 0);
+                       /*
          *              a
          *                  Steal the shooting code from the UFO class and work it into the drone
          *              a
@@ -983,7 +993,40 @@ namespace Asteroid
                 }
                 if (DroneProgHolder[i].inEffect)
                 {
+                    DronesShotTimer -= gameTime.ElapsedGameTime;
+                    if (DronesShotTimer<=TimeSpan.Zero)
+                    {
+                        bool asteroidOrUFO = true; //true = asteroid; false = UFO
+                        if      (asteroids.Count!=0 && UFOs.Count!=0) { asteroidOrUFO = Convert.ToBoolean(rand.Next(0, 2)); }
+                        else if (asteroids.Count!=0 && UFOs.Count==0) { asteroidOrUFO = true; }
+                        else if (asteroids.Count==0 && UFOs.Count!=0) { asteroidOrUFO = false; }
 
+                        int temp = 0;
+                        if       (asteroidOrUFO) { temp = asteroids.Count; }
+                        else if (!asteroidOrUFO) { temp = UFOs.Count; }
+                        int target = rand.Next(0, temp);
+
+                        Vector2 droneTargetPosition = new Vector2(0, 0);
+                        if       (asteroidOrUFO) { droneTargetPosition = asteroids[target].Position; }
+                        else if (!asteroidOrUFO) { droneTargetPosition = UFOs[target].Position; }
+                        tempDroneTargetPosition = droneTargetPosition;
+
+                        Vector2 start;
+                        Vector2 destination;
+                        Vector2 between;
+                        //
+                        start = new Vector2(DroneProgHolder[i].Position.X, DroneProgHolder[i].Position.Y + DroneProgHolder[i].Image.Height / 2);
+                        destination = droneTargetPosition;
+                        between = start - destination;
+                        //
+                        float angle = (float)Math.Atan2((double)between.Y, (double)between.X) - MathHelper.ToRadians(90);
+
+                        DroneList[i].Rotation = angle;
+
+
+
+                        DronesShotTimer = reserveDronesShotTimer;
+                    }
                 }
             }
 
@@ -1105,9 +1148,9 @@ namespace Asteroid
                     if (keyboardState.IsKeyDown(Keys.Z) && ShieldProgHolder[i].WillAbilityGetUsed())
                     {
                         float energyGainMultiplier = 5;
-                        if (i == 1) { energyGainMultiplier = 10; }
+                        if (i == 1) { energyGainMultiplier = 9; }
                         if (i == 2) { energyGainMultiplier = 18; }
-                        if (i == 3) { energyGainMultiplier = 6.9f; }
+                        if (i == 3) { energyGainMultiplier = 3.8f; }
                         ShieldProgHolder[i].EnergyGainMultiplier = energyGainMultiplier;
                         ShieldProgHolder[i].AbilityUse();
                         ShieldProgHolder[i].inEffect = true;
@@ -1119,23 +1162,18 @@ namespace Asteroid
                         CanShoot = true;
                         ExtraHitboxes.Remove(ShieldSprite.Hitbox);
                     }
+
+                    if (ShieldProgHolder[i].inEffect)
+                    {
+                        if (iFrames <= TimeSpan.FromMilliseconds(20)) { iFrames = TimeSpan.FromMilliseconds(20); }
+
+                        if ((i == ShieldFinal.ProgressionLevel - 1) && (!ExtraHitboxes.Contains(ShieldSprite.Hitbox)))
+                        {
+                            ExtraHitboxes.Add(ShieldSprite.Hitbox);
+                        }
+                    }
+
                     break;
-                }
-            }
-
-            for (int i = 0; i < ShieldProgHolder.Count; i++)
-            {
-                if (ShieldProgHolder[i].inEffect)
-                {
-                    if (iFrames <= TimeSpan.FromMilliseconds(20)) 
-                    {
-                        iFrames = TimeSpan.FromMilliseconds(20);
-                    }
-
-                    if (i == ShieldFinal.ProgressionLevel - 1)
-                    {
-                        ExtraHitboxes.Add(ShieldSprite.Hitbox);
-                    }
                 }
             }
 
@@ -1222,8 +1260,10 @@ namespace Asteroid
             {
                 if (upgrade == Drones1 && upgrade.inEffect)
                 {
-                    DroneList[0].Position = new Vector2(ship.Position.X + 20, ship.Position.Y - 10);
+                    DroneList[0].Position = new Vector2(ship.Position.X + 22, ship.Position.Y - 12);
                     DroneList[0].Draw(_spriteBatch);
+
+                    _spriteBatch.DrawLine(DroneList[0].Position, tempDroneTargetPosition, Color.Red);
                 }
             }
 
