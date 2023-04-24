@@ -125,7 +125,7 @@ namespace Asteroid
 
             return newLevel;
         }
-        public void Update(TimeSpan gameTime, Rectangle playSpace, List<Asteroid> roids, List<UFO> flys)
+        public void Update(TimeSpan gameTime, Rectangle playSpace, List<Enemy> roids, List<Enemy> flys)
         {
             GlobalSpawnTimer -= gameTime;
             smallTimer -= gameTime;
@@ -135,7 +135,7 @@ namespace Asteroid
             if (GlobalSpawnTimer<=TimeSpan.Zero && !LargeAssMax)
             {
                 //whatSpawns = Game1.WhatSpawned.LargeAss;
-                roids.Add(Asteroid.NaturalSpawn(playSpace, largevelocity, largeAss, Game1.Size.LeChonk));
+                roids.Add(Enemy.NaturalSpawn(Enemy.Type.Asteroid, playSpace, largevelocity, largeAss, Game1.Size.LeChonk, TimeSpan.Zero));
                 GlobalSpawnTimer = reserveSpawnTimer;
                 LargeSpawned++;
             }
@@ -147,7 +147,7 @@ namespace Asteroid
             if (smallTimer<=TimeSpan.Zero && !SmallAssMax)
             {
                 //whatSpawns = Game1.WhatSpawned.SmallAss;
-                roids.Add(Asteroid.NaturalSpawn(playSpace, smallvelocity, smallAss, Game1.Size.Normal));
+                roids.Add(Enemy.NaturalSpawn(Enemy.Type.Asteroid, playSpace, smallvelocity, smallAss, Game1.Size.Normal, TimeSpan.Zero));
                 smallTimer = reserveSpawnTimer * 0.5;
                 SmallSpawned++;
             }
@@ -159,7 +159,7 @@ namespace Asteroid
             if (largeUTimer<=TimeSpan.Zero && !LargeSauceMax)
             {
                 //whatSpawns = Game1.WhatSpawned.LargeSauce;
-                flys.Add(UFO.NaturalSpawn(playSpace, largevelocity, largeUFO, Game1.Size.Normal, UFOShotTimer));
+                flys.Add(Enemy.NaturalSpawn(Enemy.Type.UFO, playSpace, largevelocity, largeUFO, Game1.Size.Normal, UFOShotTimer));
                 largeUTimer = reserveSpawnTimer * 0.80;
                 LargeUSpawned++;
             }
@@ -171,7 +171,7 @@ namespace Asteroid
             if (smallUTimer<=TimeSpan.Zero && !SmallSauceMax)
             {
                 //whatSpawns = Game1.WhatSpawned.SmallSauce;
-                flys.Add(UFO.NaturalSpawn(playSpace, tinyvelocity, smallUFO, Game1.Size.Baby, SmallUFOShotTimer));
+                flys.Add(Enemy.NaturalSpawn(Enemy.Type.Asteroid, playSpace, tinyvelocity, smallUFO, Game1.Size.Baby, SmallUFOShotTimer));
                 smallUTimer = reserveSpawnTimer * 1.50;
                 SmallUSpawned++;
             }

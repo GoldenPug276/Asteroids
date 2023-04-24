@@ -82,7 +82,7 @@ namespace Asteroid
         List<Ship> DroneList = new List<Ship>();
         List<TimeSpan> DroneShotTimers = new List<TimeSpan>();
         TimeSpan reserveDroneShotTimer = new TimeSpan(0, 0, 0, 5, 0);
-        List<Vector2> DroneTargets = new List<Vector2>();
+        List<int> DroneTargetValues = new List<int>();
         List<Upgrade> DroneProgHolder = new List<Upgrade>();
 
         Upgrade Warp;
@@ -126,8 +126,9 @@ namespace Asteroid
 
         public Random rand = new Random();
 
-        List<Asteroid> asteroids = new List<Asteroid>();
-        List<UFO> UFOs = new List<UFO>();
+        List<Enemy> AllEnemies = new List<Enemy>();
+        List<Enemy> Asteroids = new List<Enemy>();
+        List<Enemy> UFOs = new List<Enemy>();
         Texture2D BigAsteroid;
         Texture2D SmallAsteroid;
         Texture2D TinyAsteroid;
@@ -247,7 +248,7 @@ namespace Asteroid
          *              Have made the types but haven't removed the Test
          *              Made the sprites
          *              Made the "Upgrade" upgrades and the shot timer (starts at 5 seconds)
-         *                  The drones should be stuck to specific areas near the ship and they should turn to face what they shoot at. They shoot machine gun bullets
+         *                  The drones should be stuck to specific areas near the ship and they should turn to face what they shoot at
          *                  The drones' bullets are added to the ship's shots
          *              Made a drone appear for the first uprade and make it stay by the ship correctly (alter position draw to make position right)
          *                  The drones will be in a List in order to better track them. Each drone will be made as a Ship for simplicity
@@ -257,11 +258,12 @@ namespace Asteroid
          *                      First, draw a line from the drone to its target in order to see if it works, then turn to the line *this worked and the line was removed*
          *                          (line drawn, delete later)
          *              Made the drone fire
-         *              Make the drone upgrades
+         *              Made the drone upgrades
          *                  Created a List to hold each Drone's ShotTimer and a List to hold each Drone's Target
-         *              a
-         *                  Steal the shooting code from the UFO class and work it into the drone
-         *              a
+         *                      Combined the UFOs and Asteroids into one Enemy Class (progress below)
+         *              Make a specific bullet for Drones
+         *                  might end up changing the drones to firing a quick beam at the target/zapping it
+         *              Remove the Test Value
          *          
          *          make the test ability into a shield that, when held, surrounds the ship and protects from all damage whilst draining energy, but you cannot shoot out of it
          *          its progression is for time it can be up/energy regen, but the last upgrade lets you sacrifice that speed and turn it into a fire orb that melts enemies
@@ -273,28 +275,42 @@ namespace Asteroid
          *              Made the shield texture into a Sprite
          *              Made the shield display when inEffect; also slightly changed the texture and capitalized it and the drone
          *              Made the effect; remember, can't shoot while active, protects from damage
-         *                  Before continuing, make the hit detection for the asteroids and ufos better (likely a function that takes either shot or hitbox and reacts)
+         *                  Before continuing, make the hit detection for the Asteroids and UFOs better (likely a function that takes either shot or hitbox and reacts)
          *                      Pretty horrid and basic, but it works
          *                      Uses a Hitbox List that holds potential colliders, then removes them if they are unactive (like activating adds, deactivating removes)
          *              Removed the Test value
-         *      
-         *                                                          {{remove individual dones below when done with the test removal}}
-         *      **DOING** (things done during the above task) 
-         *      make Upgrade remove the previous levels of abilities from the activeAbilities when picking the next level *DONE*
-         *      make quick energy regen possible by having high energyGainMultiplier's lead to more energy being added at once *DONE*
+         *              
+         *              
+         *      **DONE** (things done during the above task) 
+         *      make Upgrade remove the previous levels of abilities from the activeAbilities when picking the next level
+         *      make quick energy regen possible by having high energyGainMultiplier's lead to more energy being added at once
          *      make a function in Upgrade that lets you add an image to draw/thing to add to the screen when in effect (like abilitiy effect or upgrade thing) *SOMEWHAT DONE*
          *          actually, for this, just have manual draws since these will often need specific information from the Game1
          *          the draw might get cluttered up with this, so I will make sure to have a specific spot for it
-         *      make an extra variable called CanShoot that will determine if you are able to fire, mainly used for a shield *DONE*
-         *      add a parameter to Sprite that lets you visually change the Sprite if you want to (null by default, needs seperate assignment) *DONE*
+         *      make an extra variable called CanShoot that will determine if you are able to fire, mainly used for a shield
+         *      add a parameter to Sprite that lets you visually change the Sprite if you want to (null by default, needs seperate assignment)
          *          use this to make better hitboxes in the future
          *      
-         *      clean up the code a bit; changes will mostly be using foreach instead of for(every one) and replacing variables in bool functions with returns *DONE*
+         *      clean up the code a bit; changes will mostly be using foreach instead of for(every one) and replacing variables in bool functions with returns
          *      
-         *      make it so if you run out of energy while holding an ability/gun, the bar's color changes and you need to regen 1/3 of it to use it again (overheat) *DONE*
+         *      make it so if you run out of energy while holding an ability/gun, the bar's color changes and you need to regen 1/3 of it to use it again (overheat)
          *          can likely do this with a variable in the Upgrade class that changes when WillAbilityGetUsed returns false
          *          is being done via an overheat that checks if the ability was used last frame and if it was + out of energy, activate overheat
-         *      **DOING**
+         *          
+         *      combine the ufos and Asteroids into a single enemy class
+         *          use types to split the enemies into ufos and Asteroids
+         *              this should help keep track of them
+         *              i added comments to show what parts of it were from the original classes
+         *          enemy class made, now convert
+         *              do it by commenting out asteroid and ufo and fixing the errors. also capitalize the asteroids list while you're at it
+         *          have a function in enemy that splits the enemies into ufo and asteroid lists for ease of use
+         *              follow this up with a function that syncs the split lists with the main list
+         *          completed
+         *      **DONE**
+         *      
+         *      
+         *      
+         *      
          *      
          *      (Next Thing)
          *      
@@ -429,9 +445,9 @@ namespace Asteroid
 
             level = new Level(5, 1, 0, 0, TimeSpan.FromMilliseconds(20000), 100, 5, 1);
 
-            asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
-            asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
-            asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
+            Asteroids.Add(Enemy.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
+            Asteroids.Add(Enemy.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
+            Asteroids.Add(Enemy.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
 
             UpgradeSlot = Content.Load<Texture2D>("UpgradeImages/UpgradeSlot");
             SkipUpgrade = Content.Load<Texture2D>("UpgradeImages/UpgradeSkip");
@@ -553,14 +569,16 @@ namespace Asteroid
             int height = GraphicsDevice.Viewport.Height;
 
 
-            Window.Title = $"asteroidsCount: {asteroids.Count}      UFOCount: {UFOs.Count}      pressed: {tempPress}        width: {width}      height: {height}";
+            Window.Title = $"AsteroidsCount: {Asteroids.Count}      UFOCount: {UFOs.Count}      pressed: {tempPress}        width: {width}      height: {height}";
 
             KeyboardState keyboardState = Keyboard.GetState();
             MouseState mouseState = Mouse.GetState();
 
 
 
-
+            
+            Enemy.Sync(AllEnemies, Asteroids, UFOs);
+            Enemy.Split(AllEnemies, Asteroids, UFOs);
 
             score0s = "";
 
@@ -570,7 +588,7 @@ namespace Asteroid
             }
             if (keyboardState.IsKeyDown(Keys.OemOpenBrackets) && lastKeyboardState.IsKeyUp(Keys.OemOpenBrackets))
             {
-                asteroids.Clear();
+                Asteroids.Clear();
                 UFOs.Clear();
             }
 
@@ -627,10 +645,10 @@ namespace Asteroid
 
             level.VariablePass(tinyAsteroidVelocity, smallAsteroidVelocity, largeAsteroidVelocity, SmallAsteroid, BigAsteroid, SmallSaucer, BigSaucer);
 
-            level.Update(gameTime.ElapsedGameTime, playSpace, asteroids, UFOs);
+            level.Update(gameTime.ElapsedGameTime, playSpace, Asteroids, UFOs);
             UFOShot.Velocity = level.UFOShotSpeed;
 
-            if (asteroids.Count == 0 && UFOs.Count == 0 && level.Finished ||
+            if (Asteroids.Count == 0 && UFOs.Count == 0 && level.Finished ||
                 keyboardState.IsKeyDown(Keys.OemCloseBrackets) && lastKeyboardState.IsKeyUp(Keys.OemCloseBrackets))
             {
                 if (UpgradeTime < 1)
@@ -693,9 +711,9 @@ namespace Asteroid
                 tinyAsteroidVelocity *= 1.05f;
                 smallAsteroidVelocity *= 1.1f;
                 largeAsteroidVelocity *= 1.2f;
-                asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
-                asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
-                asteroids.Add(Asteroid.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
+                Asteroids.Add(Enemy.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
+                Asteroids.Add(Enemy.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
+                Asteroids.Add(Enemy.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship));
                 UpgradeChosen = false;
                 UpgradeTime = 0;
             }
@@ -820,11 +838,11 @@ namespace Asteroid
                 if (!IsBulletInBounds(enemyShots, counter, playSpace)) { break; } counter++;
             } counter = 0;
 
-            foreach (var asteroid in asteroids)
+            foreach (var asteroid in Asteroids)
             {
                 if (EnemyCollisionDetection(asteroid.Hitbox, shots, ExtraHitboxes))
                 {
-                    //Archived PowerUp Code: machine.Spawned(asteroids[i].Position, new Vector2(rand.Next(1, 4), rand.Next(1, 4)), asteroids[i].leSize);
+                    //Archived PowerUp Code: machine.Spawned(Asteroids[i].Position, new Vector2(rand.Next(1, 4), rand.Next(1, 4)), Asteroids[i].leSize);
 
                     if (asteroid.leSize == Size.LeChonk)
                     {
@@ -833,8 +851,8 @@ namespace Asteroid
                         asteroid.Image = SmallAsteroid;
                         asteroid.Velocity = new Vector2(asteroid.Velocity.X * (largeAsteroidVelocity / smallAsteroidVelocity),
                             asteroid.Velocity.Y * (largeAsteroidVelocity / smallAsteroidVelocity));
-                        asteroids.Add(new Asteroid(new Vector2(asteroid.Position.X + 60, asteroid.Position.Y),
-                            new Vector2(-asteroid.Velocity.X * 2, -asteroid.Velocity.Y * 2), SmallAsteroid, 0, 1 / 1f, Color.White, Size.Normal));
+                        Asteroids.Add(new Enemy(new Vector2(asteroid.Position.X + 60, asteroid.Position.Y), new Vector2(-asteroid.Velocity.X * 2, -asteroid.Velocity.Y * 2), 
+                            SmallAsteroid, 0, 1 / 1f, Color.White, Size.Normal, TimeSpan.Zero, Enemy.Type.Asteroid));
                     }
                     else if (asteroid.leSize == Size.Normal)
                     {
@@ -843,20 +861,19 @@ namespace Asteroid
                         asteroid.Image = TinyAsteroid;
                         asteroid.Velocity = new Vector2(asteroid.Velocity.X * (smallAsteroidVelocity / tinyAsteroidVelocity),
                             asteroid.Velocity.Y * (smallAsteroidVelocity / tinyAsteroidVelocity));
-                        asteroids.Add(new Asteroid(new Vector2(asteroid.Position.X + 25, asteroid.Position.Y),
-                            new Vector2(-asteroid.Velocity.X * 2, -asteroid.Velocity.Y * 2), TinyAsteroid, 0, 1 / 1f, Color.White, Size.Baby));
+                        Asteroids.Add(new Enemy(new Vector2(asteroid.Position.X + 25, asteroid.Position.Y), new Vector2(-asteroid.Velocity.X * 2, -asteroid.Velocity.Y * 2), 
+                            TinyAsteroid, 0, 1 / 1f, Color.White, Size.Baby, TimeSpan.Zero, Enemy.Type.Asteroid));
                     }
                     else if (asteroid.leSize == Size.Baby)
                     {
                         score += 50;
-
-                        asteroids.Remove(asteroid);
+                        Asteroids.Remove(asteroid);
                     }
 
                     break;
                 }
 
-                if (counter >= asteroids.Count)
+                if (counter >= Asteroids.Count)
                 {
                     break;
                 }
@@ -904,39 +921,15 @@ namespace Asteroid
                     break;
                 }
 
-                if (counter >= UFOs.Count)
-                {
-                    break;
-                }
+                if (counter >= UFOs.Count) { break; }
 
-                if (UFO.Update(gameTime.ElapsedGameTime))
+                if (UFO.UFOUpdate(gameTime.ElapsedGameTime))
                 {
                     enemyShots.Add(UFO.Shoot(UFOShotArea, UFOShot));
                     break;
                 }
 
-                if (UFO.Position.X <= UFOMovementSpace.X)
-                {
-                    UFO.Velocity.X = Math.Abs(UFO.Velocity.X);
-                }
-                else if (UFO.Position.X >= UFOMovementSpace.X + UFOMovementSpace.Width)
-                {
-                    UFO.Velocity.X = Math.Abs(UFO.Velocity.X);
-                    UFO.Velocity.X *= -1;
-                }
-
-
-                if (UFO.Position.Y <= UFOMovementSpace.Y)
-                {
-                    UFO.Velocity.Y = Math.Abs(UFO.Velocity.Y);
-                }
-                else if (UFO.Position.Y >= UFOMovementSpace.Y + UFOMovementSpace.Height)
-                {
-                    UFO.Velocity.Y = Math.Abs(UFO.Velocity.Y);
-                    UFO.Velocity.Y *= -1;
-                }
-
-                UFO.Position = new Vector2(UFO.Position.X + UFO.Velocity.X, UFO.Position.Y + UFO.Velocity.Y);
+                UFO.UFOMovement(UFOMovementSpace);
 
                 UFO.IsInBounds(playSpace);
 
@@ -999,7 +992,7 @@ namespace Asteroid
 
             for (int i = 0; i < DroneProgHolder.Count; i++)
             {
-                if (DroneProgHolder[i].isActive && DroneProgHolder[i].inEffect==false) //cut down the drone number detection
+                if (DroneProgHolder[i].isActive && DroneProgHolder[i].inEffect==false)
                 {
                     DroneList.Add(new Ship(new Vector2(0, 0), 0, Content.Load<Texture2D>("Upgrades/Drone"), 0, 1 / 1f, Color.White));
 
@@ -1007,38 +1000,39 @@ namespace Asteroid
                     reserveDroneShotTimer = TimeSpan.FromSeconds(5 - (1.5 * i) - a);
                     DroneShotTimers.Add(reserveDroneShotTimer);
 
-                    DroneTargets.Add(new Vector2(0, 0));
+                    DroneTargetValues.Add(rand.Next(0, AllEnemies.Count));
 
                     DroneProgHolder[i].inEffect = true;
+                    break;
                 }
                 
                 if (DroneProgHolder[i].inEffect)
                 {
-                    if (DroneTargets[i]==new Vector2(0,0))
-                    {
-                        bool asteroidOrUFO = true; //true = asteroid; false = UFO
-                        if (asteroids.Count!=0 && UFOs.Count!=0) { asteroidOrUFO = Convert.ToBoolean(rand.Next(0, 2)); }
-                        else if (asteroids.Count!=0 && UFOs.Count==0) { asteroidOrUFO = true; }
-                        else if (asteroids.Count==0 && UFOs.Count!=0) { asteroidOrUFO = false; }
-                        else if (asteroids.Count==0 && UFOs.Count==0) { break; }
+                    /*
+                    In case I never need this code again
 
-                        int temp = 0;
-                        if (asteroidOrUFO) { temp = asteroids.Count; }
-                        else if (!asteroidOrUFO) { temp = UFOs.Count; }
-                        int target = rand.Next(0, temp);
+                    bool asteroidOrUFO = true; //true = asteroid; false = UFO
+                    if (Asteroids.Count != 0 && UFOs.Count != 0) { asteroidOrUFO = Convert.ToBoolean(rand.Next(0, 2)); }
+                    else if (Asteroids.Count != 0 && UFOs.Count == 0) { asteroidOrUFO = true; }
+                    else if (Asteroids.Count == 0 && UFOs.Count != 0) { asteroidOrUFO = false; }
+                    else if (Asteroids.Count == 0 && UFOs.Count == 0) { break; }
 
-                        Vector2 droneTargetPosition = new Vector2(0, 0);
-                        if (asteroidOrUFO) { droneTargetPosition = asteroids[target].Position; }
-                        else if (!asteroidOrUFO) { droneTargetPosition = UFOs[target].Position; }
-                        DroneTargets[i] = droneTargetPosition;
-                    }
+                    int temp = 0;
+                    if (asteroidOrUFO) { temp = Asteroids.Count; }
+                    else if (!asteroidOrUFO) { temp = UFOs.Count; }
+                    int target = rand.Next(0, AllEnemies.Count);
+
+                    Vector2 droneTargetPosition = AllEnemies[rand.Next(0, AllEnemies.Count)].Position;
+                    if (asteroidOrUFO) { droneTargetPosition = Asteroids[target].Position; }
+                    else if (!asteroidOrUFO) { droneTargetPosition = UFOs[target].Position; }
+                    */
 
                     Vector2 start;
                     Vector2 destination;
                     Vector2 between;
                     //
                     start = DroneList[i].Hitbox.Center.ToVector2();
-                    destination = DroneTargets[i];
+                    destination = AllEnemies[DroneTargetValues[i]].Position;
                     between = start - destination;
                     //
                     float angle = (float)Math.Atan2((double)between.Y, (double)between.X) - MathHelper.ToRadians(90);
@@ -1046,12 +1040,12 @@ namespace Asteroid
                     DroneList[i].Rotation = angle;
 
                     DroneShotTimers[i] -= gameTime.ElapsedGameTime;
-                    if (DroneShotTimers[i]<=TimeSpan.Zero)
+                    if (DroneShotTimers[i] <= TimeSpan.Zero)
                     {
                         shots.Add(Bullet.BulletTypeCopy(MachineGun.GunBullet, DroneList[i].Position, angle));
 
                         DroneShotTimers[i] = reserveDroneShotTimer;
-                        DroneTargets[i] = new Vector2(0, 0);
+                        DroneTargetValues[i] = rand.Next(0, AllEnemies.Count);
                     }
                 }
             }
@@ -1224,7 +1218,7 @@ namespace Asteroid
 
             _spriteBatch.Begin();
 
-            foreach (var asteroid in asteroids)
+            foreach (var asteroid in Asteroids)
             {
                 asteroid.Draw(_spriteBatch);
             }
@@ -1291,21 +1285,18 @@ namespace Asteroid
                         switch (i)
                         {
                             case 0:
-                                DroneList[i].Position = new Vector2(ship.Position.X + 22, ship.Position.Y - 12);
-                                break;
+                                DroneList[i].Position = new Vector2(ship.Position.X + 22, ship.Position.Y - 12); break;
 
                             case 1:
-                                DroneList[i].Position = new Vector2(ship.Position.X - 22, ship.Position.Y - 12);
-                                break;
+                                DroneList[i].Position = new Vector2(ship.Position.X - 22, ship.Position.Y - 12); break;
 
                             case 2:
-                                DroneList[i].Position = new Vector2(ship.Position.X, ship.Position.Y + 32);
-                                break;
+                                DroneList[i].Position = new Vector2(ship.Position.X, ship.Position.Y + 32); break;
                         }
 
                         DroneList[i].Draw(_spriteBatch);
 
-                        _spriteBatch.DrawLine(DroneList[i].Position, DroneTargets[i], Color.Red);
+                        _spriteBatch.DrawLine(DroneList[i].Position, AllEnemies[DroneTargetValues[i]].Position, Color.Red);
                     }
 
 

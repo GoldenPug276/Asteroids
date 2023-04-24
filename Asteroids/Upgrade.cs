@@ -106,9 +106,12 @@ namespace Asteroid
                     }
                     if (ProgressionLevel > 1)
                     {
-                        ProgressionList[ProgressionLevel - 2].inEffect = false;
-                        ProgressionList[ProgressionLevel - 2].isActive = false;
-                        activeAbilities.Remove(ProgressionList[ProgressionLevel - 2]);
+                        if (ProgressionList[0].StatType!=Game1.StatUpgradeType.Drones1)
+                        {
+                            ProgressionList[ProgressionLevel - 2].inEffect = false;
+                            ProgressionList[ProgressionLevel - 2].isActive = false;
+                            activeAbilities.Remove(ProgressionList[ProgressionLevel - 2]);
+                        }
                     }
                 }
             }
