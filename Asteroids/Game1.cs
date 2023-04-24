@@ -6,9 +6,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Security.Cryptography;
 using System.Text;
 using Windows.UI.Notifications;
+using Windows.UI.WebUI;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace Asteroid
@@ -78,8 +80,9 @@ namespace Asteroid
         Upgrade Drones2;
         Upgrade Drones3;
         List<Ship> DroneList = new List<Ship>();
-        TimeSpan DronesShotTimer = new TimeSpan(0, 0, 0, 5, 0);
-        TimeSpan reserveDronesShotTimer = new TimeSpan(0, 0, 0, 5, 0);
+        List<TimeSpan> DroneShotTimers = new List<TimeSpan>();
+        TimeSpan reserveDroneShotTimer = new TimeSpan(0, 0, 0, 5, 0);
+        List<Vector2> DroneTargets = new List<Vector2>();
         List<Upgrade> DroneProgHolder = new List<Upgrade>();
 
         Upgrade Warp;
@@ -249,13 +252,13 @@ namespace Asteroid
          *              Made a drone appear for the first uprade and make it stay by the ship correctly (alter position draw to make position right)
          *                  The drones will be in a List in order to better track them. Each drone will be made as a Ship for simplicity
          *                  Drone1 will be made alone before the rest
-         *              Make the drone turn to a target
+         *              Made the drone turn to a target
          *                  After thinking about it, I have decided that the drones will just pick a target at random rather than aiming for the closest one
-         *                      First, draw a line from the drone to its target in order to see if it works, then turn to the line
+         *                      First, draw a line from the drone to its target in order to see if it works, then turn to the line *this worked and the line was removed*
          *                          (line drawn, delete later)
-         *                      */
-                                Vector2 tempDroneTargetPosition = new Vector2(0, 0);
-                       /*
+         *              Made the drone fire
+         *              Make the drone upgrades
+         *                  Created a List to hold each Drone's ShotTimer and a List to hold each Drone's Target
          *              a
          *                  Steal the shooting code from the UFO class and work it into the drone
          *              a
@@ -487,7 +490,7 @@ namespace Asteroid
             ShotSpeedProgHolder.Add(ShotSpeedUp3);
 
             Drones1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Drones1, AbilityUpgradeType.None, "Drones",
-                "Gain a drone that", "stays near you and", "shoots enemies for", "every 5 seconds.", DroneProgHolder, 1, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                "Gain a drone that", "stays near you and", "shoots enemies", "every 5 seconds.", DroneProgHolder, 1, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(Drones1);
             DroneProgHolder.Add(Drones1);
 
@@ -984,48 +987,71 @@ namespace Asteroid
                 }
             }
 
+            /*
+            Drones1.isActive = true;
+            ActiveUpgrades.Add(Drones1);
+            Drones2.isActive= true ;
+            ActiveUpgrades.Add(Drones2);
+            Drones3.isActive= true ;
+            ActiveUpgrades.Add(Drones3);
+            */
+
+
             for (int i = 0; i < DroneProgHolder.Count; i++)
             {
-                if (DroneProgHolder[i].isActive)
+                if (DroneProgHolder[i].isActive && DroneProgHolder[i].inEffect==false) //cut down the drone number detection
                 {
-                    DroneList.Add(new Ship(new Vector2(ship.Position.X + 10, ship.Position.Y - 5), 0, Content.Load<Texture2D>("Upgrades/Drone"), 0, 1 / 1f, Color.White));
+                    DroneList.Add(new Ship(new Vector2(0, 0), 0, Content.Load<Texture2D>("Upgrades/Drone"), 0, 1 / 1f, Color.White));
+
+                    float a = 0; if (i==1) { a = 0.5f; }
+                    reserveDroneShotTimer = TimeSpan.FromSeconds(5 - (1.5 * i) - a);
+                    DroneShotTimers.Add(reserveDroneShotTimer);
+
+                    DroneTargets.Add(new Vector2(0, 0));
+
                     DroneProgHolder[i].inEffect = true;
                 }
+                
                 if (DroneProgHolder[i].inEffect)
                 {
-                    DronesShotTimer -= gameTime.ElapsedGameTime;
-                    if (DronesShotTimer<=TimeSpan.Zero)
+                    if (DroneTargets[i]==new Vector2(0,0))
                     {
                         bool asteroidOrUFO = true; //true = asteroid; false = UFO
-                        if      (asteroids.Count!=0 && UFOs.Count!=0) { asteroidOrUFO = Convert.ToBoolean(rand.Next(0, 2)); }
+                        if (asteroids.Count!=0 && UFOs.Count!=0) { asteroidOrUFO = Convert.ToBoolean(rand.Next(0, 2)); }
                         else if (asteroids.Count!=0 && UFOs.Count==0) { asteroidOrUFO = true; }
                         else if (asteroids.Count==0 && UFOs.Count!=0) { asteroidOrUFO = false; }
+                        else if (asteroids.Count==0 && UFOs.Count==0) { break; }
 
                         int temp = 0;
-                        if       (asteroidOrUFO) { temp = asteroids.Count; }
+                        if (asteroidOrUFO) { temp = asteroids.Count; }
                         else if (!asteroidOrUFO) { temp = UFOs.Count; }
                         int target = rand.Next(0, temp);
 
                         Vector2 droneTargetPosition = new Vector2(0, 0);
-                        if       (asteroidOrUFO) { droneTargetPosition = asteroids[target].Position; }
+                        if (asteroidOrUFO) { droneTargetPosition = asteroids[target].Position; }
                         else if (!asteroidOrUFO) { droneTargetPosition = UFOs[target].Position; }
-                        tempDroneTargetPosition = droneTargetPosition;
+                        DroneTargets[i] = droneTargetPosition;
+                    }
 
-                        Vector2 start;
-                        Vector2 destination;
-                        Vector2 between;
-                        //
-                        start = new Vector2(DroneProgHolder[i].Position.X, DroneProgHolder[i].Position.Y + DroneProgHolder[i].Image.Height / 2);
-                        destination = droneTargetPosition;
-                        between = start - destination;
-                        //
-                        float angle = (float)Math.Atan2((double)between.Y, (double)between.X) - MathHelper.ToRadians(90);
+                    Vector2 start;
+                    Vector2 destination;
+                    Vector2 between;
+                    //
+                    start = DroneList[i].Hitbox.Center.ToVector2();
+                    destination = DroneTargets[i];
+                    between = start - destination;
+                    //
+                    float angle = (float)Math.Atan2((double)between.Y, (double)between.X) - MathHelper.ToRadians(90);
 
-                        DroneList[i].Rotation = angle;
+                    DroneList[i].Rotation = angle;
 
+                    DroneShotTimers[i] -= gameTime.ElapsedGameTime;
+                    if (DroneShotTimers[i]<=TimeSpan.Zero)
+                    {
+                        shots.Add(Bullet.BulletTypeCopy(MachineGun.GunBullet, DroneList[i].Position, angle));
 
-
-                        DronesShotTimer = reserveDronesShotTimer;
+                        DroneShotTimers[i] = reserveDroneShotTimer;
+                        DroneTargets[i] = new Vector2(0, 0);
                     }
                 }
             }
@@ -1258,12 +1284,32 @@ namespace Asteroid
 
             foreach (var upgrade in ActiveUpgrades)
             {
-                if (upgrade == Drones1 && upgrade.inEffect)
+                if ((upgrade == Drones1 || upgrade == Drones2 || upgrade == Drones3) && upgrade.inEffect)
                 {
-                    DroneList[0].Position = new Vector2(ship.Position.X + 22, ship.Position.Y - 12);
-                    DroneList[0].Draw(_spriteBatch);
+                    for (int i = 0; i < DroneList.Count; i++)
+                    {
+                        switch (i)
+                        {
+                            case 0:
+                                DroneList[i].Position = new Vector2(ship.Position.X + 22, ship.Position.Y - 12);
+                                break;
 
-                    _spriteBatch.DrawLine(DroneList[0].Position, tempDroneTargetPosition, Color.Red);
+                            case 1:
+                                DroneList[i].Position = new Vector2(ship.Position.X - 22, ship.Position.Y - 12);
+                                break;
+
+                            case 2:
+                                DroneList[i].Position = new Vector2(ship.Position.X, ship.Position.Y + 32);
+                                break;
+                        }
+
+                        DroneList[i].Draw(_spriteBatch);
+
+                        _spriteBatch.DrawLine(DroneList[i].Position, DroneTargets[i], Color.Red);
+                    }
+
+
+                    //DroneList[0].Position = new Vector2(ship.Position.X + 22, ship.Position.Y - 12);
                 }
             }
 
