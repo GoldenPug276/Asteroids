@@ -23,7 +23,7 @@ namespace Asteroid
         //All Sprites are placeholders; change later
         Ship ship;
         Bullet defaultShot;
-        Bullet devBullets; Upgrade devGun; TimeSpan devShotTimer = new TimeSpan(0, 0, 0, 0, 50);
+        Bullet devBullets; Upgrade devGun; TimeSpan devShotTimer = new TimeSpan(0, 0, 0, 0, 25);
         TimeSpan defaultShotTimer = new TimeSpan(0, 0, 0, 1, 250);
         TimeSpan reserveDefaultShotTimer = new TimeSpan(0, 0, 0, 1, 250);
         Bullet UFOShot;
@@ -45,7 +45,8 @@ namespace Asteroid
             ShotSpeedUp3 = 3,
             Drones1 = 4,
             Drones2 = 5,
-            Drones3 = 6
+            Drones3 = 6,
+            DronesFinal = 7
         }
         public enum AbilityUpgradeType
         {
@@ -80,6 +81,7 @@ namespace Asteroid
         Upgrade Drones1;
         Upgrade Drones2;
         Upgrade Drones3;
+        Upgrade DronesFinal;
         List<Ship> DroneList = new List<Ship>();
         List<TimeSpan> DroneShotTimers = new List<TimeSpan>();
         TimeSpan reserveDroneShotTimer = new TimeSpan(0, 0, 0, 3, 500);
@@ -261,6 +263,7 @@ namespace Asteroid
          *                  After thinking about it, I have decided that the drones will just pick a target at random rather than aiming for the closest one
          *                      First, draw a line from the drone to its target in order to see if it works, then turn to the line *this worked and the line was removed*
          *                          (line drawn, delete later)
+         *                              rememebr to delete when done
          *              Made the drone fire
          *              Made the drone upgrades
          *                  Created a List to hold each Drone's ShotTimer and a List to hold each Drone's Target
@@ -271,13 +274,15 @@ namespace Asteroid
          *                  After a shot, have a "cooldown" time where it sits and idles
          *                  The cooldown timer is what gets decreased with each upgrade
          *                  The ShotTimers will remain as what they were, however one and a half seconds of them will be replaced with a LockOnTimer
-         *                                          (seems to work, make sure of it a tad later)
-         *              Implement a failsafe for when the Drone's target is destroyed
+         *              Implemented a failsafe for when the Drone's target is destroyed
          *                  If its target is destroyed, the Drone's LockOnTimer and target will reset
-         *                                  (test this via a dev shot [dev shot has been made])
-         *              
          *              Make a final upgrade for the Drones
-         *                  It will increase the ShotTimer but will change the projectile to a unique one that acts as a very fast and small piercing laser
+         *                  It will increase the LockOnTimer but will change the projectile to a unique one that acts as a burning and piercing bullet
+         *                      (made the upgrade)
+         *                      (made the effect without the bullet)
+         *                      (make the bullet)
+         *                          right now, i copy and pasted the machine shot, not even different color. make an actual texture in a moment. color the texture, not the shot
+         *                      (make the effect)
          *              Remove the Test Value
          *          
          *          make the test ability into a shield that, when held, surrounds the ship and protects from all damage whilst draining energy, but you cannot shoot out of it
@@ -378,7 +383,7 @@ namespace Asteroid
                 {
                     if (checkedHitbox.Intersects(bullet.Hitbox))
                     {
-                        if (bullet.Image != Laser.GunBullet.Image)
+                        if (bullet.Image!=Laser.GunBullet.Image && bullet.Image!=DronesFinal.GunBullet.Image)
                         {
                             bullets.Remove(bullet);
                         }
@@ -539,6 +544,11 @@ namespace Asteroid
                 "Gain one more drone.", "Your drones shoot", "every 1.5 seconds.", "", DroneProgHolder, 3, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             DroneProgHolder.Add(Drones3);
 
+            DronesFinal = new Upgrade(new Vector2(0, 0), StatUpgradeType.DronesFinal, AbilityUpgradeType.None, "Drones Final",
+                "Your drones take", "twice as long to", "lock on, but they", "fire burning bullets.", DroneProgHolder, 4, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.OrangeRed, false);
+            DronesFinal.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, Content.Load<Texture2D>("ShipAndShots/BurningDroneShot"), 0, 1 / 1f, Color.White);
+            DroneProgHolder.Add(DronesFinal);
+
             //Upgrades
 
             //Guns
@@ -556,7 +566,7 @@ namespace Asteroid
 
             //Debug Gun (irrelevant)
 
-            devBullets = new Bullet(new Vector2(-20, -20), 10, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White);
+            devBullets = new Bullet(new Vector2(-20, -20), 20, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White);
             devGun = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Laser, "Dev Gun",
                 "OP Debug Gun", "", "", "", null, 0, 0, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1, Color.White, false);
 
@@ -680,7 +690,7 @@ namespace Asteroid
             }
             if (devShotTimer <= TimeSpan.Zero)
             {
-                devShotTimer = TimeSpan.FromMilliseconds(50);
+                devShotTimer = TimeSpan.FromMilliseconds(25);
             }
 
             level.VariablePass(tinyAsteroidVelocity, smallAsteroidVelocity, largeAsteroidVelocity, SmallAsteroid, BigAsteroid, SmallSaucer, BigSaucer);
@@ -1032,9 +1042,27 @@ namespace Asteroid
 
             for (int i = 0; i < DroneProgHolder.Count; i++)
             {
-                if (DroneProgHolder[i].isActive && DroneProgHolder[i].inEffect==false)
+                if (DroneProgHolder[3].isActive && !DroneProgHolder[3].inEffect)
+                {
+                    foreach (var drone in DroneList)
+                    {
+                        drone.Color = Color.OrangeRed;
+                    }
+                    for (int k = 0; k < DroneLockOnTimers.Count; k++)
+                    {
+                        DroneLockOnTimers[k] = TimeSpan.FromMilliseconds(3000);
+                    }
+                    DroneProgHolder[0].GunBullet = DronesFinal.GunBullet;
+                }
+                if (i==3 && DroneProgHolder[3].inEffect)
+                {
+                    break;
+                }
+
+                if (DroneProgHolder[i].isActive && !DroneProgHolder[i].inEffect)
                 {
                     DroneList.Add(new Ship(new Vector2(0, 0), 0, Content.Load<Texture2D>("Upgrades/Drone"), 0, 1 / 1f, Color.White));
+                    DroneProgHolder[0].GunBullet = MachineGun.GunBullet;
 
                     float a = 0; if (i>=1) { a = 500; }
                     reserveDroneShotTimer = TimeSpan.FromMilliseconds(3500 - (1500 * i) - a);
@@ -1071,14 +1099,13 @@ namespace Asteroid
                     DroneShotTimers[i] -= gameTime.ElapsedGameTime;
                     if (DroneShotTimers[i]<=TimeSpan.Zero)
                     {
-                        if (DroneTargetValues[i]==-1)
+                        if (DroneTargetValues[i]==-1||DroneTargetValues[i]>=AllEnemies.Count)
                         {
                             DroneTargetValues[i] = rand.Next(0, AllEnemies.Count);
                         }
 
-
-
-                        if (lastEnemies[DroneTargetValues[i]]!=AllEnemies[DroneTargetValues[i]])
+                        if (lastEnemies.Count>0 && AllEnemies.Count>0 && i<lastEnemies.Count && i<AllEnemies.Count &&
+                            lastEnemies[DroneTargetValues[i]] != AllEnemies[DroneTargetValues[i]])
                         {
                             for (int j = 0; j < AllEnemies.Count; j++)
                             {
@@ -1090,6 +1117,7 @@ namespace Asteroid
                                 if (j==AllEnemies.Count-1)
                                 {
                                     DroneLockOnTimers[i] = TimeSpan.FromMilliseconds(1500);
+                                        if (DroneProgHolder[3].isActive) { DroneLockOnTimers[i] = TimeSpan.FromMilliseconds(3000); }
                                     DroneTargetValues[i] = rand.Next(0, AllEnemies.Count);
                                     break;
                                 }
@@ -1097,15 +1125,13 @@ namespace Asteroid
                         }
 
 
-
-
                         Vector2 start;
                         Vector2 destination;
                         Vector2 between;
                         //
                         start = DroneList[i].Hitbox.Center.ToVector2();
-                        if (DroneTargetValues[i]==-1)   { destination = new Vector2(0, 0); }
-                        else                            { destination = AllEnemies[DroneTargetValues[i]].Position; }
+                        if (DroneTargetValues[i]==-1||AllEnemies.Count==0)   { destination = new Vector2(0, 0); }
+                        else                                                 { destination = AllEnemies[DroneTargetValues[i]].Position; }
                         between = start - destination;
                         //
                         float angle = (float)Math.Atan2((double)between.Y, (double)between.X) - MathHelper.ToRadians(90);
@@ -1115,10 +1141,10 @@ namespace Asteroid
 
                         if (DroneLockOnTimers[i]<=TimeSpan.Zero)
                         {
-                            shots.Add(Bullet.BulletTypeCopy(MachineGun.GunBullet, DroneList[i].Position, angle));
-
+                            shots.Add(Bullet.BulletTypeCopy(DroneProgHolder[0].GunBullet, DroneList[i].Position, angle));
                             DroneShotTimers[i] = reserveDroneShotTimer;
                             DroneLockOnTimers[i] = TimeSpan.FromMilliseconds(1500);
+                                if (DroneProgHolder[3].isActive) { DroneLockOnTimers[i] = TimeSpan.FromMilliseconds(3000); }
                             DroneTargetValues[i] = -1;
                         }
                     }
@@ -1375,7 +1401,7 @@ namespace Asteroid
 
                         Vector2 destination;
 
-                        if (DroneTargetValues[i] == -1) { destination = new Vector2(0, 0); }
+                        if (DroneTargetValues[i] == -1 || AllEnemies.Count == 0) { destination = new Vector2(0, 0); }
                         else { destination = AllEnemies[DroneTargetValues[i]].Position; }
 
                         _spriteBatch.DrawLine(DroneList[i].Position, destination, Color.Red);
