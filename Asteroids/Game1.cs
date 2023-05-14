@@ -33,13 +33,12 @@ namespace Asteroid
         SpriteFont font;
         SpriteFont upgradeTitleFont;
         SpriteFont upgradeDescFont;
-        TimeSpan BurnerTime = new TimeSpan(0, 0, 0, 0, 1);
+        Vector2 BurnerVector = new Vector2(0,0);
         int counter = 0;
 
         public enum StatUpgradeType
         {
             None = 0,
-            Test = 0,
             ShotSpeedUp1 = 1,
             ShotSpeedUp2 = 2,
             ShotSpeedUp3 = 3,
@@ -243,12 +242,10 @@ namespace Asteroid
          *      color code powerup enregy bars by making the upgrade title, energy bar color, and gun name color the "Color" variable of the upgrade
          *      **DONE**
          *      
+         *      -----------------------(small barrier for this chunk)
+         *      replace the "test" upgarde amd ability with actual ones and remove the "test" parameter.   *FINISHED*
          *      
-         *      replace the "test" upgarde amd ability with actual ones and remove the "test" parameter.
-         *          Ability Done
-         *          Upgrade not Done (ok back to this) (turn the "to dos" into "dones" when done with them)
-         *      
-         *          make the test upgrade into a drone that circles around the ship and shoots special bullets
+         *          make the test upgrade into a drone that circles around the ship and shoots special bullets  **DONE**
          *          its progression is for fire rate and drone amount
          *              Progress and thoughts on this:
          *              Have made the types but haven't removed the Test
@@ -262,8 +259,6 @@ namespace Asteroid
          *              Made the drone turn to a target
          *                  After thinking about it, I have decided that the drones will just pick a target at random rather than aiming for the closest one
          *                      First, draw a line from the drone to its target in order to see if it works, then turn to the line *this worked and the line was removed*
-         *                          (line drawn, delete later)
-         *                              rememebr to delete when done
          *              Made the drone fire
          *              Made the drone upgrades
          *                  Created a List to hold each Drone's ShotTimer and a List to hold each Drone's Target
@@ -277,15 +272,10 @@ namespace Asteroid
          *              Implemented a failsafe for when the Drone's target is destroyed
          *                  If its target is destroyed, the Drone's LockOnTimer and target will reset
          *              Make a final upgrade for the Drones
-         *                  It will increase the LockOnTimer but will change the projectile to a unique one that acts as a burning and piercing bullet
-         *                      (made the upgrade)
-         *                      (made the effect without the bullet)
-         *                      (make the bullet)
-         *                          right now, i copy and pasted the machine shot, not even different color. make an actual texture in a moment. color the texture, not the shot
-         *                      (make the effect)
-         *              Remove the Test Value
+         *                  It will double the LockOnTimer but will change the projectile to a unique one that acts as a burning and piercing bullet
+         *              Removed the Test Value
          *          
-         *          make the test ability into a shield that, when held, surrounds the ship and protects from all damage whilst draining energy, but you cannot shoot out of it
+         *          make the test ability into a shield that, when held, surrounds the ship and protects from all damage whilst draining energy, but blocks your gun    **DONE**
          *          its progression is for time it can be up/energy regen, but the last upgrade lets you sacrifice that speed and turn it into a fire orb that melts enemies
          *              Progress and thoughts on this:
          *              Have made the types but haven't removed the Test
@@ -299,7 +289,7 @@ namespace Asteroid
          *                      Pretty horrid and basic, but it works
          *                      Uses a Hitbox List that holds potential colliders, then removes them if they are unactive (like activating adds, deactivating removes)
          *              Removed the Test value
-         *              
+         *      -----------------------(small barrier for this chunk)
          *              
          *      **DONE** (things done during the above task) 
          *      make Upgrade remove the previous levels of abilities from the activeAbilities when picking the next level
@@ -331,10 +321,52 @@ namespace Asteroid
          *      
          *      make a debug shot that replaces the screen clear dev shortcut. it is basically laser but takes no energy and fires really fast
          *      
-         *      replace all the new Vector2(0,0)'s with a variable (mot done)
+         *      replace all the new Vector2(0,0)'s with a variable (BurnerVector)
          *      **DONE**
          *      
+         *      add a new enemy varient: armored enemies    **DOING**
+         *          There will be different armor tiers, and armor needs a certain amount of hits before destruction. Incremental upgrades
+         *          It will work sort of like bloons in the Bloons Tower Defense series, where each armer level is a "layer" that must be popped
+         *          Each bullet will have a Penetration value which will dictate how many layers of armor one shot can pierce
+         *          Only big asteroids and UFOs have armor
+         *          The armor value of an enemy will go down when shot, and the images of each armor will cycle in an array like what was done for the powerups
+         *          Once the value hits 0 or less, there is no armor.
+         *          The armor value can be a float, but the array value will be rounded up. This is for shit that takes multiple hits to break off one layer
+         *          Bullets that count as "burning"/piercing still go through armor, but every frame the armor value is reduced. If this isn't good, change.
+         *          
          *      
+         *      add a system for upgrade control. like rarity and making certain upgrades only appear at certain points
+         *      
+         *      alright, basic ahh upgrades and abilities done. now the hard ones. they will be made using the same process as above
+         *      upgrade plans:
+         *          Armor Penetrating Rounds
+         *          Nano-Armor
+         *          ECM/Radio Jammer |send fewer UFOs|
+         *          "some cool name" |have fewer asteroids|
+         *          Ricoshet Shots |ultrakill coins, figure out how to make keybind work right|
+         *          Teleport |an upgrade to warp. increase the cooldown and decrease i-frames, but allow control over where you teleport to|
+         *          Conversion |some asteroids you hurt will, rather than being split/destroyed, be converted and act as kamikaze-type effects}
+         *      ability plans:
+         *          Time Stop
+         *          Time Erase |just the i-frames|
+         *          Epitaph |shouldn't be too hard based on how i wrote the code|
+         *          Screen Nuke
+         *          Mimicry
+         *      gun plans:
+         *          Acid Gun |enemies shot by it get covered in acid, which gradually eats through armor and prevents splitting, but onlt through death via acid|
+         *          Mines |shoots explosive mines|
+         *      
+         *      Starting off with the first upgrade, Armor Penetrating Rounds    **DOING (in a moment)**
+         *          This upgrade relates to the armor values of enemies. It will simply increase the Penetration value of all guns. Different levels give different Penetration
+         *      
+         *      
+         *      Next, do the second upgrade, Nano-Armor    **LATER**
+         *          This upgrade will act as a barrier that will be able to tank a hit and take time to recharge. Higher levels give more hits and less recharge. No final form
+         *      
+         *      
+         *      a
+         *      
+         *      after the upgrades, balance the progression and wrap shit up
          *      
          *      
          *      
@@ -415,15 +447,15 @@ namespace Asteroid
         {
             nones.Clear();
 
-            Upgrade None1 = new Upgrade(baseNone.Position, baseNone.StatType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
+            Upgrade None1 = new Upgrade(baseNone.Position, baseNone.UpgradeType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4,
                baseNone.ProgressionList, baseNone.ProgressionLevel, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
 
-            Upgrade None2 = new Upgrade(baseNone.Position, baseNone.StatType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
+            Upgrade None2 = new Upgrade(baseNone.Position, baseNone.UpgradeType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4,
                baseNone.ProgressionList, baseNone.ProgressionLevel, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
 
-            Upgrade None3 = new Upgrade(baseNone.Position, baseNone.StatType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
+            Upgrade None3 = new Upgrade(baseNone.Position, baseNone.UpgradeType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4,
                baseNone.ProgressionList, baseNone.ProgressionLevel, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
 
@@ -485,32 +517,28 @@ namespace Asteroid
 
             //Upgrade Stuff (each description row can fit around 20-21 characters, tested with capital A's)
 
-            TestUpgrade = new Upgrade(new Vector2(0, 0), StatUpgradeType.Test, AbilityUpgradeType.None, "Test Upgrade",
-                "I dunno", "man V1", "(TESTING)", "", null, 0, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
-            PossibleUpgrades.Add(TestUpgrade);
-
             //Abilities
 
-            Warp = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Warp, "Warp",
+            Warp = new Upgrade(BurnerVector, StatUpgradeType.None, AbilityUpgradeType.Warp, "Warp",
                 "Right-click to warp", "to a random point", "on screen. Gain 0.4", "seconds of i-frames.", null, 0, 99, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.DarkGray, false);
             PossibleUpgrades.Add(Warp);
 
-            Shield1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Shield1, "Shield",
+            Shield1 = new Upgrade(BurnerVector, StatUpgradeType.None, AbilityUpgradeType.Shield1, "Shield",
                 "Hold Z to activate", "a shield that", "protects you from", "all damage.", ShieldProgHolder, 1, 1, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(Shield1);
             ShieldProgHolder.Add(Shield1);
-            ShieldSprite = new Sprite(new Vector2(0, 0), Content.Load<Texture2D>("Upgrades/ShieldHitbox"), 0, 1 / 1f, Color.White);
+            ShieldSprite = new Sprite(BurnerVector, Content.Load<Texture2D>("Upgrades/ShieldHitbox"), 0, 1 / 1f, Color.White);
             ShieldSprite.DisplayImage = Content.Load<Texture2D>("Upgrades/Shield");
 
-            Shield2 = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Shield2, "Shield+",
+            Shield2 = new Upgrade(BurnerVector, StatUpgradeType.None, AbilityUpgradeType.Shield2, "Shield+",
                 "You can have the", "shield active for", "longer.", "", ShieldProgHolder, 2, 1, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             ShieldProgHolder.Add(Shield2);
 
-            Shield3 = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Shield3, "Shield++",
+            Shield3 = new Upgrade(BurnerVector, StatUpgradeType.None, AbilityUpgradeType.Shield3, "Shield++",
                 "You can have the", "shield active for", "almost forever.", "", ShieldProgHolder, 3, 1, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             ShieldProgHolder.Add(Shield3);
 
-            ShieldFinal = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.ShieldFinal, "Shield Final",
+            ShieldFinal = new Upgrade(BurnerVector, StatUpgradeType.None, AbilityUpgradeType.ShieldFinal, "Shield Final",
                 "Coat your shield in", "fire, reverting its", "length but melting", "all touched enemies.", ShieldProgHolder, 4, 1, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.OrangeRed, false);
             ShieldProgHolder.Add(ShieldFinal);
 
@@ -518,33 +546,33 @@ namespace Asteroid
 
             //Upgrades
 
-            ShotSpeedUp1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.ShotSpeedUp1, AbilityUpgradeType.None, "Shot Speed+",
+            ShotSpeedUp1 = new Upgrade(BurnerVector, StatUpgradeType.ShotSpeedUp1, AbilityUpgradeType.None, "Shot Speed+",
                 "Reduces the time bet-", "-ween default shots", "and increases special", "gun energy gain.", ShotSpeedProgHolder, 1, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(ShotSpeedUp1);
             ShotSpeedProgHolder.Add(ShotSpeedUp1);
 
-            ShotSpeedUp2 = new Upgrade(new Vector2(0, 0), StatUpgradeType.ShotSpeedUp1, AbilityUpgradeType.None, "Shot Speed++",
+            ShotSpeedUp2 = new Upgrade(BurnerVector, StatUpgradeType.ShotSpeedUp1, AbilityUpgradeType.None, "Shot Speed++",
                 "Reduces the time bet-", "-ween default shots", "and increases special", "gun energy gain more.", ShotSpeedProgHolder, 2, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             ShotSpeedProgHolder.Add(ShotSpeedUp2);
 
-            ShotSpeedUp3 = new Upgrade(new Vector2(0, 0), StatUpgradeType.ShotSpeedUp1, AbilityUpgradeType.None, "Shot Speed+++",
+            ShotSpeedUp3 = new Upgrade(BurnerVector, StatUpgradeType.ShotSpeedUp1, AbilityUpgradeType.None, "Shot Speed+++",
                 "You can now shoot", "really fast and", "really often.", "", ShotSpeedProgHolder, 3, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             ShotSpeedProgHolder.Add(ShotSpeedUp3);
 
-            Drones1 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Drones1, AbilityUpgradeType.None, "Drones",
+            Drones1 = new Upgrade(BurnerVector, StatUpgradeType.Drones1, AbilityUpgradeType.None, "Drones",
                 "Gain a drone that", "stays near you and", "shoots enemies", "every 5 seconds.", DroneProgHolder, 1, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(Drones1);
             DroneProgHolder.Add(Drones1);
 
-            Drones2 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Drones2, AbilityUpgradeType.None, "Drones+",
+            Drones2 = new Upgrade(BurnerVector, StatUpgradeType.Drones2, AbilityUpgradeType.None, "Drones+",
                 "Gain an additional", "drone. Your drones", "shoot every 3 sec.", "", DroneProgHolder, 2, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             DroneProgHolder.Add(Drones2);
 
-            Drones3 = new Upgrade(new Vector2(0, 0), StatUpgradeType.Drones3, AbilityUpgradeType.None, "Drones++",
+            Drones3 = new Upgrade(BurnerVector, StatUpgradeType.Drones3, AbilityUpgradeType.None, "Drones++",
                 "Gain one more drone.", "Your drones shoot", "every 1.5 seconds.", "", DroneProgHolder, 3, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
             DroneProgHolder.Add(Drones3);
 
-            DronesFinal = new Upgrade(new Vector2(0, 0), StatUpgradeType.DronesFinal, AbilityUpgradeType.None, "Drones Final",
+            DronesFinal = new Upgrade(BurnerVector, StatUpgradeType.DronesFinal, AbilityUpgradeType.None, "Drones Final",
                 "Your drones take", "twice as long to", "lock on, but they", "fire burning bullets.", DroneProgHolder, 4, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.OrangeRed, false);
             DronesFinal.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, Content.Load<Texture2D>("ShipAndShots/BurningDroneShot"), 0, 1 / 1f, Color.White);
             DroneProgHolder.Add(DronesFinal);
@@ -553,12 +581,12 @@ namespace Asteroid
 
             //Guns
 
-            MachineGun = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Machine, "Machine Gun",
+            MachineGun = new Upgrade(BurnerVector, StatUpgradeType.None, AbilityUpgradeType.Machine, "Machine Gun",
                 "Gives you a rapid-", "-firing machine gun.", "", "", null, 0, 7, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.DarkSlateGray, false);
             PossibleUpgrades.Add(MachineGun);
 
-            Laser = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Laser, "Laser",
-                "Gives you piercing", "laser gun.", "", "", null, 0, 33, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.Red, false);
+            Laser = new Upgrade(BurnerVector, StatUpgradeType.None, AbilityUpgradeType.Laser, "Laser",
+                "Gives you a", "searing and piercing", "laser gun.", "", null, 0, 33, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.Red, false);
             PossibleUpgrades.Add(Laser);
 
             MachineGun.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, Content.Load<Texture2D>("ShipAndShots/MachineShot"), 0, 1 / 1f, Color.White);
@@ -567,14 +595,14 @@ namespace Asteroid
             //Debug Gun (irrelevant)
 
             devBullets = new Bullet(new Vector2(-20, -20), 20, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White);
-            devGun = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.Laser, "Dev Gun",
+            devGun = new Upgrade(BurnerVector, StatUpgradeType.None, AbilityUpgradeType.Laser, "Dev Gun",
                 "OP Debug Gun", "", "", "", null, 0, 0, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1, Color.White, false);
 
             //Debug Gun (irrelevant)
 
             //Guns
 
-            None = new Upgrade(new Vector2(0, 0), StatUpgradeType.None, AbilityUpgradeType.None, "Cold Treasure",
+            None = new Upgrade(BurnerVector, StatUpgradeType.None, AbilityUpgradeType.None, "Cold Treasure",
                 "We will not", "become stronger.", "", "", null, 0, 0, Content.Load<Texture2D>("UpgradeImages/Cold Treasure"), 0, 1 / 1, Color.White, false);
 
             NoneRefresh(NoneHolder, None);
@@ -1061,8 +1089,8 @@ namespace Asteroid
 
                 if (DroneProgHolder[i].isActive && !DroneProgHolder[i].inEffect)
                 {
-                    DroneList.Add(new Ship(new Vector2(0, 0), 0, Content.Load<Texture2D>("Upgrades/Drone"), 0, 1 / 1f, Color.White));
-                    DroneProgHolder[0].GunBullet = MachineGun.GunBullet;
+                    DroneList.Add(new Ship(BurnerVector, 0, Content.Load<Texture2D>("Upgrades/Drone"), 0, 1 / 1f, Color.White));
+                    if (i!=3) { DroneProgHolder[0].GunBullet = MachineGun.GunBullet; }
 
                     float a = 0; if (i>=1) { a = 500; }
                     reserveDroneShotTimer = TimeSpan.FromMilliseconds(3500 - (1500 * i) - a);
@@ -1078,7 +1106,7 @@ namespace Asteroid
                 if (DroneProgHolder[i].inEffect)
                 {
                     /*
-                    In case I never need this code again
+                    In case I ever need this code again
 
                     bool asteroidOrUFO = true; //true = asteroid; false = UFO
                     if (Asteroids.Count != 0 && UFOs.Count != 0) { asteroidOrUFO = Convert.ToBoolean(rand.Next(0, 2)); }
@@ -1130,7 +1158,7 @@ namespace Asteroid
                         Vector2 between;
                         //
                         start = DroneList[i].Hitbox.Center.ToVector2();
-                        if (DroneTargetValues[i]==-1||AllEnemies.Count==0)   { destination = new Vector2(0, 0); }
+                        if (DroneTargetValues[i]==-1||AllEnemies.Count==0)   { destination = BurnerVector; }
                         else                                                 { destination = AllEnemies[DroneTargetValues[i]].Position; }
                         between = start - destination;
                         //
@@ -1379,54 +1407,31 @@ namespace Asteroid
 
             foreach (var upgrade in ActiveUpgrades)
             {
-                if ((upgrade == Drones1 || upgrade == Drones2 || upgrade == Drones3) && upgrade.inEffect)
+                if (upgrade.UpgradeType>=StatUpgradeType.Drones1 && upgrade.UpgradeType<=StatUpgradeType.DronesFinal && upgrade.inEffect)
                 {
                     for (int i = 0; i < DroneList.Count; i++)
                     {
                         switch (i)
                         {
-                            case 0:
-                                DroneList[i].Position = new Vector2(ship.Position.X + 22, ship.Position.Y - 12); break;
-
-                            case 1:
-                                DroneList[i].Position = new Vector2(ship.Position.X - 22, ship.Position.Y - 12); break;
-
-                            case 2:
-                                DroneList[i].Position = new Vector2(ship.Position.X, ship.Position.Y + 32); break;
+                            case 0: DroneList[i].Position = new Vector2(ship.Position.X + 22, ship.Position.Y - 12); break;
+                            case 1: DroneList[i].Position = new Vector2(ship.Position.X - 22, ship.Position.Y - 12); break;
+                            case 2: DroneList[i].Position = new Vector2(ship.Position.X + 00, ship.Position.Y + 32); break;
                         }
 
                         DroneList[i].Draw(_spriteBatch);
-
-
-
-                        Vector2 destination;
-
-                        if (DroneTargetValues[i] == -1 || AllEnemies.Count == 0) { destination = new Vector2(0, 0); }
-                        else { destination = AllEnemies[DroneTargetValues[i]].Position; }
-
-                        _spriteBatch.DrawLine(DroneList[i].Position, destination, Color.Red);
                     }
-
-
-                    //DroneList[0].Position = new Vector2(ship.Position.X + 22, ship.Position.Y - 12);
                 }
             }
 
             foreach (var ability in ActiveAbilities)
             {
-                if ((ability == Shield1 || ability == Shield2 || ability == Shield3) && ability.inEffect)
+                if (ability.AbilityType>=AbilityUpgradeType.Shield1 && ability.AbilityType<=AbilityUpgradeType.ShieldFinal && ability.inEffect)
                 {
                     ShieldSprite.Position.X = ship.Position.X;
                     ShieldSprite.Position.Y = ship.Position.Y;
                     ShieldSprite.Rotation = ship.Rotation;
-                    ShieldSprite.Draw(_spriteBatch);
-                }
-                else if (ability == ShieldFinal && ability.inEffect)
-                {
-                    ShieldSprite.Position.X = ship.Position.X;
-                    ShieldSprite.Position.Y = ship.Position.Y;
-                    ShieldSprite.Rotation = ship.Rotation;
-                    ShieldSprite.Color = Color.OrangeRed;
+                    if (ability.AbilityType==AbilityUpgradeType.ShieldFinal)
+                        ShieldSprite.Color = Color.OrangeRed;
                     ShieldSprite.Draw(_spriteBatch);
                 }
             }

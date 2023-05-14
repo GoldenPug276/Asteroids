@@ -11,7 +11,7 @@ namespace Asteroid
 {
     class Upgrade : Sprite
     {
-        public Game1.StatUpgradeType StatType;
+        public Game1.StatUpgradeType UpgradeType;
         public Game1.AbilityUpgradeType AbilityType;
         Random rand = new Random();
         public bool isActive = false;
@@ -45,10 +45,10 @@ namespace Asteroid
             Texture2D image, float rot, float scale, Color color, bool active) : base(position, image, rot, scale, color)
         {
             Position = position;
-            StatType = statype;
+            UpgradeType = statype;
             AbilityType = ability;
 
-            if (StatType == Game1.StatUpgradeType.None)
+            if (UpgradeType == Game1.StatUpgradeType.None)
             {
                 if (AbilityType != Game1.AbilityUpgradeType.None && AbilityType < Game1.AbilityUpgradeType.Warp)
                 {
@@ -88,25 +88,25 @@ namespace Asteroid
                 isActive = true;
 
 
-                if (StatType != Game1.StatUpgradeType.None && AbilityType == Game1.AbilityUpgradeType.None)
+                if (UpgradeType!=Game1.StatUpgradeType.None && AbilityType==Game1.AbilityUpgradeType.None)
                 {
                     activeUpgrades.Add(this);
                 }
-                else if (AbilityType != Game1.AbilityUpgradeType.None && StatType == Game1.StatUpgradeType.None)
+                else if (AbilityType!=Game1.AbilityUpgradeType.None && UpgradeType==Game1.StatUpgradeType.None)
                 {
                     if (isGun) { activeGuns.Add(this); }
                     else { activeAbilities.Add(this); }
                 }
 
-                if (ProgressionList != null)
+                if (ProgressionList!=null)
                 {
-                    if (ProgressionLevel < ProgressionList.Count)
+                    if (ProgressionLevel<ProgressionList.Count)
                     {
                         possibleUpgrades.Add(ProgressionList[ProgressionLevel]);
                     }
-                    if (ProgressionLevel > 1)
+                    if (ProgressionLevel>1)
                     {
-                        if (ProgressionList[0].StatType!=Game1.StatUpgradeType.Drones1)
+                        if (ProgressionList[0].UpgradeType!=Game1.StatUpgradeType.Drones1)
                         {
                             ProgressionList[ProgressionLevel - 2].inEffect = false;
                             ProgressionList[ProgressionLevel - 2].isActive = false;
