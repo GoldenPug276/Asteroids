@@ -324,17 +324,19 @@ namespace Asteroid
          *      **DONE**
          *      
          *      
+         *      add a new enemy varient: armored enemies    **DOING**
+         *          There will be different armor tiers, and armor needs a certain amount of hits before destruction. Incremental upgrades
+         *          It will work sort of like bloons in the Bloons Tower Defense series, where each armer level is a "layer" that must be popped
+         *          Each bullet will have a Penetration value which will dictate how many layers of armor one shot can pierce
+         *          Only big asteroids and UFOs have armor
+         *          The armor value of an enemy will go down when shot, and the images of each armor will cycle in an array like what was done for the powerups
+         *          Once the value hits 0 or less, there is no armor.
+         *          The armor value can be a float, but the array value will be rounded up. This is for shit that takes multiple hits to break off one layer
+         *          Bullets that count as "burning"/piercing still go through armor, but every frame the armor value is reduced. If this isn't good, change.
+         *          
          *      
+         *      add a system for upgrade control. like rarity and making certain upgrades only appear at certain points
          *      
-<<<<<<<<< Temporary merge branch 1
-         *      alright, basic ahh upgrades and abilities done. now the hard ones. they will be made using the same process as above |add a few more maybe|
-         *      upgrade plans:
-         *          Nano-Armor
-         *          Armor Penetrating Rounds
-         *          ECM/Radio Jammer |send fewer UFOs|
-         *          "some cool name" |have fewer asteroids|
-         *          Ricoshet Shots |ultrakill coins|
-=========
          *      alright, basic ahh upgrades and abilities done. now the hard ones. they will be made using the same process as above
          *      upgrade plans:
          *          Armor Penetrating Rounds
@@ -344,7 +346,6 @@ namespace Asteroid
          *          Ricoshet Shots |ultrakill coins, figure out how to make keybind work right|
          *          Teleport |an upgrade to warp. increase the cooldown and decrease i-frames, but allow control over where you teleport to|
          *          Conversion |some asteroids you hurt will, rather than being split/destroyed, be converted and act as kamikaze-type effects}
->>>>>>>>> Temporary merge branch 2
          *      ability plans:
          *          Time Stop
          *          Time Erase |just the i-frames|
@@ -352,12 +353,6 @@ namespace Asteroid
          *          Screen Nuke
          *          Mimicry
          *      gun plans:
-<<<<<<<<< Temporary merge branch 1
-         *          Acid Gun |asteroids shot by it will split and be coveredin acid. after some time, the acid will kill them with no split, but only with death to acid|
-         *          Mines |shoots explosive mines|
-         *      
-         *      Starting off with the first upgrade, Nano-Armor    **DOING (in a moment)**
-=========
          *          Acid Gun |enemies shot by it get covered in acid, which gradually eats through armor and prevents splitting, but onlt through death via acid|
          *          Mines |shoots explosive mines|
          *      
@@ -366,7 +361,6 @@ namespace Asteroid
          *      
          *      
          *      Next, do the second upgrade, Nano-Armor    **LATER**
->>>>>>>>> Temporary merge branch 2
          *          This upgrade will act as a barrier that will be able to tank a hit and take time to recharge. Higher levels give more hits and less recharge. No final form
          *      
          *      
