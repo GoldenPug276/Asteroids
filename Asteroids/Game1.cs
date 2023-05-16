@@ -586,11 +586,8 @@ namespace Asteroid
             PossibleUpgrades.Add(MachineGun);
 
             Laser = new Upgrade(BurnerVector, StatUpgradeType.None, AbilityUpgradeType.Laser, "Laser",
-<<<<<<<<< Temporary merge branch 1
-                "Gives you piercing", "laser gun.", "", "", null, 0, 33, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.Red, false);
-=========
+                "Gives you piercing", "laser gun.", "", "", null, 0, 33, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.Red, false,
                 "Gives you a", "searing and piercing", "laser gun.", "", null, 0, 33, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.Red, false);
->>>>>>>>> Temporary merge branch 2
             PossibleUpgrades.Add(Laser);
 
             MachineGun.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, Content.Load<Texture2D>("ShipAndShots/MachineShot"), 0, 1 / 1f, Color.White);
