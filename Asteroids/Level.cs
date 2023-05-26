@@ -29,6 +29,9 @@ namespace Asteroid
         public bool LargeAssMax = false;
         public bool SmallSauceMax = false;
         public bool LargeSauceMax = false;
+        public float GlobalArmorValue = 0;
+        private float armorMin = 0;
+        private float armorMax = 0;
 
         private TimeSpan smallTimer;
         private TimeSpan largeUTimer;
@@ -132,58 +135,60 @@ namespace Asteroid
             largeUTimer -= gameTime;
             smallUTimer -= gameTime;
 
+            Random rand = new Random();
+
+            armorMax = (float)Math.Floor((float)LevelNum / 3);
+            if (armorMax>6) { armorMax = 6; }
+
+            if (armorMax>2) { armorMin = armorMax - 3; }
+
+            if (GlobalSpawnTimer<=TimeSpan.Zero||largeUTimer<=TimeSpan.Zero||smallUTimer<=TimeSpan.Zero)
+                { GlobalArmorValue = rand.Next((int)armorMin, (int)armorMax + 1); }
+
+            float UFOArmor = (float)Math.Floor(GlobalArmorValue / 2);
+
             if (GlobalSpawnTimer<=TimeSpan.Zero && !LargeAssMax)
             {
                 //whatSpawns = Game1.WhatSpawned.LargeAss;
-                roids.Add(Enemy.NaturalSpawn(Enemy.Type.Asteroid, playSpace, largevelocity, largeAss, Game1.Size.LeChonk, TimeSpan.Zero));
+                roids.Add(Enemy.NaturalSpawn(Enemy.Type.Asteroid, playSpace, largevelocity, largeAss, Game1.Size.LeChonk, TimeSpan.Zero, GlobalArmorValue));
                 GlobalSpawnTimer = reserveSpawnTimer;
                 LargeSpawned++;
-            }
-            else if (LargeSpawned>=LargeAsteroidTotal)
-            {
-                LargeAssMax = true;
+
+                if (LargeSpawned>=LargeAsteroidTotal) { LargeAssMax = true; }
             }
 
             if (smallTimer<=TimeSpan.Zero && !SmallAssMax)
             {
                 //whatSpawns = Game1.WhatSpawned.SmallAss;
-                roids.Add(Enemy.NaturalSpawn(Enemy.Type.Asteroid, playSpace, smallvelocity, smallAss, Game1.Size.Normal, TimeSpan.Zero));
+                roids.Add(Enemy.NaturalSpawn(Enemy.Type.Asteroid, playSpace, smallvelocity, smallAss, Game1.Size.Normal, TimeSpan.Zero, 0));
                 smallTimer = reserveSpawnTimer * 0.5;
                 SmallSpawned++;
-            }
-            else if (SmallSpawned>=SmallAsteroidTotal)
-            {
-                SmallAssMax = true;
+
+                if (SmallSpawned>=SmallAsteroidTotal) { SmallAssMax = true; }
             }
 
             if (largeUTimer<=TimeSpan.Zero && !LargeSauceMax)
             {
                 //whatSpawns = Game1.WhatSpawned.LargeSauce;
-                flys.Add(Enemy.NaturalSpawn(Enemy.Type.UFO, playSpace, largevelocity, largeUFO, Game1.Size.Normal, UFOShotTimer));
+                flys.Add(Enemy.NaturalSpawn(Enemy.Type.UFO, playSpace, largevelocity, largeUFO, Game1.Size.Normal, UFOShotTimer, UFOArmor));
                 largeUTimer = reserveSpawnTimer * 0.80;
                 LargeUSpawned++;
-            }
-            else if (LargeUSpawned >= LargeUFOTotal)
-            {
-                LargeSauceMax = true;
+
+                if (LargeUSpawned >= LargeUFOTotal) { LargeSauceMax = true; }
             }
 
             if (smallUTimer<=TimeSpan.Zero && !SmallSauceMax)
             {
                 //whatSpawns = Game1.WhatSpawned.SmallSauce;
-                flys.Add(Enemy.NaturalSpawn(Enemy.Type.Asteroid, playSpace, tinyvelocity, smallUFO, Game1.Size.Baby, SmallUFOShotTimer));
+                flys.Add(Enemy.NaturalSpawn(Enemy.Type.Asteroid, playSpace, tinyvelocity, smallUFO, Game1.Size.Baby, SmallUFOShotTimer, UFOArmor));
                 smallUTimer = reserveSpawnTimer * 1.50;
                 SmallUSpawned++;
-            }
-            else if (SmallUSpawned >= UFOTotal)
-            {
-                SmallSauceMax = true;
+
+                if (SmallUSpawned>=UFOTotal) { SmallSauceMax = true; }
             }
 
             if (SmallSauceMax && LargeSauceMax && SmallAssMax && LargeAssMax)
-            {
-                Finished = true;
-            }
+                { Finished = true; }
         }
     }
 }

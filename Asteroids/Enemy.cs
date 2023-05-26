@@ -28,8 +28,9 @@ namespace Asteroid
         //Original UFO and Asteroid Variables
 
         public bool HasCollided = false;
+        public float ArmorValue;
 
-        public Enemy(Vector2 position, Vector2 velocity, Texture2D image, float rot, float scale, Color color, Game1.Size size, TimeSpan shotTimer, Type type)
+        public Enemy(Vector2 position, Vector2 velocity, Texture2D image, float rot, float scale, Color color, Game1.Size size, TimeSpan shotTimer, Type type, float armorValue)
             : base(position, image, rot, scale, color)
         {
             Position = position;
@@ -42,6 +43,7 @@ namespace Asteroid
             ShotTimer = shotTimer;
             reserveShotTimer = ShotTimer;
             EType = type;
+            ArmorValue = armorValue;
         }
 
         public static void Sync(List<Enemy> enemyList, List<Enemy> asteroidList, List<Enemy> UFOList)
@@ -100,7 +102,7 @@ namespace Asteroid
 
             return spawn;
         }
-        public static Enemy NaturalSpawn(Type type, Rectangle playSpace, float velocity, Texture2D Image, Game1.Size size, TimeSpan shotTimer)
+        public static Enemy NaturalSpawn(Type type, Rectangle playSpace, float velocity, Texture2D Image, Game1.Size size, TimeSpan shotTimer, float armor)
         {
             Vector2 Velocity = new Vector2(velocity, velocity);
             Vector2 SpawnLocation = SpawnLocation = SpawnSpot(playSpace, Image, type);
@@ -108,7 +110,7 @@ namespace Asteroid
             if (SpawnLocation.X >= 0) { Velocity.X *= -1; }
             if (SpawnLocation.Y >= 0) { Velocity.Y *= -1; }
 
-            Enemy New = new Enemy(SpawnLocation, Velocity, Image, 0, 1 / 1f, Color.White, size, shotTimer, type);
+            Enemy New = new Enemy(SpawnLocation, Velocity, Image, 0, 1 / 1f, Color.White, size, shotTimer, type, armor);
             return New;
         }
         public void IsInBounds(Rectangle playSpace)
@@ -130,7 +132,7 @@ namespace Asteroid
 
         //Original Asteroid Functions
 
-        public static Enemy InitialSpawn(Rectangle playSpace, float lVelocity, Texture2D largeImage, Ship ship)
+        public static Enemy InitialSpawn(Rectangle playSpace, float lVelocity, Texture2D largeImage, Ship ship, float armor)
         {
             Enemy New;
             int width = playSpace.Width;
@@ -160,7 +162,7 @@ namespace Asteroid
             }
             Velocity.Y *= direction;
 
-            New = new Enemy(SpawnLocation, Velocity, largeImage, 0, 1 / 1f, Color.White, Game1.Size.LeChonk, TimeSpan.Zero, Type.Asteroid);
+            New = new Enemy(SpawnLocation, Velocity, largeImage, 0, 1 / 1f, Color.White, Game1.Size.LeChonk, TimeSpan.Zero, Type.Asteroid, armor);
 
             if (New.Hitbox.Intersects(ship.Hitbox))
             {

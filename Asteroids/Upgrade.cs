@@ -39,9 +39,10 @@ namespace Asteroid
         private bool usedThisFrame = false;
         private bool usedLastFrame = false;
         public bool Overheat = false;
+        public float Penetration = 0;
 
         public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability,
-            string name, string descrip1, string descrip2, string descrip3, string descrip4, List<Upgrade> progList, int progLevel, float energy,
+            string name, string descrip1, string descrip2, string descrip3, string descrip4, List<Upgrade> progList, int progLevel, float energy, float pen,
             Texture2D image, float rot, float scale, Color color, bool active) : base(position, image, rot, scale, color)
         {
             Position = position;
@@ -77,6 +78,7 @@ namespace Asteroid
             Scale = scale;
             Color = color;
             isActive = active;
+            Penetration = pen;
         }
 
         public void WhenSelected(List<Upgrade> possibleUpgrades, List<Upgrade> activeUpgrades, List<Upgrade> activeAbilities, List<Upgrade> activeGuns)
