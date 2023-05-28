@@ -10,7 +10,8 @@ namespace Asteroid
     {
         public float Velocity;
         public bool Aligned = false;
-        public Bullet(Vector2 position, float velocity, Texture2D image, float rot, float scale, Color color) : base(position, image, rot, scale, color)
+        public bool Burning;
+        public Bullet(Vector2 position, float velocity, Texture2D image,float rot, float scale, Color color, bool burn) : base(position, image, rot, scale, color)
         {
             Position = position;
             Velocity = velocity;
@@ -18,6 +19,7 @@ namespace Asteroid
             Rotation = rot;
             Scale = scale;
             Color = color;
+            Burning = burn;
         }
 
         public void Move()
@@ -37,7 +39,7 @@ namespace Asteroid
 
         static public Bullet BulletTypeCopy(Bullet shot, Vector2 spot, float rotat)
         {
-            Bullet newshot = new Bullet(spot, shot.Velocity, shot.Image, rotat, shot.Scale, shot.Color);
+            Bullet newshot = new Bullet(spot, shot.Velocity, shot.Image, rotat, shot.Scale, shot.Color, shot.Burning);
             return newshot;
         }
     }

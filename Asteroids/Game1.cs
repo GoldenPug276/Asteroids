@@ -19,6 +19,7 @@ namespace Asteroid
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
+        public static GameTime gameTime;
 
         //All Sprites are placeholders; change later
         Ship ship;
@@ -138,6 +139,9 @@ namespace Asteroid
         Texture2D TinyAsteroid;
         Texture2D BigSaucer;
         Texture2D SmallSaucer;
+        public static Texture2D[] AsteroidArmor;
+        public static Texture2D[] BigUFOArmor;
+        public static Texture2D[] SmallUFOArmor;
 
         public enum Size
         {
@@ -336,6 +340,7 @@ namespace Asteroid
          *          The armor value can be a float, but the array value will be rounded up. This is for shit that takes multiple hits to break off one layer
          *              For example, if the armor value is 1.5, it is registered as an armor level of 2
          *          Bullets that count as "burning"/piercing still go through armor, but every frame the armor value is reduced. If this isn't good, change.
+         *                  Maybe in the future make enemies with burning shots that can "break" or pierce your armor/shields at a weaker rate
          *              Work Order and Progress:
          *              Added the armor value to enemies and their functions
          *              Made it have a min and max value for some randomness
@@ -346,9 +351,24 @@ namespace Asteroid
          *                  DronesDefault: 0.5
          *                  DronesBurning: 0.5 (burning)
          *                      (u can probably also use these in upgrades for ones that do damage)
-         *              Make an array to hold the armors
-         *                  Probably hold it in the Enemy Class
-         *              Figure out how to make it work
+         *                  ShieldFinal: 1
+         *              Made an array to hold the armors
+         *                  They are all static in Game1
+         *                      Remember to 
+         *              Do a few quick task that I thought of
+         *                  Added a "Burning" parameter to bullets so as to not check the image
+         *                  Made the current gameTime variable have a slightly different name and gave the old name to a static version
+         *                  Make a "TimeCheck" function in Game1 to do the whole "time-gameTime" thing
+         *                      It uses the actual GameTime parameter rather than just the TimeSpan
+         *                          (haven't finished converting everything; currently finished converting (from left to right in classes): upgrade and fire functions in game1)
+         *                  Slightly change/optimize the Level class
+         *              Make the textures for the Asteroids
+         *                  The textures will be placeholders to be updated later
+         *                      (currently have armor up to level 3, add the rest when the code works)
+         *              Do something to account for non-Big Asteroids
+         *              Figure out how to make it work for the Asteroids
+         *              Copy the stuff over to UFOs
+         *                  At the very end, add a special shot for both UFOs just for clarity
          *          
          *      
          *      add a system for upgrade control. like rarity and making certain upgrades only appear at certain points
@@ -423,25 +443,33 @@ namespace Asteroid
          * Sprite Positions are in the middle of the Sprite rather than the upper right corner
          */
 
+        public static bool TimeCheck(TimeSpan checkedTime, TimeSpan reserveTime)
+        {
+            checkedTime -= gameTime.ElapsedGameTime;
+            if (checkedTime<=TimeSpan.Zero)
+            {
+                checkedTime = reserveTime;
+                return true;
+            }
+
+            return false;
+        }
         bool EnemyCollisionDetection(Rectangle checkedHitbox, List<Bullet> bullets, List<Rectangle> hitboxes)
         {
-            if (bullets != null)
+            if (bullets!=null)
             {
                 foreach (Bullet bullet in bullets)
                 {
                     if (checkedHitbox.Intersects(bullet.Hitbox))
                     {
-                        if (bullet.Image!=Laser.GunBullet.Image && bullet.Image!=DronesFinal.GunBullet.Image)
-                        {
-                            bullets.Remove(bullet);
-                        }
+                        if (!bullet.Burning) { bullets.Remove(bullet); }
                         return true;
                     }
                 }
 
             }
 
-            if (hitboxes != null)
+            if (hitboxes!=null)
             {
                 foreach(Rectangle hitbox in hitboxes)
                 {
@@ -513,8 +541,8 @@ namespace Asteroid
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             ship = new Ship(playSpace.Center.ToVector2(), 0, Content.Load<Texture2D>("ShipAndShots/Ship"), 0, 1 / 1f, Color.White);
 
-            defaultShot = new Bullet(new Vector2(-20, -20), shotVelocity, Content.Load<Texture2D>("ShipAndShots/Shot"), 0, 1 / 1f, Color.White);
-            UFOShot = new Bullet(new Vector2(-20, -20), 5, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White);
+            defaultShot = new Bullet(new Vector2(-20, -20), shotVelocity, Content.Load<Texture2D>("ShipAndShots/Shot"), 0, 1 / 1f, Color.White, false);
+            UFOShot = new Bullet(new Vector2(-20, -20), 5, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White, true);
 
 
             level = new Level(5, 1, 0, 0, TimeSpan.FromMilliseconds(20000), 100, 5, 1);
@@ -590,7 +618,7 @@ namespace Asteroid
 
             DronesFinal = new Upgrade(BurnerVector, StatUpgradeType.DronesFinal, AbilityUpgradeType.None, "Drones Final",
                 "Your drones take", "twice as long to", "lock on, but they", "fire burning bullets.", DroneProgHolder, 4, 0, 0.5f, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.OrangeRed, false);
-            DronesFinal.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, Content.Load<Texture2D>("ShipAndShots/BurningDroneShot"), 0, 1 / 1f, Color.White);
+            DronesFinal.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, Content.Load<Texture2D>("ShipAndShots/BurningDroneShot"), 0, 1 / 1f, Color.White, true);
             DroneProgHolder.Add(DronesFinal);
 
             //Upgrades
@@ -605,12 +633,12 @@ namespace Asteroid
                 "Gives you a", "searing and piercing", "laser gun.", "", null, 0, 33, 1, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.Red, false);
             PossibleUpgrades.Add(Laser);
 
-            MachineGun.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, Content.Load<Texture2D>("ShipAndShots/MachineShot"), 0, 1 / 1f, Color.White);
-            Laser.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.5f, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White);
+            MachineGun.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, Content.Load<Texture2D>("ShipAndShots/MachineShot"), 0, 1 / 1f, Color.White, false);
+            Laser.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.5f, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White, true);
 
             //Debug Gun (irrelevant)
 
-            devBullets = new Bullet(new Vector2(-20, -20), 20, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White);
+            devBullets = new Bullet(new Vector2(-20, -20), 20, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White, true);
             devGun = new Upgrade(BurnerVector, StatUpgradeType.None, AbilityUpgradeType.Laser, "Dev Gun",
                 "OP Debug Gun", "", "", "", null, 0, 0, 1, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1, Color.White, false);
 
@@ -646,10 +674,11 @@ namespace Asteroid
         }
         KeyboardState lastKeyboardState;
         MouseState lastMouseState;
-        protected override void Update(GameTime gameTime)
+        protected override void Update(GameTime gameTimer)
         {
             int width = GraphicsDevice.Viewport.Width;
             int height = GraphicsDevice.Viewport.Height;
+            gameTime = gameTimer;
 
 
             Window.Title = $"AsteroidsCount: {Asteroids.Count}      UFOCount: {UFOs.Count}      pressed: {tempPress}        width: {width}      height: {height}";
@@ -689,23 +718,18 @@ namespace Asteroid
 
             ship.Move(keyboardState);
 
-            MachineGunShotTimer -= gameTime.ElapsedGameTime;
-            LaserShotTimer -= gameTime.ElapsedGameTime;
-            defaultShotTimer -= gameTime.ElapsedGameTime;
-            devShotTimer-= gameTime.ElapsedGameTime;
-
-            MachineGun.AbilityUpdate(gameTime.ElapsedGameTime);
-            Laser.AbilityUpdate(gameTime.ElapsedGameTime);
-            devGun.AbilityUpdate(gameTime.ElapsedGameTime);
+            MachineGun.AbilityUpdate();
+            Laser.AbilityUpdate();
+            devGun.AbilityUpdate();
 
             if (mouseState.LeftButton==ButtonState.Pressed && CanShoot)
             {
-                if (MachineGun.WillGunShoot(MachineGunShotTimer)==true)
+                if (MachineGun.WillGunShoot(TimeCheck(MachineGunShotTimer, reserveMachineGunShotTimer)))
                 {
                     shots.Add(Bullet.BulletTypeCopy(MachineGun.GunBullet, ship.Position, ship.Rotation));
                     MachineGun.AbilityUse();
                 }
-                else if (Laser.WillGunShoot(LaserShotTimer)==true)
+                else if (Laser.WillGunShoot(TimeCheck(LaserShotTimer, reserveLaserShotTimer)))
                 {
                     shots.Add(Bullet.BulletTypeCopy(Laser.GunBullet, ship.Position, ship.Rotation));
                     Laser.AbilityUse();
@@ -713,28 +737,12 @@ namespace Asteroid
                 else if ((defaultShotTimer<=TimeSpan.Zero || lastMouseState.LeftButton==ButtonState.Released) && CurrentActiveGunIndex==0)
                 {
                     shots.Add(Bullet.BulletTypeCopy(defaultShot, ship.Position, ship.Rotation));
+                    defaultShotTimer = reserveDefaultShotTimer;
                 }
-                else if (devGun.WillGunShoot(devShotTimer)==true)
+                else if (devGun.WillGunShoot(TimeCheck(devShotTimer, TimeSpan.FromMilliseconds(25))))
                 {
                     shots.Add(Bullet.BulletTypeCopy(devBullets, ship.Position, ship.Rotation));
                 }
-            }
-
-            if (MachineGunShotTimer <= TimeSpan.Zero)
-            {
-                MachineGunShotTimer = reserveMachineGunShotTimer;
-            }
-            if (LaserShotTimer <= TimeSpan.Zero)
-            {
-                LaserShotTimer = reserveLaserShotTimer;
-            }
-            if (defaultShotTimer <= TimeSpan.Zero)
-            {
-                defaultShotTimer = reserveDefaultShotTimer;
-            }
-            if (devShotTimer <= TimeSpan.Zero)
-            {
-                devShotTimer = TimeSpan.FromMilliseconds(25);
             }
 
             level.VariablePass(tinyAsteroidVelocity, smallAsteroidVelocity, largeAsteroidVelocity, SmallAsteroid, BigAsteroid, SmallSaucer, BigSaucer);
@@ -1296,7 +1304,7 @@ namespace Asteroid
             //Ability Effect Code
 
 
-            Warp.AbilityUpdate(gameTime.ElapsedGameTime);
+            Warp.AbilityUpdate();
             if (mouseState.RightButton == ButtonState.Pressed && lastMouseState.RightButton == ButtonState.Released && Warp.WillAbilityGetUsed())
             {
                 ship.Position = new Vector2(rand.Next(0, width), rand.Next(0, height));
@@ -1309,7 +1317,7 @@ namespace Asteroid
             {
                 if (ShieldProgHolder[i].isActive)
                 {
-                    ShieldProgHolder[i].AbilityUpdate(gameTime.ElapsedGameTime);
+                    ShieldProgHolder[i].AbilityUpdate();
                     if (keyboardState.IsKeyDown(Keys.Z) && ShieldProgHolder[i].WillAbilityGetUsed())
                     {
                         float energyGainMultiplier = 5;

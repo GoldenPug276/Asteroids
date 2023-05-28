@@ -131,7 +131,7 @@ namespace Asteroid
             movingEnergy.Width -= EnergyUse;
         }
 
-        public void AbilityUpdate(TimeSpan ElapsedGameTime)
+        public void AbilityUpdate()
         {
             usedLastFrame = usedThisFrame;
             usedThisFrame = false;
@@ -140,8 +140,7 @@ namespace Asteroid
             if (EnergyGainMultiplier < 10) { energyGain = 1; }
             else { energyGain = EnergyGainMultiplier / 10; }
 
-            energyRegen -= ElapsedGameTime;
-            if (energyRegen <= TimeSpan.Zero && energyRemaining.Width < 100)
+            if (Game1.TimeCheck(energyRegen, reserveEnergyRegen / EnergyGainMultiplier) && energyRemaining.Width < 100)
             {
                 if (energyMoveIf > 0)
                 {
@@ -153,15 +152,14 @@ namespace Asteroid
                     movingEnergy.Width += energyGain;
                     energyMoveIf *= -1;
                 }
-                energyRegen = reserveEnergyRegen / EnergyGainMultiplier;
             }
 
             if (Overheat && energyRemaining.Width>=energyTotal.Width/3) { Overheat = false; }
         }
 
-        public bool WillGunShoot(TimeSpan shotTimer)
+        public bool WillGunShoot(bool shotTimerOver)
         {
-            if (isActive && inEffect && shotTimer <= TimeSpan.Zero && energyRemaining.Width >= EnergyUse && !Overheat) { usedThisFrame = true; return true; }
+            if (isActive && inEffect && shotTimerOver && energyRemaining.Width >= EnergyUse && !Overheat) { usedThisFrame = true; return true; }
 
             if (usedLastFrame && energyRemaining.Width < EnergyUse)
             {

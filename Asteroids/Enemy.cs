@@ -29,6 +29,7 @@ namespace Asteroid
 
         public bool HasCollided = false;
         public float ArmorValue;
+        public Texture2D[] ArmorImages;
 
         public Enemy(Vector2 position, Vector2 velocity, Texture2D image, float rot, float scale, Color color, Game1.Size size, TimeSpan shotTimer, Type type, float armorValue)
             : base(position, image, rot, scale, color)
@@ -44,6 +45,19 @@ namespace Asteroid
             reserveShotTimer = ShotTimer;
             EType = type;
             ArmorValue = armorValue;
+            armorUp();
+        }
+        private void armorUp()
+        {
+            switch (EType)
+            {
+                case Type.Asteroid:
+                    if (leSize==Game1.Size.LeChonk)  { ArmorImages = Game1.AsteroidArmor; } break;
+
+                case Type.UFO:
+                    if (leSize == Game1.Size.Normal) { ArmorImages = Game1.BigUFOArmor; }
+                    if (leSize == Game1.Size.Baby)   { ArmorImages = Game1.SmallUFOArmor; } break;
+            }
         }
 
         public static void Sync(List<Enemy> enemyList, List<Enemy> asteroidList, List<Enemy> UFOList)
@@ -184,7 +198,7 @@ namespace Asteroid
 
             double angle = Math.Atan2((double)between.Y, (double)between.X) - MathHelper.ToRadians(90);
 
-            Bullet shot = new Bullet(start, shotCopy.Velocity, shotCopy.Image, (float)angle, 1 / 1f, Color.White);
+            Bullet shot = new Bullet(start, shotCopy.Velocity, shotCopy.Image, (float)angle, 1 / 1f, Color.White, true);
             ShotTimer = reserveShotTimer;
             return shot;
         }
