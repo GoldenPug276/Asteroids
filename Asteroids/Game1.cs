@@ -358,10 +358,13 @@ namespace Asteroid
          *              Do a few quick task that I thought of
          *                  Added a "Burning" parameter to bullets so as to not check the image
          *                  Made the current gameTime variable have a slightly different name and gave the old name to a static version
-         *                  Make a "TimeCheck" function in Game1 to do the whole "time-gameTime" thing
+         *                  Made a static "TimeCheck" function in Game1 to do the whole "time-gameTime" thing
          *                      It uses the actual GameTime parameter rather than just the TimeSpan
-         *                          (haven't finished converting everything; currently finished converting (from left to right in classes): upgrade and fire functions in game1)
+         *                  Made a non-static "HalfTimeCheck" which functions as the previous one but does't use a reserve timer
+         *                  Made a ShipGotHit function to deal with the ship taking damage
+         *                      (might end up changing it when i make armor for the ship)
          *                  Slightly change/optimize the Level class
+         *                      (might do it with an array that will hold wheter or not a timer has finished)
          *              Make the textures for the Asteroids
          *                  The textures will be placeholders to be updated later
          *                      (currently have armor up to level 3, add the rest when the code works)
@@ -445,14 +448,14 @@ namespace Asteroid
 
         public static bool TimeCheck(TimeSpan checkedTime, TimeSpan reserveTime)
         {
+            if (HalfTimeCheck(checkedTime)) { checkedTime = reserveTime;    return true; }
+            else                            {                               return false; }
+        }
+        public static bool HalfTimeCheck(TimeSpan checkedTime)
+        {
             checkedTime -= gameTime.ElapsedGameTime;
-            if (checkedTime<=TimeSpan.Zero)
-            {
-                checkedTime = reserveTime;
-                return true;
-            }
-
-            return false;
+            if (checkedTime <= TimeSpan.Zero)   { return true; }
+            else                                { return false; }
         }
         bool EnemyCollisionDetection(Rectangle checkedHitbox, List<Bullet> bullets, List<Rectangle> hitboxes)
         {
@@ -478,6 +481,16 @@ namespace Asteroid
             }
 
             return false;
+        }
+        void ShipGotHit()
+        {
+            if (iFrames<=TimeSpan.Zero)
+            {
+                ship.Position = playSpace.Center.ToVector2();
+                lives--;
+                iFrames = TimeSpan.FromMilliseconds(2000);
+                ship.Velocity = 0;
+            }
         }
         bool IsBulletInBounds(List<Bullet> bullets, int i, Rectangle playSpace)
         {
@@ -747,7 +760,7 @@ namespace Asteroid
 
             level.VariablePass(tinyAsteroidVelocity, smallAsteroidVelocity, largeAsteroidVelocity, SmallAsteroid, BigAsteroid, SmallSaucer, BigSaucer);
 
-            level.Update(gameTime.ElapsedGameTime, playSpace, Asteroids, UFOs);
+            level.Update(playSpace, Asteroids, UFOs);
             UFOShot.Velocity = level.UFOShotSpeed;
 
             if (Asteroids.Count == 0 && UFOs.Count == 0 && level.Finished ||
@@ -886,17 +899,10 @@ namespace Asteroid
 
             //Upgrade Code
 
-            iFrames -= gameTime.ElapsedGameTime;
-            if (iFrames >= TimeSpan.Zero)
+            if ((iFrames-=gameTime.ElapsedGameTime)>=TimeSpan.Zero)
             {
-                if ((int)iFrames.TotalMilliseconds % 2 < 1)
-                {
-                    ship.Color = Color.Black;
-                }
-                else
-                {
-                    ship.Color = Color.White;
-                }
+                int color = 255 * ((int)iFrames.TotalMilliseconds % 2);
+                ship.Color = new Color(color, color, color);
             }
             else
             {
@@ -927,13 +933,7 @@ namespace Asteroid
                 if (ship.Hitbox.Intersects(enemyShot.Hitbox))
                 {
                     enemyShots.Remove(enemyShot);
-                    if (iFrames <= TimeSpan.Zero)
-                    {
-                        ship.Position = playSpace.Center.ToVector2();
-                        lives--;
-                        iFrames = TimeSpan.FromMilliseconds(2000);
-                        ship.Velocity = 0;
-                    }
+                    ShipGotHit();
                     break;
                 }
 
@@ -996,14 +996,7 @@ namespace Asteroid
 
                 if (ship.Hitbox.Intersects(asteroid.Hitbox))
                 {
-                    if (iFrames <= TimeSpan.Zero)
-                    {
-                        ship.Position = playSpace.Center.ToVector2();
-                        lives--;
-                        iFrames = TimeSpan.FromMilliseconds(2000);
-                        ship.Velocity = 0;
-                    }
-                    //make look good later
+                    ShipGotHit();
                 } counter++;
             } counter = 0;
 
@@ -1025,7 +1018,7 @@ namespace Asteroid
 
                 if (counter >= UFOs.Count) { break; }
 
-                if (UFO.UFOUpdate(gameTime.ElapsedGameTime))
+                if (TimeCheck(UFO.ShotTimer, UFO.reserveShotTimer))
                 {
                     enemyShots.Add(UFO.Shoot(UFOShotArea, UFOShot));
                     break;
@@ -1037,13 +1030,7 @@ namespace Asteroid
 
                 if (ship.Hitbox.Intersects(UFO.Hitbox))
                 {
-                    if (iFrames <= TimeSpan.Zero)
-                    {
-                        ship.Position = playSpace.Center.ToVector2();
-                        lives--;
-                        iFrames = TimeSpan.FromMilliseconds(2000);
-                        ship.Velocity = 0;
-                    }
+                    ShipGotHit();
                 } counter++;
             } counter = 0;
 
@@ -1148,8 +1135,7 @@ namespace Asteroid
                     else if (!asteroidOrUFO) { droneTargetPosition = UFOs[target].Position; }
                     */
 
-                    DroneShotTimers[i] -= gameTime.ElapsedGameTime;
-                    if (DroneShotTimers[i]<=TimeSpan.Zero)
+                    if (HalfTimeCheck(DroneShotTimers[i]))
                     {
                         if (DroneTargetValues[i]==-1||DroneTargetValues[i]>=AllEnemies.Count)
                         {
@@ -1189,9 +1175,7 @@ namespace Asteroid
                         float angle = (float)Math.Atan2((double)between.Y, (double)between.X) - MathHelper.ToRadians(90);
                         DroneList[i].Rotation = angle;
 
-                        DroneLockOnTimers[i] -= gameTime.ElapsedGameTime;
-
-                        if (DroneLockOnTimers[i]<=TimeSpan.Zero)
+                        if (HalfTimeCheck(DroneLockOnTimers[i]))
                         {
                             shots.Add(Bullet.BulletTypeCopy(DroneProgHolder[0].GunBullet, DroneList[i].Position, angle));
                             DroneShotTimers[i] = reserveDroneShotTimer;

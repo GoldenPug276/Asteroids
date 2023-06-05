@@ -78,7 +78,8 @@ namespace Asteroid
 
         public static Level NextLevel(Level lLev)
         {
-            Level newLevel = new Level(lLev.SmallAsteroidTotal, lLev.LargeAsteroidTotal, lLev.LargeUFOTotal, lLev.UFOTotal, lLev.GlobalSpawnTimer, lLev.UFORange, lLev.UFOShotSpeed, lLev.LevelNum);
+            Level newLevel = new Level(lLev.SmallAsteroidTotal, lLev.LargeAsteroidTotal, lLev.LargeUFOTotal, lLev.UFOTotal, 
+                lLev.GlobalSpawnTimer, lLev.UFORange, lLev.UFOShotSpeed, lLev.LevelNum);
 
             newLevel.LevelNum++;
             if (newLevel.LevelNum==2)
@@ -128,13 +129,8 @@ namespace Asteroid
 
             return newLevel;
         }
-        public void Update(TimeSpan gameTime, Rectangle playSpace, List<Enemy> roids, List<Enemy> flys)
+        public void Update(Rectangle playSpace, List<Enemy> roids, List<Enemy> flys)
         {
-            GlobalSpawnTimer -= gameTime;
-            smallTimer -= gameTime;
-            largeUTimer -= gameTime;
-            smallUTimer -= gameTime;
-
             Random rand = new Random();
 
             armorMax = (float)Math.Floor((float)LevelNum / 3);
@@ -152,41 +148,37 @@ namespace Asteroid
 
             float UFOArmor = (float)Math.Floor(GlobalArmorValue / 2);
 
-            if (GlobalSpawnTimer<=TimeSpan.Zero && !LargeAssMax)
+            if (Game1.TimeCheck(GlobalSpawnTimer, reserveSpawnTimer) && !LargeAssMax)
             {
                 //whatSpawns = Game1.WhatSpawned.LargeAss;
                 roids.Add(Enemy.NaturalSpawn(Enemy.Type.Asteroid, playSpace, largevelocity, largeAss, Game1.Size.LeChonk, TimeSpan.Zero, GlobalArmorValue));
-                GlobalSpawnTimer = reserveSpawnTimer;
                 LargeSpawned++;
 
                 if (LargeSpawned>=LargeAsteroidTotal) { LargeAssMax = true; }
             }
 
-            if (smallTimer<=TimeSpan.Zero && !SmallAssMax)
+            if (Game1.TimeCheck(smallTimer, reserveSpawnTimer*0.5) && !SmallAssMax)
             {
                 //whatSpawns = Game1.WhatSpawned.SmallAss;
                 roids.Add(Enemy.NaturalSpawn(Enemy.Type.Asteroid, playSpace, smallvelocity, smallAss, Game1.Size.Normal, TimeSpan.Zero, 0));
-                smallTimer = reserveSpawnTimer * 0.5;
                 SmallSpawned++;
 
                 if (SmallSpawned>=SmallAsteroidTotal) { SmallAssMax = true; }
             }
 
-            if (largeUTimer<=TimeSpan.Zero && !LargeSauceMax)
+            if (Game1.TimeCheck(largeUTimer, reserveSpawnTimer*0.8) && !LargeSauceMax)
             {
                 //whatSpawns = Game1.WhatSpawned.LargeSauce;
                 flys.Add(Enemy.NaturalSpawn(Enemy.Type.UFO, playSpace, largevelocity, largeUFO, Game1.Size.Normal, UFOShotTimer, UFOArmor));
-                largeUTimer = reserveSpawnTimer * 0.80;
                 LargeUSpawned++;
 
                 if (LargeUSpawned >= LargeUFOTotal) { LargeSauceMax = true; }
             }
 
-            if (smallUTimer<=TimeSpan.Zero && !SmallSauceMax)
+            if (Game1.TimeCheck(smallUTimer, reserveSpawnTimer*1.5) && !SmallSauceMax)
             {
                 //whatSpawns = Game1.WhatSpawned.SmallSauce;
                 flys.Add(Enemy.NaturalSpawn(Enemy.Type.Asteroid, playSpace, tinyvelocity, smallUFO, Game1.Size.Baby, SmallUFOShotTimer, UFOArmor));
-                smallUTimer = reserveSpawnTimer * 1.50;
                 SmallUSpawned++;
 
                 if (SmallUSpawned>=UFOTotal) { SmallSauceMax = true; }

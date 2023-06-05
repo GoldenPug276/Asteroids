@@ -24,7 +24,7 @@ namespace Asteroid
         public Game1.Size leSize;
         public Vector2 Velocity;
         public TimeSpan ShotTimer;
-        private TimeSpan reserveShotTimer;
+        public TimeSpan reserveShotTimer;
         //Original UFO and Asteroid Variables
 
         public bool HasCollided = false;
@@ -199,18 +199,20 @@ namespace Asteroid
             double angle = Math.Atan2((double)between.Y, (double)between.X) - MathHelper.ToRadians(90);
 
             Bullet shot = new Bullet(start, shotCopy.Velocity, shotCopy.Image, (float)angle, 1 / 1f, Color.White, true);
-            ShotTimer = reserveShotTimer;
             return shot;
         }
+
         //Name changed from Update to UFOUpdate, still exists so as to not mess up old code
-        public bool UFOUpdate(TimeSpan gameTime)
+        //Scratch that, removed as new method of taking time will now be used
+        //
+        /*public bool UFOUpdate(TimeSpan gameTime)
         {
             ShotTimer -= gameTime;
 
             if (ShotTimer <= TimeSpan.Zero) { return true; }
 
             return false;
-        }
+        }*/
 
         //Original UFO Functions
 

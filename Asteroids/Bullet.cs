@@ -24,16 +24,15 @@ namespace Asteroid
 
         public void Move()
         {
+            float movement = Velocity;
+
             if (!Aligned)
             {
-                Position = new Vector2(Position.X + (float)Math.Sin(Rotation) * 17f, Position.Y - (float)Math.Cos(Rotation) * 17f);
+                movement = 17f;
                 Aligned = true;
             }
-            else
-            {
-                Position = new Vector2(Position.X + (float)Math.Sin(Rotation) * Velocity, Position.Y - (float)Math.Cos(Rotation) * Velocity);
-            }
 
+            Position = new Vector2(Position.X + (float)Math.Sin(Rotation) * movement, Position.Y - (float)Math.Cos(Rotation) * movement);
 
         }
 
