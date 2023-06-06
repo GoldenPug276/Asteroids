@@ -138,11 +138,6 @@ namespace Asteroid
 
             if (armorMax>2) { armorMin = armorMax - 3; }
 
-            if (1==1)
-            {
-
-            }
-
             if (GlobalSpawnTimer<=TimeSpan.Zero||largeUTimer<=TimeSpan.Zero||smallUTimer<=TimeSpan.Zero)
                 { GlobalArmorValue = rand.Next((int)armorMin, (int)armorMax + 1); }
 

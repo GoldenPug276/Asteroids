@@ -52,12 +52,25 @@ namespace Asteroid
             switch (EType)
             {
                 case Type.Asteroid:
-                    if (leSize==Game1.Size.LeChonk)  { ArmorImages = Game1.AsteroidArmor; } break;
+                    ArmorImages = Game1.AsteroidArmor;
+                    if (leSize!=Game1.Size.LeChonk)  { ArmorValue = 0; } break;
 
                 case Type.UFO:
                     if (leSize == Game1.Size.Normal) { ArmorImages = Game1.BigUFOArmor; }
                     if (leSize == Game1.Size.Baby)   { ArmorImages = Game1.SmallUFOArmor; } break;
             }
+        }
+
+        public bool ArmorDamage()
+        {
+            //true = armor still up
+            //false = armor broken
+
+
+
+
+            return true;
+
         }
 
         public static void Sync(List<Enemy> enemyList, List<Enemy> asteroidList, List<Enemy> UFOList)

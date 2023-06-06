@@ -49,9 +49,9 @@ namespace Asteroid
             UpgradeType = statype;
             AbilityType = ability;
 
-            if (UpgradeType == Game1.StatUpgradeType.None)
+            if (UpgradeType == Game1.StatUpNone)
             {
-                if (AbilityType != Game1.AbilityUpgradeType.None && AbilityType < Game1.AbilityUpgradeType.Warp)
+                if (AbilityType != Game1.AbilityUpNone && AbilityType < Game1.AbilityUpgradeType.Warp)
                 {
                     energyTotal = new Rectangle(10, 70, 100, 20);
                     isGun = true;
@@ -90,11 +90,11 @@ namespace Asteroid
                 isActive = true;
 
 
-                if (UpgradeType!=Game1.StatUpgradeType.None && AbilityType==Game1.AbilityUpgradeType.None)
+                if (UpgradeType!=Game1.StatUpNone && AbilityType==Game1.AbilityUpNone)
                 {
                     activeUpgrades.Add(this);
                 }
-                else if (AbilityType!=Game1.AbilityUpgradeType.None && UpgradeType==Game1.StatUpgradeType.None)
+                else if (AbilityType!=Game1.AbilityUpNone && UpgradeType==Game1.StatUpNone)
                 {
                     if (isGun) { activeGuns.Add(this); }
                     else { activeAbilities.Add(this); }
