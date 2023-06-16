@@ -6,6 +6,7 @@ using MonoGame.Extended.BitmapFonts;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Windows.Media.Capture;
 
 namespace Asteroid
 {
@@ -36,6 +37,9 @@ namespace Asteroid
         public float EnergyGainMultiplier = 1;
 
         public bool isGun = false;
+        public TimeSpan ShotTimer;
+        private bool readyToFire = false;
+        public TimeSpan reserveShotTimer;
         private bool usedThisFrame = false;
         private bool usedLastFrame = false;
         public bool Overheat = false;
@@ -140,26 +144,38 @@ namespace Asteroid
             if (EnergyGainMultiplier < 10) { energyGain = 1; }
             else { energyGain = EnergyGainMultiplier / 10; }
 
-            if (Game1.TimeCheck(energyRegen, reserveEnergyRegen / EnergyGainMultiplier) && energyRemaining.Width < 100)
+            energyRegen -= Game1.gameTime.ElapsedGameTime;
+
+            if (energyRegen<=TimeSpan.Zero && energyRemaining.Width<100)
             {
-                if (energyMoveIf > 0)
+                if (energyMoveIf>0)
                 {
                     energyRemaining.Width += energyGain;
                     energyMoveIf *= -1;
                 }
-                else if (energyMoveIf < 0)
+                else if (energyMoveIf<0)
                 {
                     movingEnergy.Width += energyGain;
                     energyMoveIf *= -1;
                 }
+
+                energyRegen = reserveEnergyRegen / EnergyGainMultiplier;
             }
 
             if (Overheat && energyRemaining.Width>=energyTotal.Width/3) { Overheat = false; }
+
+            if (isGun) { ShotTimer -= Game1.gameTime.ElapsedGameTime; }
+            if (ShotTimer<=TimeSpan.Zero) { readyToFire = true; } else { readyToFire = false; }
         }
 
-        public bool WillGunShoot(bool shotTimerOver)
+        public bool WillGunShoot()
         {
-            if (isActive && inEffect && shotTimerOver && energyRemaining.Width >= EnergyUse && !Overheat) { usedThisFrame = true; return true; }
+            if (isActive && inEffect && readyToFire && energyRemaining.Width>=EnergyUse && !Overheat)
+            {
+                usedThisFrame = true;
+                ShotTimer = reserveShotTimer;
+                return true;
+            }
 
             if (usedLastFrame && energyRemaining.Width < EnergyUse)
             {
