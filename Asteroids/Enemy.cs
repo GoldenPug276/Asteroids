@@ -211,7 +211,8 @@ namespace Asteroid
 
             double angle = Math.Atan2((double)between.Y, (double)between.X) - MathHelper.ToRadians(90);
 
-            Bullet shot = new Bullet(start, shotCopy.Velocity, shotCopy.Image, (float)angle, 1 / 1f, Color.White, true);
+            Bullet shot = Bullet.BulletTypeCopy(shotCopy, start, (float)angle);
+
             return shot;
         }
 

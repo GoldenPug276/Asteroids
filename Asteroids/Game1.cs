@@ -34,7 +34,7 @@ namespace Asteroid
         SpriteFont font;
         SpriteFont upgradeTitleFont;
         SpriteFont upgradeDescFont;
-        Vector2 BurnVec = new Vector2(0,0);
+        Vector2 BurnVec = new Vector2(0, 0);
         int counter = 0;
 
         public enum StatUpgradeType
@@ -373,10 +373,20 @@ namespace Asteroid
          *              Gave the Upgrade Class an optional ShotTimer and reserveShotTimer parameter so as to make shooting with guns simpler
          *              Converted the defaultShot into a gun so as to make Penetration calculation easier
          *                  And whilst I was at it, I made the gun swap code look less horrid
-         *              Do a similar conversion for the UFOs
-         *              
+         *              Made and implemented a ContentLoad2D function to load Texture2D's without having to type out Content.Load<Texture2D>
+         *              Made and implemented strings in LoadContent in order to load Texture2D's for long subfolder paths (like "ShipAndShots/" and "UpgradeImages/")
+         *                  (ufoArmors have the paths "Armor/LargeUFOArmor" and "Armor/SmallUFOArmor" [with the number at the end added manually])
          *              Figure out how to make it work for the Asteroids
-         *                  Uses a ArmorDamage function in the Enemy class that gets called upon collision, does armor calc, and returns if the armor is still stable
+         *                  First, make the armor display
+         *                      Remember that at ArmorValue 0, armor is not displayed
+         *                                  (current progress: i added the images to the array but got distracted with the 2 above tasks)
+         *                  
+         *                  Uses a ArmorDamage function in the Enemy class with the following parameters:
+         *                      Gets called upon collision,
+         *                      Does armor calculation,
+         *                      And returns if the armor is still stable
+         *                  Then, test
+         *                  
          *              Copy the stuff over to UFOs
          *                  At the very end, add a special shot for both UFOs just for clarity
          *          
@@ -453,16 +463,21 @@ namespace Asteroid
          * Sprite Positions are in the middle of the Sprite rather than the upper right corner
          */
 
+        Texture2D ContentLoad2D(string path)
+        {
+            return Content.Load<Texture2D>(path);
+        }
+
         public static bool TimeCheck(TimeSpan checkedTime, TimeSpan reserveTime)
         {
-            if (HalfTimeCheck(checkedTime)) { checkedTime = reserveTime;    return true; }
-            else                            {                               return false; }
+            if (HalfTimeCheck(checkedTime)) { checkedTime = reserveTime; return true; }
+            else { return false; }
         }
         public static bool HalfTimeCheck(TimeSpan checkedTime)
         {
             checkedTime -= gameTime.ElapsedGameTime;
-            if (checkedTime <= TimeSpan.Zero)   { return true; }
-            else                                { return false; }
+            if (checkedTime<=TimeSpan.Zero) { return true; }
+            else { return false; }
         }
         bool EnemyCollisionDetection(Rectangle checkedHitbox, List<Bullet> bullets, List<Rectangle> hitboxes)
         {
@@ -481,7 +496,7 @@ namespace Asteroid
 
             if (hitboxes!=null)
             {
-                foreach(Rectangle hitbox in hitboxes)
+                foreach (var hitbox in hitboxes)
                 {
                     if (checkedHitbox.Intersects(hitbox)) { return true; }
                 }
@@ -552,18 +567,27 @@ namespace Asteroid
             upgradeTitleFont = Content.Load<SpriteFont>("UpgradeTitleFont");
             upgradeDescFont = Content.Load<SpriteFont>("UpgradeFont");
 
-            BigAsteroid = Content.Load<Texture2D>("Enemies/BigAsteroid");
-            SmallAsteroid = Content.Load<Texture2D>("Enemies/SmallAsteroid");
-            TinyAsteroid = Content.Load<Texture2D>("Enemies/TinyAsteroid");
-            BigSaucer = Content.Load<Texture2D>("Enemies/Big Saucer");
-            SmallSaucer = Content.Load<Texture2D>("Enemies/Small Saucer");
+            string shipShots = "ShipAndShots/";
+            string upgradeImages = "UpgradeImages/";
+            string assArm = "Armor/AsteroidArmor";
+            string UFOArm = "Armor/LargeUFOArmor";
+            string ufoArm = "Armor/SmallUFOArmor";
+            string tempIdiot = "idiot/You Are An Idiot";
+
+            BigAsteroid = ContentLoad2D("Enemies/BigAsteroid");
+            SmallAsteroid = ContentLoad2D("Enemies/SmallAsteroid");
+            TinyAsteroid = ContentLoad2D("Enemies/TinyAsteroid");
+            BigSaucer = ContentLoad2D("Enemies/Big Saucer");
+            SmallSaucer = ContentLoad2D("Enemies/Small Saucer");
+
+            AsteroidArmor = new Texture2D[] { BigAsteroid, ContentLoad2D($"{assArm}1"), ContentLoad2D($"{assArm}2"), ContentLoad2D($"{assArm}3") };
 
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            ship = new Ship(playSpace.Center.ToVector2(), 0, Content.Load<Texture2D>("ShipAndShots/Ship"), 0, 1 / 1f, Color.White);
+            ship = new Ship(playSpace.Center.ToVector2(), 0, ContentLoad2D($"{shipShots}Ship"), 0, 1 / 1f, Color.White);
 
-            defaultShot = new Bullet(new Vector2(-20, -20), shotVelocity, Content.Load<Texture2D>("ShipAndShots/Shot"), 0, 1 / 1f, Color.White, false);
+            defaultShot = new Bullet(new Vector2(-20, -20), shotVelocity, ContentLoad2D($"{shipShots}Shot"), 0, 1 / 1f, Color.White, false);
 
-            UFOShot = new Bullet(new Vector2(-20, -20), 5, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White, true);
+            UFOShot = new Bullet(new Vector2(-20, -20), 5, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1f, Color.White, true);
 
 
             level = new Level(5, 1, 0, 0, TimeSpan.FromMilliseconds(20000), 100, 5, 1);
@@ -572,8 +596,8 @@ namespace Asteroid
             Asteroids.Add(Enemy.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship, 0));
             Asteroids.Add(Enemy.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship, 0));
 
-            UpgradeSlot = Content.Load<Texture2D>("UpgradeImages/UpgradeSlot");
-            SkipUpgrade = Content.Load<Texture2D>("UpgradeImages/UpgradeSkip");
+            UpgradeSlot = ContentLoad2D($"{upgradeImages}UpgradeSlot");
+            SkipUpgrade = ContentLoad2D($"{upgradeImages}UpgradeSkip");
             UpgradeChoice1 = new Button(new Vector2(135, 240), UpgradeSlot, 0, 1, Color.White);
             UpgradeChoice2 = new Button(new Vector2(405, 240), UpgradeSlot, 0, 1, Color.White);
             UpgradeChoice3 = new Button(new Vector2(675, 240), UpgradeSlot, 0, 1, Color.White);
@@ -585,26 +609,26 @@ namespace Asteroid
             //Abilities
 
             Warp = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Warp, "Warp", "Press M2 to warp", "to a random point", "on screen. Gain 0.4", "seconds of i-frames.",
-                null, 0, 99, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.DarkGray, false);
+                null, 0, 99, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkGray, false);
             PossibleUpgrades.Add(Warp);
 
             Shield1 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield1, "Shield", "Hold Z to activate", "a shield that", "protects you from", "all damage.",
-                ShieldProgHolder, 1, 1, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                ShieldProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(Shield1);
             ShieldProgHolder.Add(Shield1);
-            ShieldSprite = new Sprite(BurnVec, Content.Load<Texture2D>("Upgrades/ShieldHitbox"), 0, 1 / 1f, Color.White);
-            ShieldSprite.DisplayImage = Content.Load<Texture2D>("Upgrades/Shield");
+            ShieldSprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/ShieldHitbox"), 0, 1 / 1f, Color.White);
+            ShieldSprite.DisplayImage = ContentLoad2D("Upgrades/Shield");
 
             Shield2 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield2, "Shield+", "You can have the", "shield active for", "longer.", "",
-                ShieldProgHolder, 2, 1, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                ShieldProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             ShieldProgHolder.Add(Shield2);
 
-            Shield3 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield3, "Shield++","You can have the", "shield active for", "almost forever.", "",
-                ShieldProgHolder, 3, 1, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+            Shield3 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield3, "Shield++", "You can have the", "shield active for", "almost forever.", "",
+                ShieldProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             ShieldProgHolder.Add(Shield3);
 
             ShieldFinal = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.ShieldFinal, "Shield Final", "Coat your shield in", "fire, reverting its", "length but melting",
-                "all touched enemies.", ShieldProgHolder, 4, 1, 1, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.OrangeRed, false);
+                "all touched enemies.", ShieldProgHolder, 4, 1, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
             ShieldProgHolder.Add(ShieldFinal);
 
             //Abilities
@@ -612,34 +636,34 @@ namespace Asteroid
             //Upgrades
 
             ShotSpeedUp1 = new Upgrade(BurnVec, StatUpgradeType.ShotSpeedUp1, AbilityUpNone, "Shot Speed+", "Reduces the time bet-", "-ween default shots",
-                "and increases special", "gun energy gain.", ShotSpeedProgHolder, 1, 0, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                "and increases special", "gun energy gain.", ShotSpeedProgHolder, 1, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(ShotSpeedUp1);
             ShotSpeedProgHolder.Add(ShotSpeedUp1);
 
             ShotSpeedUp2 = new Upgrade(BurnVec, StatUpgradeType.ShotSpeedUp1, AbilityUpNone, "Shot Speed++", "Increases fire speed", "and special gun", "energy gain more.", "",
-                ShotSpeedProgHolder, 2, 0, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                ShotSpeedProgHolder, 2, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             ShotSpeedProgHolder.Add(ShotSpeedUp2);
 
             ShotSpeedUp3 = new Upgrade(BurnVec, StatUpgradeType.ShotSpeedUp1, AbilityUpNone, "Shot Speed+++", "You can now shoot", "really fast and", "really often.", "",
-                ShotSpeedProgHolder, 3, 0, 0, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                ShotSpeedProgHolder, 3, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             ShotSpeedProgHolder.Add(ShotSpeedUp3);
 
             Drones1 = new Upgrade(BurnVec, StatUpgradeType.Drones1, AbilityUpNone, "Drones", "Gain a drone that", "stays near you and", "shoots enemies", "every 5 seconds.",
-                DroneProgHolder, 1, 0, 0.5f, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                DroneProgHolder, 1, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(Drones1);
             DroneProgHolder.Add(Drones1);
 
             Drones2 = new Upgrade(BurnVec, StatUpgradeType.Drones2, AbilityUpNone, "Drones+", "Gain an additional", "drone. Your drones", "shoot every 3 sec.", "",
-                DroneProgHolder, 2, 0, 0.5f, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                DroneProgHolder, 2, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             DroneProgHolder.Add(Drones2);
 
             Drones3 = new Upgrade(BurnVec, StatUpgradeType.Drones3, AbilityUpNone, "Drones++", "Gain one more drone.", "Your drones shoot", "every 1.5 seconds.", "",
-                DroneProgHolder, 3, 0, 0.5f, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.White, false);
+                DroneProgHolder, 3, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             DroneProgHolder.Add(Drones3);
 
             DronesFinal = new Upgrade(BurnVec, StatUpgradeType.DronesFinal, AbilityUpNone, "Drones Final", "Your drones take", "twice as long to", "lock on, but they",
-                "fire burning bullets.", DroneProgHolder, 4, 0, 0.5f, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.OrangeRed, false);
-            DronesFinal.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, Content.Load<Texture2D>("ShipAndShots/BurningDroneShot"), 0, 1 / 1f, Color.White, true);
+                "fire burning bullets.", DroneProgHolder, 4, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
+            DronesFinal.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, ContentLoad2D($"{shipShots}BurningDroneShot"), 0, 1 / 1f, Color.White, true);
             DroneProgHolder.Add(DronesFinal);
 
             //Upgrades
@@ -647,25 +671,25 @@ namespace Asteroid
             //Guns
 
             MachineGun = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Machine, "Machine Gun", "Gives you a rapid-", "-firing machine gun.", "", "",
-                null, 0, 7, 0.2f, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.DarkSlateGray, false);
+                null, 0, 7, 0.2f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkSlateGray, false);
             MachineGun.ShotTimer = MachineGunShotTimer;
             MachineGun.reserveShotTimer = reserveMachineGunShotTimer;
             PossibleUpgrades.Add(MachineGun);
 
             Laser = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Laser, "Laser", "Gives you a", "searing and piercing", "laser gun.", "",
-                null, 0, 33, 1, Content.Load<Texture2D>("idiot/You Are An Idiot"), 0, 1 / 1, Color.Red, false);
+                null, 0, 33, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Red, false);
             Laser.ShotTimer = LaserShotTimer;
             Laser.reserveShotTimer = reserveLaserShotTimer;
             PossibleUpgrades.Add(Laser);
 
-            MachineGun.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, Content.Load<Texture2D>("ShipAndShots/MachineShot"), 0, 1 / 1f, Color.White, false);
-            Laser.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.5f, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White, true);
+            MachineGun.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, ContentLoad2D($"{shipShots}MachineShot"), 0, 1 / 1f, Color.White, false);
+            Laser.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.5f, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1f, Color.White, true);
 
             //Debug Gun (irrelevant)
 
-            devBullets = new Bullet(new Vector2(-20, -20), 20, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1f, Color.White, true);
+            devBullets = new Bullet(new Vector2(-20, -20), 20, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1f, Color.White, true);
             devGun = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Laser, "Dev Gun",
-                "OP Debug Gun", "", "", "", null, 0, 0, 1, Content.Load<Texture2D>("ShipAndShots/LaserShot"), 0, 1 / 1, Color.White, false);
+                "OP Debug Gun", "", "", "", null, 0, 0, 1, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1, Color.White, false);
             devGun.ShotTimer = devShotTimer;
             devGun.reserveShotTimer = TimeSpan.FromMilliseconds(25);
 
@@ -674,7 +698,7 @@ namespace Asteroid
             //Guns
 
             None = new Upgrade(BurnVec, StatUpNone, AbilityUpNone, "Cold Treasure",
-                "We will not", "become stronger.", "", "", null, 0, 0, 1, Content.Load<Texture2D>("UpgradeImages/Cold Treasure"), 0, 1 / 1, Color.White, false);
+                "We will not", "become stronger.", "", "", null, 0, 0, 1, ContentLoad2D($"{upgradeImages}Cold Treasure"), 0, 1 / 1, Color.White, false);
 
             NoneRefresh(NoneHolder, None);
 
@@ -719,8 +743,6 @@ namespace Asteroid
             MouseState mouseState = Mouse.GetState();
 
 
-
-            
             Enemy.Sync(AllEnemies, Asteroids, UFOs);
             Enemy.Split(AllEnemies, Asteroids, UFOs);
             lastEnemies = AllEnemies;
@@ -750,6 +772,8 @@ namespace Asteroid
 
             ship.Move(keyboardState);
 
+            //Gun Code
+
             defaultTimer -= gameTime.ElapsedGameTime;
             MachineGun.AbilityUpdate();
             Laser.AbilityUpdate();
@@ -777,6 +801,10 @@ namespace Asteroid
                     shots.Add(Bullet.BulletTypeCopy(devBullets, ship.Position, ship.Rotation));
                 }
             }
+
+            //Gun Code
+
+            //Level Code
 
             level.VariablePass(tinyAsteroidVelocity, smallAsteroidVelocity, largeAsteroidVelocity, SmallAsteroid, BigAsteroid, SmallSaucer, BigSaucer);
 
@@ -852,6 +880,8 @@ namespace Asteroid
                 UpgradeChosen = false;
                 UpgradeTime = 0;
             }
+
+            //Level Code
 
             //Upgrade Code
 
@@ -957,7 +987,11 @@ namespace Asteroid
                     break;
                 }
 
-                if (!IsBulletInBounds(enemyShots, counter, playSpace)) { break; } counter++;
+                if (!IsBulletInBounds(enemyShots, counter, playSpace))
+                {
+                    break;
+                }
+                counter++;
             } counter = 0;
 
             foreach (var asteroid in Asteroids)
@@ -973,7 +1007,7 @@ namespace Asteroid
                         asteroid.Image = SmallAsteroid;
                         asteroid.Velocity = new Vector2(asteroid.Velocity.X * (largeAsteroidVelocity / smallAsteroidVelocity),
                             asteroid.Velocity.Y * (largeAsteroidVelocity / smallAsteroidVelocity));
-                        Asteroids.Add(new Enemy(new Vector2(asteroid.Position.X + 60, asteroid.Position.Y), new Vector2(-asteroid.Velocity.X * 2, -asteroid.Velocity.Y * 2), 
+                        Asteroids.Add(new Enemy(new Vector2(asteroid.Position.X + 60, asteroid.Position.Y), new Vector2(-asteroid.Velocity.X * 2, -asteroid.Velocity.Y * 2),
                             SmallAsteroid, 0, 1 / 1f, Color.White, Size.Normal, TimeSpan.Zero, Enemy.Type.Asteroid, 0));
                     }
                     else if (asteroid.leSize == Size.Normal)
@@ -983,7 +1017,7 @@ namespace Asteroid
                         asteroid.Image = TinyAsteroid;
                         asteroid.Velocity = new Vector2(asteroid.Velocity.X * (smallAsteroidVelocity / tinyAsteroidVelocity),
                             asteroid.Velocity.Y * (smallAsteroidVelocity / tinyAsteroidVelocity));
-                        Asteroids.Add(new Enemy(new Vector2(asteroid.Position.X + 25, asteroid.Position.Y), new Vector2(-asteroid.Velocity.X * 2, -asteroid.Velocity.Y * 2), 
+                        Asteroids.Add(new Enemy(new Vector2(asteroid.Position.X + 25, asteroid.Position.Y), new Vector2(-asteroid.Velocity.X * 2, -asteroid.Velocity.Y * 2),
                             TinyAsteroid, 0, 1 / 1f, Color.White, Size.Baby, TimeSpan.Zero, Enemy.Type.Asteroid, 0));
                     }
                     else if (asteroid.leSize == Size.Baby)
@@ -1017,7 +1051,8 @@ namespace Asteroid
                 if (ship.Hitbox.Intersects(asteroid.Hitbox))
                 {
                     ShipGotHit();
-                } counter++;
+                }
+                counter++;
             } counter = 0;
 
             UFOMovementSpace = new Rectangle((int)ship.Position.X - 60, 50, 120, 60);
@@ -1051,7 +1086,8 @@ namespace Asteroid
                 if (ship.Hitbox.Intersects(UFO.Hitbox))
                 {
                     ShipGotHit();
-                } counter++;
+                }
+                counter++;
             } counter = 0;
 
             ship.IsInBounds(playSpace);
@@ -1114,10 +1150,7 @@ namespace Asteroid
                     }
                     DroneProgHolder[0].GunBullet = DronesFinal.GunBullet;
                 }
-                if (i==3 && DroneProgHolder[3].inEffect)
-                {
-                    break;
-                }
+                if (i==3 && DroneProgHolder[3].inEffect) { break; }
 
                 if (DroneProgHolder[i].isActive && !DroneProgHolder[i].inEffect)
                 {
@@ -1134,7 +1167,7 @@ namespace Asteroid
                     DroneProgHolder[i].inEffect = true;
                     break;
                 }
-                
+
                 if (DroneProgHolder[i].inEffect)
                 {
                     /*
@@ -1164,7 +1197,7 @@ namespace Asteroid
                         }
 
                         if (lastEnemies.Count>0 && AllEnemies.Count>0 && i<lastEnemies.Count && i<AllEnemies.Count &&
-                            lastEnemies[DroneTargetValues[i]] != AllEnemies[DroneTargetValues[i]])
+                            lastEnemies[DroneTargetValues[i]]!=AllEnemies[DroneTargetValues[i]])
                         {
                             for (int j = 0; j < AllEnemies.Count; j++)
                             {
@@ -1176,7 +1209,7 @@ namespace Asteroid
                                 if (j==AllEnemies.Count-1)
                                 {
                                     DroneLockOnTimers[i] = TimeSpan.FromMilliseconds(1500);
-                                        if (DroneProgHolder[3].isActive) { DroneLockOnTimers[i] = TimeSpan.FromMilliseconds(3000); }
+                                    if (DroneProgHolder[3].isActive) { DroneLockOnTimers[i] = TimeSpan.FromMilliseconds(3000); }
                                     DroneTargetValues[i] = rand.Next(0, AllEnemies.Count);
                                     break;
                                 }
@@ -1189,8 +1222,8 @@ namespace Asteroid
                         Vector2 between;
                         //
                         start = DroneList[i].Hitbox.Center.ToVector2();
-                        if (DroneTargetValues[i]==-1||AllEnemies.Count==0)   { destination = BurnVec; }
-                        else                                                 { destination = AllEnemies[DroneTargetValues[i]].Position; }
+                        if (DroneTargetValues[i]==-1||AllEnemies.Count==0)  { destination = BurnVec; }
+                        else                                                { destination = AllEnemies[DroneTargetValues[i]].Position; }
                         between = start - destination;
                         //
                         float angle = (float)Math.Atan2((double)between.Y, (double)between.X) - MathHelper.ToRadians(90);
@@ -1201,7 +1234,7 @@ namespace Asteroid
                             shots.Add(Bullet.BulletTypeCopy(DroneProgHolder[0].GunBullet, DroneList[i].Position, angle));
                             DroneShotTimers[i] = reserveDroneShotTimer;
                             DroneLockOnTimers[i] = TimeSpan.FromMilliseconds(1500);
-                                if (DroneProgHolder[3].isActive) { DroneLockOnTimers[i] = TimeSpan.FromMilliseconds(3000); }
+                            if (DroneProgHolder[3].isActive) { DroneLockOnTimers[i] = TimeSpan.FromMilliseconds(3000); }
                             DroneTargetValues[i] = -1;
                         }
                     }
