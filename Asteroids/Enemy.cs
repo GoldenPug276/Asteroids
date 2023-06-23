@@ -46,6 +46,10 @@ namespace Asteroid
             EType = type;
             ArmorValue = armorValue;
             armorUp();
+            if (ArmorValue!=0) 
+            {
+                DisplayImage = ArmorImages[(int)Math.Ceiling(ArmorValue)];
+            }
         }
         private void armorUp()
         {
@@ -61,16 +65,18 @@ namespace Asteroid
             }
         }
 
-        public bool ArmorDamage()
+        public bool ArmorDamage(float pen)
         {
             //true = armor still up
             //false = armor broken
 
 
 
+            DisplayImage = ArmorImages[(int)Math.Ceiling(ArmorValue)];
+            if (ArmorValue==0) { DisplayImage = null; }
+
 
             return true;
-
         }
 
         public static void Sync(List<Enemy> enemyList, List<Enemy> asteroidList, List<Enemy> UFOList)
@@ -256,7 +262,6 @@ namespace Asteroid
 
             Position = new Vector2(Position.X + Velocity.X, Position.Y + Velocity.Y);
         }
-
 
         //UFO Function Conversion
     }

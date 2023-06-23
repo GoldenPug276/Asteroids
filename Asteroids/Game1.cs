@@ -111,6 +111,8 @@ namespace Asteroid
         TimeSpan LaserShotTimer = new TimeSpan(0, 0, 0, 0, 300);
         TimeSpan reserveLaserShotTimer = new TimeSpan(0, 0, 0, 0, 300);
 
+        float CollisionPenetration = 0;
+
         /*  Old Powerup Code, Archived
         Powerup machine;
         Powerup laser;
@@ -360,9 +362,8 @@ namespace Asteroid
          *              Did a few quick tasks that I thought of:
          *                  Added a "Burning" parameter to bullets so as to not check the image
          *                  Made the current gameTime variable have a slightly different name and gave the old name to a static version
-         *                  Made a static "TimeCheck" function in Game1 to do the whole "time-gameTime" thing
-         *                      It uses the actual GameTime parameter rather than just the TimeSpan
-         *                  Made a non-static "HalfTimeCheck" which functions as the previous one but does't use a reserve timer
+         *                      When this was done originally, I also made functions to do the TimeCheck thing for me, one with a reserve and one without
+         *                      However, they basically never worked right, so they have since been removed
          *                  Made a ShipGotHit function to deal with the ship taking damage
          *                      (might end up changing it when i make armor for the ship)
          *                  Made specific static variables to hold StatUpgradeType.None and AbilityUpgradeType.None
@@ -377,14 +378,22 @@ namespace Asteroid
          *              Made and implemented strings in LoadContent in order to load Texture2D's for long subfolder paths (like "ShipAndShots/" and "UpgradeImages/")
          *                  (ufoArmors have the paths "Armor/LargeUFOArmor" and "Armor/SmallUFOArmor" [with the number at the end added manually])
          *              Figure out how to make it work for the Asteroids
-         *                  First, make the armor display
+         *                  First, I made the armor display just in general
          *                      Remember that at ArmorValue 0, armor is not displayed
-         *                                  (current progress: i added the images to the array but got distracted with the 2 above tasks)
-         *                  
-         *                  Uses a ArmorDamage function in the Enemy class with the following parameters:
-         *                      Gets called upon collision,
+         *                          I added a variable called noArmorChain that makes is so that the 3rd 0 armorValue roll will be rerolled with a minimum of 1
+         *                      First displayed using the main function, then updated using the below function
+         *                  Then, make an ArmorDamage function in the Enemy class with the following parameters: (remove dones at the end and make the shiz past tense)
+         *                      Takes in the Penetration of whatever caused damage      **DONE**
+         *                          I am currently using a variable in Game1 called CollisionPenetration updated in the similar function to set this, change later if this is bad
+         *                          I also gave each bullet a Penetratn value as well for simplicity
+         *                                  (temp UFOShot has 0 pen)
+         *                                  (also, since there's only 1 thing in ExtraHitbox atm, i just used the shield' penetration directly. 
+         *                                      change this asap, i'm just out of time rn)
+         *                      Gets called upon collision,     **DONE FOR ASTEROIDS*
          *                      Does armor calculation,
          *                      And returns if the armor is still stable
+         *                      If the armor is still stable, then it sets the DisplayImage to armor[armorValue]    **DONE**
+         *                  
          *                  Then, test
          *                  
          *              Copy the stuff over to UFOs
@@ -467,18 +476,6 @@ namespace Asteroid
         {
             return Content.Load<Texture2D>(path);
         }
-
-        public static bool TimeCheck(TimeSpan checkedTime, TimeSpan reserveTime)
-        {
-            if (HalfTimeCheck(checkedTime)) { checkedTime = reserveTime; return true; }
-            else { return false; }
-        }
-        public static bool HalfTimeCheck(TimeSpan checkedTime)
-        {
-            checkedTime -= gameTime.ElapsedGameTime;
-            if (checkedTime<=TimeSpan.Zero) { return true; }
-            else { return false; }
-        }
         bool EnemyCollisionDetection(Rectangle checkedHitbox, List<Bullet> bullets, List<Rectangle> hitboxes)
         {
             if (bullets!=null)
@@ -487,6 +484,7 @@ namespace Asteroid
                 {
                     if (checkedHitbox.Intersects(bullet.Hitbox))
                     {
+                        CollisionPenetration = bullet.Penetration;
                         if (!bullet.Burning) { bullets.Remove(bullet); }
                         return true;
                     }
@@ -498,7 +496,7 @@ namespace Asteroid
             {
                 foreach (var hitbox in hitboxes)
                 {
-                    if (checkedHitbox.Intersects(hitbox)) { return true; }
+                    if (checkedHitbox.Intersects(hitbox)) { CollisionPenetration = ShieldFinal.Penetration; return true; }
                 }
             }
 
@@ -585,9 +583,9 @@ namespace Asteroid
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             ship = new Ship(playSpace.Center.ToVector2(), 0, ContentLoad2D($"{shipShots}Ship"), 0, 1 / 1f, Color.White);
 
-            defaultShot = new Bullet(new Vector2(-20, -20), shotVelocity, ContentLoad2D($"{shipShots}Shot"), 0, 1 / 1f, Color.White, false);
+            defaultShot = new Bullet(new Vector2(-20, -20), shotVelocity, ContentLoad2D($"{shipShots}Shot"), 0, 1 / 1f, Color.White, 1, false);
 
-            UFOShot = new Bullet(new Vector2(-20, -20), 5, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1f, Color.White, true);
+            UFOShot = new Bullet(new Vector2(-20, -20), 5, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1f, Color.White, 0, true);
 
 
             level = new Level(5, 1, 0, 0, TimeSpan.FromMilliseconds(20000), 100, 5, 1);
@@ -663,7 +661,7 @@ namespace Asteroid
 
             DronesFinal = new Upgrade(BurnVec, StatUpgradeType.DronesFinal, AbilityUpNone, "Drones Final", "Your drones take", "twice as long to", "lock on, but they",
                 "fire burning bullets.", DroneProgHolder, 4, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
-            DronesFinal.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, ContentLoad2D($"{shipShots}BurningDroneShot"), 0, 1 / 1f, Color.White, true);
+            DronesFinal.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, ContentLoad2D($"{shipShots}BurningDroneShot"), 0, 1 / 1f, Color.White, 1, true);
             DroneProgHolder.Add(DronesFinal);
 
             //Upgrades
@@ -682,12 +680,14 @@ namespace Asteroid
             Laser.reserveShotTimer = reserveLaserShotTimer;
             PossibleUpgrades.Add(Laser);
 
-            MachineGun.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, ContentLoad2D($"{shipShots}MachineShot"), 0, 1 / 1f, Color.White, false);
-            Laser.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.5f, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1f, Color.White, true);
+            MachineGun.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, ContentLoad2D($"{shipShots}MachineShot"), 0, 1 / 1f, Color.White,
+                MachineGun.Penetration, false);
+            Laser.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.5f, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1f, Color.White,
+                Laser.Penetration, true);
 
             //Debug Gun (irrelevant)
 
-            devBullets = new Bullet(new Vector2(-20, -20), 20, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1f, Color.White, true);
+            devBullets = new Bullet(new Vector2(-20, -20), 20, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1f, Color.White, 1, true);
             devGun = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Laser, "Dev Gun",
                 "OP Debug Gun", "", "", "", null, 0, 0, 1, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1, Color.White, false);
             devGun.ShotTimer = devShotTimer;
@@ -706,6 +706,7 @@ namespace Asteroid
 
             defaultGun = None;
             defaultGun.UpgradeName = "";
+            defaultGun.Penetration = defaultShot.Penetration;
             defaultGun.GunBullet = defaultShot;
             defaultGun.ShotTimer = defaultTimer;
             defaultGun.reserveShotTimer = reserveDefaultTimer;
@@ -737,7 +738,7 @@ namespace Asteroid
             gameTime = gameTimer;
 
 
-            Window.Title = $"AsteroidsCount: {Asteroids.Count}      UFOCount: {UFOs.Count}      pressed: {tempPress}        width: {width}      height: {height}";
+            Window.Title = $"AsteroidsCount: {Asteroids.Count}      UFOCount: {UFOs.Count}      pressed: {tempPress}        width: {width}      height: {height}        armor: {level.GlobalArmorValue}";
 
             KeyboardState keyboardState = Keyboard.GetState();
             MouseState mouseState = Mouse.GetState();
@@ -1000,8 +1001,10 @@ namespace Asteroid
                 {
                     //Archived PowerUp Code: machine.Spawned(Asteroids[i].Position, new Vector2(rand.Next(1, 4), rand.Next(1, 4)), Asteroids[i].leSize);
 
-                    if (asteroid.leSize == Size.LeChonk)
+                    if (asteroid.leSize == Size.LeChonk && !asteroid.ArmorDamage(CollisionPenetration))
                     {
+                        //asteroid.ArmorDamage();
+
                         score += 10;
                         asteroid.leSize++;
                         asteroid.Image = SmallAsteroid;
@@ -1073,9 +1076,11 @@ namespace Asteroid
 
                 if (counter >= UFOs.Count) { break; }
 
-                if (TimeCheck(UFO.ShotTimer, UFO.reserveShotTimer))
+                UFO.ShotTimer -= gameTime.ElapsedGameTime;
+                if (UFO.ShotTimer<=TimeSpan.Zero)
                 {
                     enemyShots.Add(UFO.Shoot(UFOShotArea, UFOShot));
+                    UFO.ShotTimer = UFO.reserveShotTimer;
                     break;
                 }
 
@@ -1189,7 +1194,8 @@ namespace Asteroid
                     else if (!asteroidOrUFO) { droneTargetPosition = UFOs[target].Position; }
                     */
 
-                    if (HalfTimeCheck(DroneShotTimers[i]))
+                    DroneShotTimers[i] -= gameTime.ElapsedGameTime;
+                    if (DroneShotTimers[i]<=TimeSpan.Zero)
                     {
                         if (DroneTargetValues[i]==-1||DroneTargetValues[i]>=AllEnemies.Count)
                         {
@@ -1229,7 +1235,8 @@ namespace Asteroid
                         float angle = (float)Math.Atan2((double)between.Y, (double)between.X) - MathHelper.ToRadians(90);
                         DroneList[i].Rotation = angle;
 
-                        if (HalfTimeCheck(DroneLockOnTimers[i]))
+                        DroneLockOnTimers[i] -= gameTime.ElapsedGameTime;
+                        if (DroneLockOnTimers[i]<=TimeSpan.Zero)
                         {
                             shots.Add(Bullet.BulletTypeCopy(DroneProgHolder[0].GunBullet, DroneList[i].Position, angle));
                             DroneShotTimers[i] = reserveDroneShotTimer;
