@@ -69,12 +69,28 @@ namespace Asteroid
         {
             //true = armor still up
             //false = armor broken
+            //upon the armor breaking, still return true until the next check so that an armor of 1 doesn't act as an armor of 0
 
+            if (ArmorValue-pen<=0 && ArmorValue!=0)
+            {
+                ArmorValue = 0;
+                DisplayImage = null;
+                return true;
+            }
+            
+            ArmorValue -= pen;
 
+            if (ArmorValue<=0)
+            {
+                ArmorValue = 0;
+            }
 
             DisplayImage = ArmorImages[(int)Math.Ceiling(ArmorValue)];
-            if (ArmorValue==0) { DisplayImage = null; }
-
+            if (ArmorValue==0)
+            {
+                DisplayImage = null;
+                return false;
+            }
 
             return true;
         }

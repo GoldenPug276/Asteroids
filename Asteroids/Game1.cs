@@ -100,6 +100,7 @@ namespace Asteroid
         List<Upgrade> ShieldProgHolder = new List<Upgrade>();
 
         List<Rectangle> ExtraHitboxes = new List<Rectangle>();
+        List<float> ExtraPens = new List<float>();
 
         string GunInEffectName = "Default";
         Color GunInEffectColor = Color.DarkGray;
@@ -331,7 +332,7 @@ namespace Asteroid
          *      **DONE**
          *      
          *      
-         *      add a new enemy varient: armored enemies    **DOING**
+         *      add a new enemy varient: armored enemies   *FINISHED*
          *          There will be different armor tiers, and armor needs a certain amount of hits before destruction. Incremental upgrades
          *          It will work sort of like bloons in the Bloons Tower Defense series, where each armer level is a "layer" that must be popped
          *              Every 3 levels, add 1 armor point to the max possible armor value. Start to decrease the lowest armor possible after armor level 3
@@ -377,28 +378,30 @@ namespace Asteroid
          *              Made and implemented a ContentLoad2D function to load Texture2D's without having to type out Content.Load<Texture2D>
          *              Made and implemented strings in LoadContent in order to load Texture2D's for long subfolder paths (like "ShipAndShots/" and "UpgradeImages/")
          *                  (ufoArmors have the paths "Armor/LargeUFOArmor" and "Armor/SmallUFOArmor" [with the number at the end added manually])
-         *              Figure out how to make it work for the Asteroids
-         *                  First, I made the armor display just in general
+         *              Figured out how to make it work for the Asteroids
+         *                  First, made the armor display just in general
          *                      Remember that at ArmorValue 0, armor is not displayed
          *                          I added a variable called noArmorChain that makes is so that the 3rd 0 armorValue roll will be rerolled with a minimum of 1
          *                      First displayed using the main function, then updated using the below function
-         *                  Then, make an ArmorDamage function in the Enemy class with the following parameters: (remove dones at the end and make the shiz past tense)
-         *                      Takes in the Penetration of whatever caused damage      **DONE**
+         *                  Then, made an ArmorDamage function in the Enemy class with the following parameters:
+         *                      Takes in the Penetration of whatever caused damage
          *                          I am currently using a variable in Game1 called CollisionPenetration updated in the similar function to set this, change later if this is bad
-         *                          I also gave each bullet a Penetratn value as well for simplicity
+         *                          I also gave each bullet a Penetration value as well for simplicity
+         *                          Also gave the EnemyCollisionDetection function with an extra penetration list that will be parallel to ExtraHitboxes
          *                                  (temp UFOShot has 0 pen)
-         *                                  (also, since there's only 1 thing in ExtraHitbox atm, i just used the shield' penetration directly. 
-         *                                      change this asap, i'm just out of time rn)
-         *                      Gets called upon collision,     **DONE FOR ASTEROIDS*
+         *                      Gets called upon collision,
          *                      Does armor calculation,
          *                      And returns if the armor is still stable
-         *                      If the armor is still stable, then it sets the DisplayImage to armor[armorValue]    **DONE**
-         *                  
-         *                  Then, test
-         *                  
-         *              Copy the stuff over to UFOs
-         *                  At the very end, add a special shot for both UFOs just for clarity
-         *          
+         *                      If the armor is still stable, then it sets the DisplayImage to armor[armorValue]
+         *                  Then, tested it, and it worked perfectly with no issues, trust me
+         *              Copied the stuff over to UFOs
+         *                  Made the placeholder textures for all 3 large and small UFO armor levels
+         *              Lastly, made the placeholder textures for the last 3 levels of Asteroid armor
+         *      
+         *      Armor works perfectly, I think
+         *      
+         *      
+         *      quickly fix the small UFOs...uhm...listening to Free Bird
          *      
          *      add a system for upgrade control. like rarity and making certain upgrades only appear at certain points
          *      
@@ -476,7 +479,7 @@ namespace Asteroid
         {
             return Content.Load<Texture2D>(path);
         }
-        bool EnemyCollisionDetection(Rectangle checkedHitbox, List<Bullet> bullets, List<Rectangle> hitboxes)
+        bool EnemyCollisionDetection(Rectangle checkedHitbox, List<Bullet> bullets, List<Rectangle> hitboxes, List<float> hitboxPens)
         {
             if (bullets!=null)
             {
@@ -494,9 +497,9 @@ namespace Asteroid
 
             if (hitboxes!=null)
             {
-                foreach (var hitbox in hitboxes)
+                for (int i = 0; i < hitboxes.Count; i++)
                 {
-                    if (checkedHitbox.Intersects(hitbox)) { CollisionPenetration = ShieldFinal.Penetration; return true; }
+                    if (checkedHitbox.Intersects(hitboxes[i])) { CollisionPenetration = hitboxPens[i]; return true; }
                 }
             }
 
@@ -568,7 +571,7 @@ namespace Asteroid
             string shipShots = "ShipAndShots/";
             string upgradeImages = "UpgradeImages/";
             string assArm = "Armor/AsteroidArmor";
-            string UFOArm = "Armor/LargeUFOArmor";
+            string UFOArm = "Armor/BigUFOArmor";
             string ufoArm = "Armor/SmallUFOArmor";
             string tempIdiot = "idiot/You Are An Idiot";
 
@@ -578,7 +581,10 @@ namespace Asteroid
             BigSaucer = ContentLoad2D("Enemies/Big Saucer");
             SmallSaucer = ContentLoad2D("Enemies/Small Saucer");
 
-            AsteroidArmor = new Texture2D[] { BigAsteroid, ContentLoad2D($"{assArm}1"), ContentLoad2D($"{assArm}2"), ContentLoad2D($"{assArm}3") };
+            AsteroidArmor = new Texture2D[] { BigAsteroid, ContentLoad2D($"{assArm}1"), ContentLoad2D($"{assArm}2"), ContentLoad2D($"{assArm}3"),
+                ContentLoad2D($"{assArm}4"), ContentLoad2D($"{assArm}5"), ContentLoad2D($"{assArm}6") };
+            BigUFOArmor = new Texture2D[] { BigSaucer, ContentLoad2D($"{UFOArm}1"), ContentLoad2D($"{UFOArm}2"), ContentLoad2D($"{UFOArm}3") };
+            SmallUFOArmor = new Texture2D[] { SmallSaucer, ContentLoad2D($"{ufoArm}1"), ContentLoad2D($"{ufoArm}2"), ContentLoad2D($"{ufoArm}3") };
 
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             ship = new Ship(playSpace.Center.ToVector2(), 0, ContentLoad2D($"{shipShots}Ship"), 0, 1 / 1f, Color.White);
@@ -669,7 +675,7 @@ namespace Asteroid
             //Guns
 
             MachineGun = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Machine, "Machine Gun", "Gives you a rapid-", "-firing machine gun.", "", "",
-                null, 0, 7, 0.2f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkSlateGray, false);
+                null, 0, 7, 0.25f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkSlateGray, false);
             MachineGun.ShotTimer = MachineGunShotTimer;
             MachineGun.reserveShotTimer = reserveMachineGunShotTimer;
             PossibleUpgrades.Add(MachineGun);
@@ -997,14 +1003,12 @@ namespace Asteroid
 
             foreach (var asteroid in Asteroids)
             {
-                if (EnemyCollisionDetection(asteroid.Hitbox, shots, ExtraHitboxes))
+                if (EnemyCollisionDetection(asteroid.Hitbox, shots, ExtraHitboxes, ExtraPens))
                 {
                     //Archived PowerUp Code: machine.Spawned(Asteroids[i].Position, new Vector2(rand.Next(1, 4), rand.Next(1, 4)), Asteroids[i].leSize);
 
                     if (asteroid.leSize == Size.LeChonk && !asteroid.ArmorDamage(CollisionPenetration))
                     {
-                        //asteroid.ArmorDamage();
-
                         score += 10;
                         asteroid.leSize++;
                         asteroid.Image = SmallAsteroid;
@@ -1063,7 +1067,7 @@ namespace Asteroid
 
             foreach (var UFO in UFOs)
             {
-                if (EnemyCollisionDetection(UFO.Hitbox, shots, ExtraHitboxes))
+                if (EnemyCollisionDetection(UFO.Hitbox, shots, ExtraHitboxes, ExtraPens) && !UFO.ArmorDamage(CollisionPenetration))
                 {
                     //Archived PowerUp Code: laser.Spawned(UFOs[i].Position, new Vector2(rand.Next(1, 3), rand.Next(1, 3)), UFOs[i].leSize);
 
@@ -1362,6 +1366,7 @@ namespace Asteroid
                         ShieldProgHolder[i].inEffect = false;
                         CanShoot = true;
                         ExtraHitboxes.Remove(ShieldSprite.Hitbox);
+                        ExtraPens.Remove(ShieldFinal.Penetration);
                     }
 
                     if (ShieldProgHolder[i].inEffect)
@@ -1371,6 +1376,7 @@ namespace Asteroid
                         if ((i == ShieldFinal.ProgressionLevel - 1) && (!ExtraHitboxes.Contains(ShieldSprite.Hitbox)))
                         {
                             ExtraHitboxes.Add(ShieldSprite.Hitbox);
+                            ExtraPens.Add(ShieldFinal.Penetration);
                         }
                     }
 
