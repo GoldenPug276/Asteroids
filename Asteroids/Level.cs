@@ -21,6 +21,7 @@ namespace Asteroid
         public TimeSpan reserveSpawnTimer;
         public int LevelNum;
         public int UFORange;
+        public int UFOMoveExtra;
         public TimeSpan UFOShotTimer = new TimeSpan(0, 0, 5);
         public TimeSpan SmallUFOShotTimer = new TimeSpan(0, 0, 0, 4, 500);
         public float UFOShotSpeed;
@@ -46,7 +47,7 @@ namespace Asteroid
         private Texture2D smallUFO;
         private Texture2D largeUFO;
 
-        public Level(int smallCount, int largeCount, int largeUCount, int uCount, TimeSpan spawnTimer, int range, float speed, int level)
+        public Level(int smallCount, int largeCount, int largeUCount, int uCount, TimeSpan spawnTimer, int range, int movePlus, float speed, int level)
         {
             SmallAsteroidTotal = smallCount;
             LargeAsteroidTotal = largeCount;
@@ -55,6 +56,7 @@ namespace Asteroid
 
             GlobalSpawnTimer = spawnTimer;
             UFORange = range;
+            UFOMoveExtra = movePlus;
             LevelNum = level;
 
             reserveSpawnTimer = GlobalSpawnTimer;
@@ -80,7 +82,7 @@ namespace Asteroid
         public static Level NextLevel(Level lLev)
         {
             Level newLevel = new Level(lLev.SmallAsteroidTotal, lLev.LargeAsteroidTotal, lLev.LargeUFOTotal, lLev.UFOTotal, 
-                lLev.GlobalSpawnTimer, lLev.UFORange, lLev.UFOShotSpeed, lLev.LevelNum);
+                lLev.GlobalSpawnTimer, lLev.UFORange, lLev.UFOMoveExtra, lLev.UFOShotSpeed, lLev.LevelNum);
 
             newLevel.LevelNum++;
             if (newLevel.LevelNum==2)
@@ -96,6 +98,7 @@ namespace Asteroid
                 newLevel.UFOShotTimer *= 0.9f;
                 newLevel.SmallUFOShotTimer *= 0.85f;
                 newLevel.UFORange -= 10;
+                newLevel.UFOMoveExtra += 5;
             }
             else if (newLevel.LevelNum>=5 && newLevel.LevelNum<8)
             {
@@ -103,6 +106,7 @@ namespace Asteroid
                 newLevel.UFOTotal = (int)(newLevel.UFOTotal * 1.75);
                 newLevel.SmallUFOShotTimer *= 0.75f;
                 newLevel.UFORange -= 20;
+                newLevel.UFOMoveExtra += 10;
             }
             else if (newLevel.LevelNum>=8)
             {
@@ -110,6 +114,7 @@ namespace Asteroid
                 newLevel.UFOTotal = (int)(newLevel.UFOTotal * 2.5);
                 newLevel.SmallUFOShotTimer *= 0.5f;
                 newLevel.UFORange = 10;
+                newLevel.UFOMoveExtra = 50;
             }
 
             newLevel.UFOShotSpeed *= 1.25f;
@@ -176,7 +181,7 @@ namespace Asteroid
             if (largeUTimer<=TimeSpan.Zero && !LargeSauceMax)
             {
                 //whatSpawns = Game1.WhatSpawned.LargeSauce;
-                flys.Add(Enemy.NaturalSpawn(Enemy.Type.UFO, playSpace, largevelocity, largeUFO, Game1.Size.Normal, UFOShotTimer, UFOArmor));
+                flys.Add(Enemy.NaturalSpawn(Enemy.Type.UFO, playSpace, smallvelocity, largeUFO, Game1.Size.Normal, UFOShotTimer, UFOArmor));
                 LargeUSpawned++;
                 largeUTimer = reserveSpawnTimer * 0.8;
 
@@ -186,7 +191,7 @@ namespace Asteroid
             if (smallUTimer<=TimeSpan.Zero && !SmallSauceMax)
             {
                 //whatSpawns = Game1.WhatSpawned.SmallSauce;
-                flys.Add(Enemy.NaturalSpawn(Enemy.Type.Asteroid, playSpace, tinyvelocity, smallUFO, Game1.Size.Baby, SmallUFOShotTimer, UFOArmor));
+                flys.Add(Enemy.NaturalSpawn(Enemy.Type.UFO, playSpace, tinyvelocity, smallUFO, Game1.Size.Baby, SmallUFOShotTimer, UFOArmor));
                 SmallUSpawned++;
                 smallUTimer = reserveSpawnTimer * 1.5;
 

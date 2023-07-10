@@ -26,6 +26,7 @@ namespace Asteroid
         public string UpgradeDescription4;
         public List<Upgrade> ProgressionList;
         public int ProgressionLevel;
+        public int Rarity;
         public Bullet GunBullet;
         public float EnergyUse;
         public RectangleF energyTotal;
@@ -46,7 +47,7 @@ namespace Asteroid
         public float Penetration = 0;
 
         public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability,
-            string name, string descrip1, string descrip2, string descrip3, string descrip4, List<Upgrade> progList, int progLevel, float energy, float pen,
+            string name, string descrip1, string descrip2, string descrip3, string descrip4, int rarity, List<Upgrade> progList, int progLevel, float energy, float pen,
             Texture2D image, float rot, float scale, Color color, bool active) : base(position, image, rot, scale, color)
         {
             Position = position;
@@ -74,6 +75,7 @@ namespace Asteroid
             UpgradeDescription2 = descrip2;
             UpgradeDescription3 = descrip3;
             UpgradeDescription4 = descrip4;
+            Rarity = rarity;
             ProgressionList = progList;
             ProgressionLevel = progLevel;
             EnergyUse = energy;
@@ -83,6 +85,21 @@ namespace Asteroid
             Color = color;
             isActive = active;
             Penetration = pen;
+        }
+
+        public static Upgrade Generation(List<Upgrade> PossibleUpgrades)
+        {
+            Random rand = new Random();
+
+            while (true)
+            {
+                Upgrade currentRoll = PossibleUpgrades[rand.Next(0, PossibleUpgrades.Count)];
+
+                if (rand.Next(1,currentRoll.Rarity)<=100)
+                {
+                    return currentRoll;
+                }
+            }
         }
 
         public void WhenSelected(List<Upgrade> possibleUpgrades, List<Upgrade> activeUpgrades, List<Upgrade> activeAbilities, List<Upgrade> activeGuns)
