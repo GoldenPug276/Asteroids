@@ -87,19 +87,34 @@ namespace Asteroid
             Penetration = pen;
         }
 
+        public void RarityChange(int rarity)
+        {
+            Rarity = rarity;
+        }
+
         public static Upgrade Generation(List<Upgrade> PossibleUpgrades)
         {
             Random rand = new Random();
 
-            while (true)
-            {
-                Upgrade currentRoll = PossibleUpgrades[rand.Next(0, PossibleUpgrades.Count)];
+            List<Upgrade> potential = new List<Upgrade>();
 
-                if (rand.Next(1,currentRoll.Rarity)<=100)
+            foreach (var upgrade in PossibleUpgrades) { potential.Add(upgrade); }
+
+            while (potential.Count > 1)
+            {
+                for (int i = 0; i < potential.Count; i++)
                 {
-                    return currentRoll;
+                    if (rand.Next(1, 101)>potential[i].Rarity)
+                    {
+                        potential.Remove(potential[i]);
+                        i--;
+                    }
+
+                    if (potential.Count==1) { break; }
                 }
             }
+
+            return potential[0];
         }
 
         public void WhenSelected(List<Upgrade> possibleUpgrades, List<Upgrade> activeUpgrades, List<Upgrade> activeAbilities, List<Upgrade> activeGuns)

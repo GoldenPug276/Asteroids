@@ -413,13 +413,24 @@ namespace Asteroid
          *              this variable makes some Upgrades more likely to appear than others, but Nones will still only appear when there are no more options
          *                      (can probably also use this to make the upgrades i'm testing show up instantly)
          *          added a static Generation function in Upgrade to apply Rarity
-         *                  (actually, change the Generation to work like this:
-         *                  it rolls every possible upgrade at once and saves the rolls that succeed
-         *                  it continues to do this until only one upgrade remains
-         *                  if 0 end up remaining, loop the function
-         *                      this will make it so that higher rarities will always get their chance)
-         *              the function will generate a random number from 1-100. if the number is less than the Rarity, the Upgrade appears
-         *              this function will also soon be able to change the odds from things like other Upgrades or the LevelNum
+         *          the functon works as such:
+         *              it rolls every possible Upgrade at once
+         *              the function will generate a random number from 1-100
+         *                  if the number is less than the Rarity, the Upgrade is held on to
+         *                  otherwise, it i removed from the list
+         *              it continues to do this until only one Upgrade remains
+         *              if the last possible Upgrade left were to be removed, break and keep that final possibility
+         *                  this allows higher rarities to actually mean something rather than relying on chance to even be selected
+         *          added a RarityChange function in Upgrade to change the odds from outside influence
+         *              the function itself only takes in a number to change the rarity to
+         *              the numbers are changed outside the function
+         *                      (alter this functionality later if neccesary)
+         *          add a function in Level that will influence Upgrade Rarity
+         *              upon entering a new level, each Upgrade in PossibleUpgrades will have its Rarity increase by 5% up to 75%
+         *              this function will also add Upgrades to the PossibleUpgrades pool, doing this every level
+         *                  maybe also give all Upgrades a variable that dictates at which level it is added to the pool
+         *                  (whilst there, maybe put a commented thing near where the upgrades are defined to more easily show the format and what each variable is)
+         *                  (after adding all this, alter the rarities of Upgrades)
          *      
          *      alright, basic ahh upgrades and abilities done. now the hard ones. they will be made using the same process as above
          *      upgrade plans:
@@ -434,8 +445,9 @@ namespace Asteroid
          *          Time Stop
          *          Time Erase |just the i-frames|
          *          Epitaph |shouldn't be too hard based on how i wrote the code|
+         *              Time Erase can be upgraded to also use Epitaph if it has been obtained
          *          Screen Nuke
-         *          Mimicry
+         *          Mimicry or just E.G.O. Manifestion |gives both Greater Splits and Onrush|
          *      gun plans:
          *          Acid Gun |enemies shot by it get covered in acid, which gradually eats through armor and prevents splitting, but onlt through death via acid|
          *          Mines |shoots explosive mines|
@@ -629,11 +641,11 @@ namespace Asteroid
             //Abilities
 
             Warp = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Warp, "Warp", "Press M2 to warp", "to a random point", "on screen. Gain 0.4", "seconds of i-frames.",
-                70, null, 0, 99, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkGray, false);
+                65, null, 0, 99, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkGray, false);
             PossibleUpgrades.Add(Warp);
 
             Shield1 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield1, "Shield", "Hold Z to activate", "a shield that", "protects you from", "all damage.",
-                70, ShieldProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                55, ShieldProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(Shield1);
             ShieldProgHolder.Add(Shield1);
             ShieldSprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/ShieldHitbox"), 0, 1 / 1f, Color.White);
@@ -648,7 +660,7 @@ namespace Asteroid
             ShieldProgHolder.Add(Shield3);
 
             ShieldFinal = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.ShieldFinal, "Shield Final", "Coat your shield in", "fire, reverting its", "length but melting",
-                "all touched enemies.", 35, ShieldProgHolder, 4, 1, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
+                "all touched enemies.", 30, ShieldProgHolder, 4, 1, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
             ShieldProgHolder.Add(ShieldFinal);
 
             //Abilities
@@ -656,33 +668,33 @@ namespace Asteroid
             //Upgrades
 
             ShotSpeedUp1 = new Upgrade(BurnVec, StatUpgradeType.ShotSpeedUp1, AbilityUpNone, "Shot Speed+", "Reduces the time bet-", "-ween default shots",
-                "and increases special", "gun energy gain.", 85, ShotSpeedProgHolder, 1, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                "and increases special", "gun energy gain.", 60, ShotSpeedProgHolder, 1, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(ShotSpeedUp1);
             ShotSpeedProgHolder.Add(ShotSpeedUp1);
 
             ShotSpeedUp2 = new Upgrade(BurnVec, StatUpgradeType.ShotSpeedUp1, AbilityUpNone, "Shot Speed++", "Increases fire speed", "and special gun", "energy gain more.", "",
-                70, ShotSpeedProgHolder, 2, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                55, ShotSpeedProgHolder, 2, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             ShotSpeedProgHolder.Add(ShotSpeedUp2);
 
             ShotSpeedUp3 = new Upgrade(BurnVec, StatUpgradeType.ShotSpeedUp1, AbilityUpNone, "Shot Speed+++", "You can now shoot", "really fast and", "really often.", "",
-                60, ShotSpeedProgHolder, 3, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                50, ShotSpeedProgHolder, 3, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             ShotSpeedProgHolder.Add(ShotSpeedUp3);
 
             Drones1 = new Upgrade(BurnVec, StatUpgradeType.Drones1, AbilityUpNone, "Drones", "Gain a drone that", "stays near you and", "shoots enemies", "every 5 seconds.",
-                70, DroneProgHolder, 1, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                50, DroneProgHolder, 1, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             PossibleUpgrades.Add(Drones1);
             DroneProgHolder.Add(Drones1);
 
             Drones2 = new Upgrade(BurnVec, StatUpgradeType.Drones2, AbilityUpNone, "Drones+", "Gain an additional", "drone. Your drones", "shoot every 3 sec.", "",
-                55, DroneProgHolder, 2, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                45, DroneProgHolder, 2, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             DroneProgHolder.Add(Drones2);
 
             Drones3 = new Upgrade(BurnVec, StatUpgradeType.Drones3, AbilityUpNone, "Drones++", "Gain one more drone.", "Your drones shoot", "every 1.5 seconds.", "",
-                55, DroneProgHolder, 3, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                50, DroneProgHolder, 3, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             DroneProgHolder.Add(Drones3);
 
             DronesFinal = new Upgrade(BurnVec, StatUpgradeType.DronesFinal, AbilityUpNone, "Drones Final", "Your drones take", "twice as long to", "lock on, but they",
-                "fire burning bullets.", 35, DroneProgHolder, 4, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
+                "fire burning bullets.", 30, DroneProgHolder, 4, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
             DronesFinal.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, ContentLoad2D($"{shipShots}BurningDroneShot"), 0, 1 / 1f, Color.White, 1, true);
             DroneProgHolder.Add(DronesFinal);
 
@@ -691,13 +703,13 @@ namespace Asteroid
             //Guns
 
             MachineGun = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Machine, "Machine Gun", "Gives you a rapid-", "-firing machine gun.", "", "",
-                75, null, 0, 7, 0.25f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkSlateGray, false);
+                45, null, 0, 7, 0.25f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkSlateGray, false);
             MachineGun.ShotTimer = MachineGunShotTimer;
             MachineGun.reserveShotTimer = reserveMachineGunShotTimer;
             PossibleUpgrades.Add(MachineGun);
 
             Laser = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Laser, "Laser", "Gives you a", "searing and piercing", "laser gun.", "",
-                65, null, 0, 33, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Red, false);
+                35, null, 0, 33, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Red, false);
             Laser.ShotTimer = LaserShotTimer;
             Laser.reserveShotTimer = reserveLaserShotTimer;
             PossibleUpgrades.Add(Laser);
