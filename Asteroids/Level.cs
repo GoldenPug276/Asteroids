@@ -3,12 +3,14 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Asteroid
 {
     class Level
     {
+        /* Old System Archive
         public int SmallAsteroidTotal;
         public int LargeAsteroidTotal;
         public int LargeUFOTotal;
@@ -17,8 +19,23 @@ namespace Asteroid
         public int LargeSpawned;
         public int SmallUSpawned;
         public int LargeUSpawned;
+
         public TimeSpan GlobalSpawnTimer = new TimeSpan();
         public TimeSpan reserveSpawnTimer;
+
+        private TimeSpan smallTimer;
+        private TimeSpan largeUTimer;
+        private TimeSpan smallUTimer;
+        */
+
+        public float SmallAsteroidSpawnChance = 2.5f;
+        public float LargeAsteroidSpawnChance = 5;
+        public float LargeUFOSpawnChance = 0;
+        public float SmallUFOSpawnChance = 0;
+        public TimeSpan LevelSpawnTimer = new TimeSpan(0, 0, 30);
+        public TimeSpan SpawnOpportunityTimer = new TimeSpan(0, 0, 1);
+        public TimeSpan reserveSpawnOppTimer = new TimeSpan(0, 0, 1);
+
         public int LevelNum;
         public int UFORange;
         public int UFOMoveExtra;
@@ -35,10 +52,6 @@ namespace Asteroid
         private float armorMax = 0;
         private float noArmorChain = 0;
 
-        private TimeSpan smallTimer;
-        private TimeSpan largeUTimer;
-        private TimeSpan smallUTimer;
-
         private float tinyvelocity;
         private float smallvelocity;
         private float largevelocity;
@@ -47,23 +60,24 @@ namespace Asteroid
         private Texture2D smallUFO;
         private Texture2D largeUFO;
 
-        public Level(int smallCount, int largeCount, int largeUCount, int uCount, TimeSpan spawnTimer, int range, int movePlus, float speed, int level)
+        public Level(int range, int movePlus, float speed, int level)//int smallCount, int largeCount, int largeUCount, int uCount, TimeSpan spawnTimer
         {
-            SmallAsteroidTotal = smallCount;
-            LargeAsteroidTotal = largeCount;
-            LargeUFOTotal = largeUCount;
-            UFOTotal = uCount;
+            //SmallAsteroidTotal = smallCount;
+            //LargeAsteroidTotal = largeCount;
+            //LargeUFOTotal = largeUCount;
+            //UFOTotal = uCount;
 
-            GlobalSpawnTimer = spawnTimer;
+            //GlobalSpawnTimer = spawnTimer;
+
+            //reserveSpawnTimer = GlobalSpawnTimer;
+            //smallTimer = reserveSpawnTimer * 0.5;
+
+            //largeUTimer = reserveSpawnTimer * 0.85;
+            //smallUTimer = reserveSpawnTimer * 1.5;
+
             UFORange = range;
             UFOMoveExtra = movePlus;
             LevelNum = level;
-
-            reserveSpawnTimer = GlobalSpawnTimer;
-            smallTimer = reserveSpawnTimer * 0.5;
-
-            largeUTimer = reserveSpawnTimer * 0.85;
-            smallUTimer = reserveSpawnTimer * 1.5;
 
             UFOShotSpeed = speed;
         }
@@ -81,49 +95,79 @@ namespace Asteroid
 
         public static Level NextLevel(Level lLev)
         {
-            Level newLevel = new Level(lLev.SmallAsteroidTotal, lLev.LargeAsteroidTotal, lLev.LargeUFOTotal, lLev.UFOTotal, 
-                lLev.GlobalSpawnTimer, lLev.UFORange, lLev.UFOMoveExtra, lLev.UFOShotSpeed, lLev.LevelNum);
+            Level newLevel = new Level(lLev.UFORange, lLev.UFOMoveExtra, lLev.UFOShotSpeed, lLev.LevelNum);
 
             newLevel.LevelNum++;
             if (newLevel.LevelNum==2)
             {
-                newLevel.LargeUFOTotal = 12;
-                newLevel.UFOTotal = 3;
-                newLevel.LargeAsteroidTotal = 3;
+                //newLevel.LargeUFOTotal = 12;
+                //newLevel.UFOTotal = 3;
+                //newLevel.LargeAsteroidTotal = 3;
+
+                newLevel.LargeAsteroidSpawnChance = 5;
+                newLevel.SmallAsteroidSpawnChance = 10;
+                newLevel.LargeUFOSpawnChance = 5;
+                newLevel.SmallUFOSpawnChance = 2.5f;
             }
             else if (newLevel.LevelNum==3)
             {
-                newLevel.LargeUFOTotal = (int)(newLevel.LargeUFOTotal * 0.5);
-                newLevel.UFOTotal *= 2;
+                //newLevel.LargeUFOTotal = (int)(newLevel.LargeUFOTotal * 0.5);
+                //newLevel.UFOTotal *= 2;
+
                 newLevel.UFOShotTimer *= 0.9f;
                 newLevel.SmallUFOShotTimer *= 0.85f;
                 newLevel.UFORange -= 10;
                 newLevel.UFOMoveExtra += 5;
+
+                newLevel.LargeAsteroidSpawnChance = 10;
+                newLevel.SmallAsteroidSpawnChance = 15;
+                newLevel.LargeUFOSpawnChance = 10;
+                newLevel.SmallUFOSpawnChance = 5;
             }
             else if (newLevel.LevelNum>=5 && newLevel.LevelNum<8)
             {
-                newLevel.LargeUFOTotal = 0;
-                newLevel.UFOTotal = (int)(newLevel.UFOTotal * 1.75);
+                //newLevel.LargeUFOTotal = 0;
+                //newLevel.UFOTotal = (int)(newLevel.UFOTotal * 1.75);
+
                 newLevel.SmallUFOShotTimer *= 0.75f;
                 newLevel.UFORange -= 20;
                 newLevel.UFOMoveExtra += 10;
+
+                newLevel.LargeAsteroidSpawnChance += 5;
+                newLevel.SmallAsteroidSpawnChance += 5;
+                newLevel.LargeUFOSpawnChance += 10;
+                newLevel.SmallUFOSpawnChance += 5;
             }
             else if (newLevel.LevelNum>=8)
             {
-                newLevel.LargeUFOTotal = 0;
-                newLevel.UFOTotal = (int)(newLevel.UFOTotal * 2.5);
+                //newLevel.LargeUFOTotal = 0;
+                //newLevel.UFOTotal = (int)(newLevel.UFOTotal * 2.5);
+
                 newLevel.SmallUFOShotTimer *= 0.5f;
                 newLevel.UFORange = 10;
                 newLevel.UFOMoveExtra = 50;
+
+                newLevel.LargeAsteroidSpawnChance += 10;
+                newLevel.SmallAsteroidSpawnChance += 5;
+                newLevel.LargeUFOSpawnChance -= 5;
+                newLevel.SmallUFOSpawnChance += 10;
+
+                //add some (+=(x+(level.Num*x))
             }
+
+            newLevel.LevelSpawnTimer = new TimeSpan(0, 0, 0, 30, 0);
+
 
             newLevel.UFOShotSpeed *= 1.25f;
 
-            newLevel.LargeAsteroidTotal = (int)(newLevel.LargeAsteroidTotal * 1.5);
-            newLevel.SmallAsteroidTotal = (int)(newLevel.SmallAsteroidTotal * 1.75);
+            //newLevel.LargeAsteroidTotal = (int)(newLevel.LargeAsteroidTotal * 1.5);
+            //newLevel.SmallAsteroidTotal = (int)(newLevel.SmallAsteroidTotal * 1.75);
 
-            newLevel.GlobalSpawnTimer = newLevel.GlobalSpawnTimer * 0.9;
-            newLevel.reserveSpawnTimer = newLevel.GlobalSpawnTimer;
+            //newLevel.GlobalSpawnTimer = newLevel.GlobalSpawnTimer * 0.9;
+            //newLevel.reserveSpawnTimer = newLevel.GlobalSpawnTimer;
+
+
+            //Old Spawn Info
 
             //Level newLevel= new Level();
             //1.75x as many smalls
@@ -139,24 +183,64 @@ namespace Asteroid
         {
             Random rand = new Random();
 
+            LevelSpawnTimer -= Game1.gameTime.ElapsedGameTime;
+            SpawnOpportunityTimer -= Game1.gameTime.ElapsedGameTime;
+
+            armorMax = (float)Math.Floor((float)LevelNum / 3);
+            if (armorMax > 6) { armorMax = 6; }
+
+            if (armorMax > 2) { armorMin = armorMax - 3; }
+
+            float UFOArmor = (float)Math.Floor(GlobalArmorValue / 2);
+
+
+            if (SpawnOpportunityTimer<=TimeSpan.Zero && LevelSpawnTimer>TimeSpan.Zero)
+            {
+                if (rand.Next(1, 101)<=LargeAsteroidSpawnChance)
+                {
+                    GlobalArmorValue = rand.Next((int)armorMin, (int)armorMax + 1);
+                    if (GlobalArmorValue==0) { noArmorChain++; }
+                    if (noArmorChain==3) { GlobalArmorValue = rand.Next(1, (int)armorMax + 1); noArmorChain = 0; }
+
+                    roids.Add(Enemy.NaturalSpawn(Enemy.Type.Asteroid, playSpace, largevelocity, largeAss, Game1.Size.LeChonk, TimeSpan.Zero, GlobalArmorValue));
+                }
+                if (rand.Next(1, 101)<=SmallAsteroidSpawnChance)
+                {
+                    roids.Add(Enemy.NaturalSpawn(Enemy.Type.Asteroid, playSpace, smallvelocity, smallAss, Game1.Size.Normal, TimeSpan.Zero, 0));
+                }
+                if (rand.Next(1, 101)<=LargeUFOSpawnChance)
+                {
+                    GlobalArmorValue = rand.Next((int)armorMin, (int)armorMax + 1);
+                    if (GlobalArmorValue==0) { noArmorChain++; }
+                    if (noArmorChain==3) { GlobalArmorValue = rand.Next(1, (int)armorMax + 1); noArmorChain = 0; }
+                    UFOArmor = (float)Math.Floor(GlobalArmorValue / 2);
+
+                    flys.Add(Enemy.NaturalSpawn(Enemy.Type.UFO, playSpace, smallvelocity, largeUFO, Game1.Size.Normal, UFOShotTimer, UFOArmor));
+                }
+                if (rand.Next(1, 101)<=SmallUFOSpawnChance)
+                {
+                    GlobalArmorValue = rand.Next((int)armorMin, (int)armorMax + 1);
+                    if (GlobalArmorValue==0) { noArmorChain++; }
+                    if (noArmorChain==3) { GlobalArmorValue = rand.Next(1, (int)armorMax + 1); noArmorChain = 0; }
+                    UFOArmor = (float)Math.Floor(GlobalArmorValue / 2);
+
+                    flys.Add(Enemy.NaturalSpawn(Enemy.Type.UFO, playSpace, tinyvelocity, smallUFO, Game1.Size.Baby, SmallUFOShotTimer, UFOArmor));
+                }
+
+                SpawnOpportunityTimer = reserveSpawnOppTimer;
+            }
+
+            if (LevelSpawnTimer<=TimeSpan.Zero)
+                { Finished = true; }
+
+
+
+            /* Old Spawn Archive
+
             GlobalSpawnTimer -= Game1.gameTime.ElapsedGameTime;
             smallTimer -= Game1.gameTime.ElapsedGameTime;
             largeUTimer -= Game1.gameTime.ElapsedGameTime;
             smallUTimer -= Game1.gameTime.ElapsedGameTime;
-
-            armorMax = (float)Math.Floor((float)LevelNum / 3);
-            if (armorMax>6) { armorMax = 6; }
-
-            if (armorMax>2) { armorMin = armorMax - 3; }
-
-            if (GlobalSpawnTimer<=TimeSpan.Zero||largeUTimer<=TimeSpan.Zero||smallUTimer<=TimeSpan.Zero)
-            {
-                GlobalArmorValue = rand.Next((int)armorMin, (int)armorMax + 1);
-                if (GlobalArmorValue==0)    { noArmorChain++; }
-                if (noArmorChain==3)        { GlobalArmorValue = rand.Next(1, (int)armorMax + 1); noArmorChain = 0; }
-            }
-
-            float UFOArmor = (float)Math.Floor(GlobalArmorValue / 2);
 
             if (GlobalSpawnTimer<=TimeSpan.Zero && !LargeAssMax)
             {
@@ -200,6 +284,8 @@ namespace Asteroid
 
             if (SmallSauceMax && LargeSauceMax && SmallAssMax && LargeAssMax)
                 { Finished = true; }
+
+            */
         }
     }
 }

@@ -129,7 +129,6 @@ namespace Asteroid
 
         Texture2D UpgradeSlot;
         Texture2D SkipUpgrade;
-        string tempPress = "";
 
         public Rectangle playSpace;
 
@@ -408,7 +407,7 @@ namespace Asteroid
          *              (half as much since -X and +width on the area rectangle)
          *          i also changed large UFO from largevelocity to smallvelocity
          *      
-         *      add a system for upgrade control. like rarity and making certain upgrades only appear at certain points **DOING**
+         *      add a system for upgrade control. like rarity and making certain upgrades only appear at certain points **DOING** (return in a moment)
          *          gave a new Rarity variable to Upgrade
          *              this variable makes some Upgrades more likely to appear than others, but Nones will still only appear when there are no more options
          *                      (can probably also use this to make the upgrades i'm testing show up instantly)
@@ -426,11 +425,35 @@ namespace Asteroid
          *              the numbers are changed outside the function
          *                      (alter this functionality later if neccesary)
          *          add a function in Level that will influence Upgrade Rarity
+         *                                                                      (return to this part after the task directly after this)
          *              upon entering a new level, each Upgrade in PossibleUpgrades will have its Rarity increase by 5% up to 75%
          *              this function will also add Upgrades to the PossibleUpgrades pool, doing this every level
          *                  maybe also give all Upgrades a variable that dictates at which level it is added to the pool
          *                  (whilst there, maybe put a commented thing near where the upgrades are defined to more easily show the format and what each variable is)
          *                  (after adding all this, alter the rarities of Upgrades)
+         *      
+         *      had an idea: rework the spawning system/level transition entirely    **DOING**
+         *          right now, the SpawnTimer and spawn counts decrease and increase respectively per level, leading to VERY long levels
+         *          the following system will DEFINITLY need testing and balancing, but it should be better
+         *          replace this system with the following:
+         *              Remove the increase in spawn size and decrease in SpawnTimer
+         *              Replace the spawn size with a spawn chance for each Enemy
+         *                      (the old stuff in the NewLevel function still remains until all imported)
+         *                      (the old things in Update were moved to the bottom)
+         *              Each Level has a 20-30 second timer
+         *                      (probably eventually make the timer change with Level; 30 seconds for now)
+         *              Spawning occurs during that time
+         *              The SpawnTimer is always somewhere around 1 secnd
+         *              When the SpawnTimer finishes, roll the dice to see if a thing spawns at that SpawnOpportunity
+         *              Each individual Enemy's spawn chance increases at a dfferent rate for each Level
+         *                      (completly replace the old functions in the code)    (Done)
+         *                          (after testing, i think i should do some slight rebalancing now instead of waiting)
+         *                          (also clean up the Level class and change how the old stuff is archived while doing this)
+         *              If the spawn rate is too low, add something to force spawns similar to Armor
+         *                  If there were no spawns after 3-5 SpawnOpportunities, pick something random and spawn it
+         *          this should be a much less tedious system
+         *          archive the old functions just because why not
+         *      
          *      
          *      alright, basic ahh upgrades and abilities done. now the hard ones. they will be made using the same process as above
          *      upgrade plans:
@@ -622,7 +645,7 @@ namespace Asteroid
             UFOShot = new Bullet(new Vector2(-20, -20), 5, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1f, Color.White, 0, true);
 
 
-            level = new Level(5, 1, 0, 0, TimeSpan.FromMilliseconds(20000), 100, 0, 5, 1);
+            level = new Level(100, 0, 5, 1);
 
             Asteroids.Add(Enemy.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship, 0));
             Asteroids.Add(Enemy.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship, 0));
@@ -772,7 +795,7 @@ namespace Asteroid
             gameTime = gameTimer;
 
 
-            Window.Title = $"AsteroidsCount: {Asteroids.Count}      UFOCount: {UFOs.Count}      pressed: {tempPress}        width: {width}      height: {height}        armor: {level.GlobalArmorValue}";
+            Window.Title = $"AsteroidsCount: {Asteroids.Count}      UFOCount: {UFOs.Count}      width: {width}      height: {height}        armor: {level.GlobalArmorValue}     levelTimer: {level.LevelSpawnTimer}";
 
             KeyboardState keyboardState = Keyboard.GetState();
             MouseState mouseState = Mouse.GetState();
@@ -896,10 +919,12 @@ namespace Asteroid
             }
             if (UpgradeChosen == true)
             {
-                level.GlobalSpawnTimer = level.reserveSpawnTimer;
                 if (level.LevelNum == 10)
                 {
-                    level.GlobalSpawnTimer = new TimeSpan(0, 0, 0, 0, 500);
+                    level.LargeAsteroidSpawnChance = 90;
+                    level.SmallAsteroidSpawnChance = 90;
+                    level.LargeUFOSpawnChance = 90;
+                    level.SmallUFOSpawnChance = 90;
                 }
                 level = Level.NextLevel(level);
                 ship.Position = playSpace.Center.ToVector2();
@@ -935,7 +960,6 @@ namespace Asteroid
                 bool broken = false;
                 if (UpgradeSkip.wasClicked)
                 {
-                    tempPress = "skipped";
                     foreach (var upgrade in UpgradesToDraw)
                     {
                         upgrade.Skipped();
@@ -945,8 +969,6 @@ namespace Asteroid
                 }
                 if (UpgradesToDraw[i].isActive && !UpgradeSkip.wasClicked && !broken)
                 {
-                    tempPress = UpgradesToDraw[i].UpgradeName;
-
                     for (int j = 0; j < UpgradesToDraw.Count; j++)
                     {
                         if (j != i)
