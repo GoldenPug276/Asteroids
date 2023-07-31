@@ -46,7 +46,11 @@ namespace Asteroid
             Drones1 = 4,
             Drones2 = 5,
             Drones3 = 6,
-            DronesFinal = 7
+            DronesFinal = 7,
+            ArmorPen1 = 8,
+            ArmorPen2 = 9,
+            ArmorPen3 = 10,
+
         }
         public static StatUpgradeType StatUpNone = StatUpgradeType.None;
         public enum AbilityUpgradeType
@@ -61,6 +65,7 @@ namespace Asteroid
             ShieldFinal = 8
         }
         public static AbilityUpgradeType AbilityUpNone = AbilityUpgradeType.None;
+        List<Upgrade> AllUpgrades = new List<Upgrade>();
         List<Upgrade> PossibleUpgrades = new List<Upgrade>();
         List<Upgrade> UpgradesToDraw = new List<Upgrade>();
         List<Upgrade> ActiveUpgrades = new List<Upgrade>();
@@ -87,9 +92,12 @@ namespace Asteroid
         List<TimeSpan> DroneShotTimers = new List<TimeSpan>();
         TimeSpan reserveDroneShotTimer = new TimeSpan(0, 0, 0, 3, 500);
         List<TimeSpan> DroneLockOnTimers = new List<TimeSpan>();
-
         List<int> DroneTargetValues = new List<int>();
         List<Upgrade> DroneProgHolder = new List<Upgrade>();
+        Upgrade ArmorPen1;
+        Upgrade ArmorPen2;
+        Upgrade ArmorPen3;
+        List<Upgrade> ArmorPenProgHolder = new List<Upgrade>();
 
         Upgrade Warp;
         Upgrade Shield1;
@@ -407,7 +415,7 @@ namespace Asteroid
          *              (half as much since -X and +width on the area rectangle)
          *          i also changed large UFO from largevelocity to smallvelocity
          *      
-         *      add a system for upgrade control. like rarity and making certain upgrades only appear at certain points **DOING** (return in a moment)
+         *      add a system for upgrade control. like rarity and making certain upgrades only appear at certain points **DONE**
          *          gave a new Rarity variable to Upgrade
          *              this variable makes some Upgrades more likely to appear than others, but Nones will still only appear when there are no more options
          *                      (can probably also use this to make the upgrades i'm testing show up instantly)
@@ -425,14 +433,12 @@ namespace Asteroid
          *              the numbers are changed outside the function
          *                      (alter this functionality later if neccesary)
          *          add a function in Level that will influence Upgrade Rarity
-         *                                                                      (return to this part after the task directly after this)
          *              upon entering a new level, each Upgrade in PossibleUpgrades will have its Rarity increase by 5% up to 75%
          *              this function will also add Upgrades to the PossibleUpgrades pool, doing this every level
          *                  maybe also give all Upgrades a variable that dictates at which level it is added to the pool
-         *                  (whilst there, maybe put a commented thing near where the upgrades are defined to more easily show the format and what each variable is)
-         *                  (after adding all this, alter the rarities of Upgrades)
+         *                      added an AllUpgrades List to make this easier
          *      
-         *      had an idea: rework the spawning system/level transition entirely    **DOING**
+         *      had an idea: rework the spawning system/level transition entirely    **DONE**
          *          right now, the SpawnTimer and spawn counts decrease and increase respectively per level, leading to VERY long levels
          *          the following system will DEFINITLY need testing and balancing, but it should be better
          *          replace this system with the following:
@@ -446,18 +452,13 @@ namespace Asteroid
          *              The SpawnTimer is always somewhere around 1 secnd
          *              When the SpawnTimer finishes, roll the dice to see if a thing spawns at that SpawnOpportunity
          *              Each individual Enemy's spawn chance increases at a dfferent rate for each Level
-         *                      (completly replace the old functions in the code)    (Done)
-         *                          (after testing, i think i should do some slight rebalancing now instead of waiting)
-         *                          (also clean up the Level class and change how the old stuff is archived while doing this)
-         *              If the spawn rate is too low, add something to force spawns similar to Armor
-         *                  If there were no spawns after 3-5 SpawnOpportunities, pick something random and spawn it
          *          this should be a much less tedious system
          *          archive the old functions just because why not
          *      
          *      
          *      alright, basic ahh upgrades and abilities done. now the hard ones. they will be made using the same process as above
          *      upgrade plans:
-         *          Armor Penetrating Rounds
+         *          Armor Penetrating Rounds    **ADDED**
          *          Nano-Armor
          *          ECM/Radio Jammer |send fewer UFOs|
          *          "some cool name" |have fewer asteroids|
@@ -475,8 +476,9 @@ namespace Asteroid
          *          Acid Gun |enemies shot by it get covered in acid, which gradually eats through armor and prevents splitting, but onlt through death via acid|
          *          Mines |shoots explosive mines|
          *      
-         *      Starting off with the first upgrade, Armor Penetrating Rounds    **DOING (in a moment)**
+         *      Starting off with the first upgrade, Armor Penetrating Rounds    **DONE**
          *          This upgrade relates to the armor values of enemies. It will simply increase the Penetration value of all guns. Different levels give different Penetration
+         *                  (make sure it works right)
          *      
          *      
          *      Next, do the second upgrade, Nano-Armor    **LATER**
@@ -579,15 +581,15 @@ namespace Asteroid
             nones.Clear();
 
             Upgrade None1 = new Upgrade(baseNone.Position, baseNone.UpgradeType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
-               baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, baseNone.Rarity,
+               baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, baseNone.Rarity, baseNone.LevelAvailability,
                baseNone.ProgressionList, baseNone.ProgressionLevel, 0, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
 
             Upgrade None2 = new Upgrade(baseNone.Position, baseNone.UpgradeType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
-               baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, baseNone.Rarity,
+               baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, baseNone.Rarity, baseNone.LevelAvailability,
                baseNone.ProgressionList, baseNone.ProgressionLevel, 0, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
 
             Upgrade None3 = new Upgrade(baseNone.Position, baseNone.UpgradeType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
-               baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, baseNone.Rarity,
+               baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, baseNone.Rarity, baseNone.LevelAvailability,
                baseNone.ProgressionList, baseNone.ProgressionLevel, 0, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
 
             nones.Add(None1);
@@ -661,29 +663,34 @@ namespace Asteroid
 
             //Upgrade Stuff (each description row can fit around 20-21 characters, tested with capital A's)
 
+            // Example = new Upgrade(position, StatUpgradeType.statype, AbilityUpgradeType.ability, name, string descrip1, string descrip2, string descrip3, string descrip4,
+            // int rarity, int levelSeen, List<Upgrade> progList, int progLevel, float energy, float pen, Texture2D image, float rot, float scale, Color color, bool active)
+
+            //levelSeen of 0 means that it will not enter the Possible Upgrade pool naturally
+
             //Abilities
 
             Warp = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Warp, "Warp", "Press M2 to warp", "to a random point", "on screen. Gain 0.4", "seconds of i-frames.",
-                65, null, 0, 99, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkGray, false);
-            PossibleUpgrades.Add(Warp);
+                65, 1, null, 0, 99, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkGray, false);
+            AllUpgrades.Add(Warp);
 
             Shield1 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield1, "Shield", "Hold Z to activate", "a shield that", "protects you from", "all damage.",
-                55, ShieldProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
-            PossibleUpgrades.Add(Shield1);
+                50, 1, ShieldProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+            AllUpgrades.Add(Shield1);
             ShieldProgHolder.Add(Shield1);
             ShieldSprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/ShieldHitbox"), 0, 1 / 1f, Color.White);
             ShieldSprite.DisplayImage = ContentLoad2D("Upgrades/Shield");
 
             Shield2 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield2, "Shield+", "You can have the", "shield active for", "longer.", "",
-                55, ShieldProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                40, 0, ShieldProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             ShieldProgHolder.Add(Shield2);
 
             Shield3 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield3, "Shield++", "You can have the", "shield active for", "almost forever.", "",
-                55, ShieldProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                50, 0, ShieldProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             ShieldProgHolder.Add(Shield3);
 
             ShieldFinal = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.ShieldFinal, "Shield Final", "Coat your shield in", "fire, reverting its", "length but melting",
-                "all touched enemies.", 30, ShieldProgHolder, 4, 1, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
+                "all touched enemies.", 40, 0, ShieldProgHolder, 4, 1, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
             ShieldProgHolder.Add(ShieldFinal);
 
             //Abilities
@@ -691,51 +698,64 @@ namespace Asteroid
             //Upgrades
 
             ShotSpeedUp1 = new Upgrade(BurnVec, StatUpgradeType.ShotSpeedUp1, AbilityUpNone, "Shot Speed+", "Reduces the time bet-", "-ween default shots",
-                "and increases special", "gun energy gain.", 60, ShotSpeedProgHolder, 1, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
-            PossibleUpgrades.Add(ShotSpeedUp1);
+                "and increases special", "gun energy gain.", 60, 1, ShotSpeedProgHolder, 1, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+            AllUpgrades.Add(ShotSpeedUp1);
             ShotSpeedProgHolder.Add(ShotSpeedUp1);
 
             ShotSpeedUp2 = new Upgrade(BurnVec, StatUpgradeType.ShotSpeedUp1, AbilityUpNone, "Shot Speed++", "Increases fire speed", "and special gun", "energy gain more.", "",
-                55, ShotSpeedProgHolder, 2, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                50, 0, ShotSpeedProgHolder, 2, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             ShotSpeedProgHolder.Add(ShotSpeedUp2);
 
             ShotSpeedUp3 = new Upgrade(BurnVec, StatUpgradeType.ShotSpeedUp1, AbilityUpNone, "Shot Speed+++", "You can now shoot", "really fast and", "really often.", "",
-                50, ShotSpeedProgHolder, 3, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                40, 0, ShotSpeedProgHolder, 3, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             ShotSpeedProgHolder.Add(ShotSpeedUp3);
 
             Drones1 = new Upgrade(BurnVec, StatUpgradeType.Drones1, AbilityUpNone, "Drones", "Gain a drone that", "stays near you and", "shoots enemies", "every 5 seconds.",
-                50, DroneProgHolder, 1, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
-            PossibleUpgrades.Add(Drones1);
+                40, 3, DroneProgHolder, 1, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+            AllUpgrades.Add(Drones1);
             DroneProgHolder.Add(Drones1);
 
             Drones2 = new Upgrade(BurnVec, StatUpgradeType.Drones2, AbilityUpNone, "Drones+", "Gain an additional", "drone. Your drones", "shoot every 3 sec.", "",
-                45, DroneProgHolder, 2, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                45, 0, DroneProgHolder, 2, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             DroneProgHolder.Add(Drones2);
 
             Drones3 = new Upgrade(BurnVec, StatUpgradeType.Drones3, AbilityUpNone, "Drones++", "Gain one more drone.", "Your drones shoot", "every 1.5 seconds.", "",
-                50, DroneProgHolder, 3, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                50, 0, DroneProgHolder, 3, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             DroneProgHolder.Add(Drones3);
 
             DronesFinal = new Upgrade(BurnVec, StatUpgradeType.DronesFinal, AbilityUpNone, "Drones Final", "Your drones take", "twice as long to", "lock on, but they",
-                "fire burning bullets.", 30, DroneProgHolder, 4, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
+                "fire burning bullets.", 40, 0, DroneProgHolder, 4, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
             DronesFinal.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, ContentLoad2D($"{shipShots}BurningDroneShot"), 0, 1 / 1f, Color.White, 1, true);
             DroneProgHolder.Add(DronesFinal);
+
+            ArmorPen1 = new Upgrade(BurnVec, StatUpgradeType.ArmorPen1, AbilityUpNone, "AP Rounds", "Allows all your guns", "to penetrate 1 extra",
+                "layer of armor.", "(From the default)", 60, 4, ArmorPenProgHolder, 1, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+            AllUpgrades.Add(ArmorPen1);
+            ArmorPenProgHolder.Add(ArmorPen1);
+
+            ArmorPen2 = new Upgrade(BurnVec, StatUpgradeType.ArmorPen2, AbilityUpNone, "AP Rounds+", "Allows all your guns", "to penetrate 2 extra",
+                "layers of armor.", "(From the default)", 40, 0, ArmorPenProgHolder, 2, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+            ArmorPenProgHolder.Add(ArmorPen2);
+
+            ArmorPen3 = new Upgrade(BurnVec, StatUpgradeType.ArmorPen3, AbilityUpNone, "AP Rounds++", "Allows all your guns", "to penetrate 3 extra",
+                "layers of armor.", "(From the default)", 40, 0, ArmorPenProgHolder, 3, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+            ArmorPenProgHolder.Add(ArmorPen3);
 
             //Upgrades
 
             //Guns
 
             MachineGun = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Machine, "Machine Gun", "Gives you a rapid-", "-firing machine gun.", "", "",
-                45, null, 0, 7, 0.25f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkSlateGray, false);
+                45, 2, null, 0, 7, 0.25f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkSlateGray, false);
             MachineGun.ShotTimer = MachineGunShotTimer;
             MachineGun.reserveShotTimer = reserveMachineGunShotTimer;
-            PossibleUpgrades.Add(MachineGun);
+            AllUpgrades.Add(MachineGun);
 
             Laser = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Laser, "Laser", "Gives you a", "searing and piercing", "laser gun.", "",
-                35, null, 0, 33, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Red, false);
+                35, 3, null, 0, 33, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Red, false);
             Laser.ShotTimer = LaserShotTimer;
             Laser.reserveShotTimer = reserveLaserShotTimer;
-            PossibleUpgrades.Add(Laser);
+            AllUpgrades.Add(Laser);
 
             MachineGun.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, ContentLoad2D($"{shipShots}MachineShot"), 0, 1 / 1f, Color.White,
                 MachineGun.Penetration, false);
@@ -746,7 +766,7 @@ namespace Asteroid
 
             devBullets = new Bullet(new Vector2(-20, -20), 20, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1f, Color.White, 1, true);
             devGun = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Laser, "Dev Gun",
-                "OP Debug Gun", "", "", "", 0, null, 0, 0, 1, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1, Color.White, false);
+                "OP Debug Gun", "", "", "", 0, 0, null, 0, 0, 1, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1, Color.White, false);
             devGun.ShotTimer = devShotTimer;
             devGun.reserveShotTimer = TimeSpan.FromMilliseconds(25);
 
@@ -754,8 +774,16 @@ namespace Asteroid
 
             //Guns
 
+            foreach(var upgrade in AllUpgrades)
+            {
+                if (upgrade.LevelAvailability==1)
+                {
+                    PossibleUpgrades.Add(upgrade);
+                }
+            }
+
             None = new Upgrade(BurnVec, StatUpNone, AbilityUpNone, "Cold Treasure",
-                "We will not", "become stronger.", "", "", 100, null, 0, 0, 1, ContentLoad2D($"{upgradeImages}Cold Treasure"), 0, 1 / 1, Color.White, false);
+                "We will not", "become stronger.", "", "", 100, 0, null, 0, 0, 1, ContentLoad2D($"{upgradeImages}Cold Treasure"), 0, 1 / 1, Color.White, false);
 
             NoneRefresh(NoneHolder, None);
 
@@ -937,6 +965,20 @@ namespace Asteroid
                 Asteroids.Add(Enemy.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship, level.GlobalArmorValue));
                 Asteroids.Add(Enemy.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship, level.GlobalArmorValue));
                 Asteroids.Add(Enemy.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship, level.GlobalArmorValue));
+                foreach (var upgrade in PossibleUpgrades)
+                {
+                    if (upgrade.Rarity<75)
+                    {
+                        upgrade.RarityChange(upgrade.Rarity + 5);
+                    }
+                }
+                foreach(var upgrade in AllUpgrades)
+                {
+                    if (upgrade.LevelAvailability==level.LevelNum)
+                    {
+                        PossibleUpgrades.Add(upgrade);
+                    }
+                }
                 UpgradeChosen = false;
                 UpgradeTime = 0;
             }
@@ -1189,16 +1231,6 @@ namespace Asteroid
                 }
             }
 
-            /*
-            Drones1.isActive = true;
-            ActiveUpgrades.Add(Drones1);
-            Drones2.isActive= true ;
-            ActiveUpgrades.Add(Drones2);
-            Drones3.isActive= true ;
-            ActiveUpgrades.Add(Drones3);
-            */
-
-
             for (int i = 0; i < DroneProgHolder.Count; i++)
             {
                 if (DroneProgHolder[3].isActive && !DroneProgHolder[3].inEffect)
@@ -1303,6 +1335,24 @@ namespace Asteroid
                             DroneTargetValues[i] = -1;
                         }
                     }
+                }
+            }
+
+            for (int i = 0; i < ArmorPenProgHolder.Count; i++)
+            {
+                if (ArmorPenProgHolder[i].isActive && !ArmorPenProgHolder[i].inEffect)
+                {
+                    if (i==0)
+                    {
+                        defaultGun.Penetration += 1;
+                        MachineGun.Penetration += 0.75f;
+                    }
+                    defaultGun.Penetration += 1;
+                    MachineGun.Penetration += 0.75f; //lower since it shoots faster
+                    if (i==2) { MachineGun.Penetration = 2; }
+                    //Laser.Penetration += 1; - not needed because it's burning
+                    ArmorPenProgHolder[i].inEffect = true;
+                    break;
                 }
             }
 

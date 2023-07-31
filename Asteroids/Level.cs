@@ -104,10 +104,10 @@ namespace Asteroid
                 //newLevel.UFOTotal = 3;
                 //newLevel.LargeAsteroidTotal = 3;
 
-                newLevel.LargeAsteroidSpawnChance = 5;
-                newLevel.SmallAsteroidSpawnChance = 10;
-                newLevel.LargeUFOSpawnChance = 5;
-                newLevel.SmallUFOSpawnChance = 2.5f;
+                newLevel.LargeAsteroidSpawnChance = 7.5f;
+                newLevel.SmallAsteroidSpawnChance = 15;
+                newLevel.LargeUFOSpawnChance = 7.5f;
+                newLevel.SmallUFOSpawnChance = 5f;
             }
             else if (newLevel.LevelNum==3)
             {
@@ -119,12 +119,12 @@ namespace Asteroid
                 newLevel.UFORange -= 10;
                 newLevel.UFOMoveExtra += 5;
 
-                newLevel.LargeAsteroidSpawnChance = 10;
-                newLevel.SmallAsteroidSpawnChance = 15;
-                newLevel.LargeUFOSpawnChance = 10;
-                newLevel.SmallUFOSpawnChance = 5;
+                newLevel.LargeAsteroidSpawnChance = 15;
+                newLevel.SmallAsteroidSpawnChance = 22.5f;
+                newLevel.LargeUFOSpawnChance = 15;
+                newLevel.SmallUFOSpawnChance = 7.5f;
             }
-            else if (newLevel.LevelNum>=5 && newLevel.LevelNum<8)
+            else if (newLevel.LevelNum>=5 && newLevel.LevelNum<9)
             {
                 //newLevel.LargeUFOTotal = 0;
                 //newLevel.UFOTotal = (int)(newLevel.UFOTotal * 1.75);
@@ -133,12 +133,12 @@ namespace Asteroid
                 newLevel.UFORange -= 20;
                 newLevel.UFOMoveExtra += 10;
 
-                newLevel.LargeAsteroidSpawnChance += 5;
-                newLevel.SmallAsteroidSpawnChance += 5;
-                newLevel.LargeUFOSpawnChance += 10;
-                newLevel.SmallUFOSpawnChance += 5;
+                newLevel.LargeAsteroidSpawnChance += 7.5f;
+                newLevel.SmallAsteroidSpawnChance += 7.5f;
+                newLevel.LargeUFOSpawnChance += 5;
+                newLevel.SmallUFOSpawnChance += 10;
             }
-            else if (newLevel.LevelNum>=8)
+            else if (newLevel.LevelNum>=9)
             {
                 //newLevel.LargeUFOTotal = 0;
                 //newLevel.UFOTotal = (int)(newLevel.UFOTotal * 2.5);
@@ -147,12 +147,12 @@ namespace Asteroid
                 newLevel.UFORange = 10;
                 newLevel.UFOMoveExtra = 50;
 
-                newLevel.LargeAsteroidSpawnChance += 10;
-                newLevel.SmallAsteroidSpawnChance += 5;
+                newLevel.LargeAsteroidSpawnChance += 7.5f;
+                newLevel.SmallAsteroidSpawnChance += 10;
                 newLevel.LargeUFOSpawnChance -= 5;
-                newLevel.SmallUFOSpawnChance += 10;
+                newLevel.SmallUFOSpawnChance += 7.5f;
 
-                //add some (+=(x+(level.Num*x))
+                //add some (+=(x+(level.Num*x)) eventually
             }
 
             newLevel.LevelSpawnTimer = new TimeSpan(0, 0, 0, 30, 0);
@@ -234,7 +234,7 @@ namespace Asteroid
                 { Finished = true; }
 
 
-
+        }
             /* Old Spawn Archive
 
             GlobalSpawnTimer -= Game1.gameTime.ElapsedGameTime;
@@ -286,6 +286,5 @@ namespace Asteroid
                 { Finished = true; }
 
             */
-        }
     }
 }

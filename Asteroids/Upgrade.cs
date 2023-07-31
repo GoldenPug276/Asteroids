@@ -27,6 +27,7 @@ namespace Asteroid
         public List<Upgrade> ProgressionList;
         public int ProgressionLevel;
         public int Rarity;
+        public int LevelAvailability;
         public Bullet GunBullet;
         public float EnergyUse;
         public RectangleF energyTotal;
@@ -47,7 +48,7 @@ namespace Asteroid
         public float Penetration = 0;
 
         public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability,
-            string name, string descrip1, string descrip2, string descrip3, string descrip4, int rarity, List<Upgrade> progList, int progLevel, float energy, float pen,
+            string name, string descrip1, string descrip2, string descrip3, string descrip4, int rarity, int levelSeen, List<Upgrade> progList, int progLevel, float energy, float pen,
             Texture2D image, float rot, float scale, Color color, bool active) : base(position, image, rot, scale, color)
         {
             Position = position;
@@ -76,6 +77,7 @@ namespace Asteroid
             UpgradeDescription3 = descrip3;
             UpgradeDescription4 = descrip4;
             Rarity = rarity;
+            LevelAvailability = levelSeen;
             ProgressionList = progList;
             ProgressionLevel = progLevel;
             EnergyUse = energy;
