@@ -43,6 +43,11 @@ namespace Asteroid
             Bullet newshot = new Bullet(spot, shot.Velocity, shot.Image, rotat, shot.Scale, shot.Color, shot.Penetration, shot.Burning);
             return newshot;
         }
+
+        public void BulletPenInherit(Upgrade gun)
+        {
+            Penetration = gun.Penetration;
+        }
     }
 }
 //u can use a drawline for like a laser sight

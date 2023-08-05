@@ -62,7 +62,11 @@ namespace Asteroid
             Shield1 = 5,
             Shield2 = 6,
             Shield3 = 7,
-            ShieldFinal = 8
+            ShieldFinal = 8,
+            TimeStop1 = 9,
+            TimeStop2 = 10,
+            TimeStop3 = 11,
+            TimeStopFinal = 12
         }
         public static AbilityUpgradeType AbilityUpNone = AbilityUpgradeType.None;
         List<Upgrade> AllUpgrades = new List<Upgrade>();
@@ -106,6 +110,11 @@ namespace Asteroid
         Upgrade ShieldFinal;
         Sprite ShieldSprite;
         List<Upgrade> ShieldProgHolder = new List<Upgrade>();
+        Upgrade TimeStop1;
+        Upgrade TimeStop2;
+        Upgrade TimeStop3;
+        Upgrade TimeStopFinal;
+        List<Upgrade> TimeStopProgHolder = new List<Upgrade>();
 
         List<Rectangle> ExtraHitboxes = new List<Rectangle>();
         List<float> ExtraPens = new List<float>();
@@ -459,14 +468,45 @@ namespace Asteroid
          *      alright, basic ahh upgrades and abilities done. now the hard ones. they will be made using the same process as above
          *      upgrade plans:
          *          Armor Penetrating Rounds    **ADDED**
+         *              3 total levels
+         *              This upgrade relates to the armor values of enemies
+         *              It will simply increase the Penetration value of all guns
+         *              Different levels give different Penetration
+         *                  While doing this, I made sure that a Gun's Bullets inherit the Gun's Penetration when fired
+         *                  I decided to add a function in the Bullet Class to do this cuz why the hell not
          *          Nano-Armor
-         *          ECM/Radio Jammer |send fewer UFOs|
-         *          "some cool name" |have fewer asteroids|
+         *              3 total levels
+         *              This upgrade will act as a barrier that will be able to tank a hit and take time to recharge
+         *              Higher levels give more hits and less recharge
+         *          ECM/Radio Jammer
+         *              3 total levels
+         *              For each level, that many UFO spawns get ignored
+         *              Like at level 1, UFOs will only spawn every 2 successful SpawnOpportunities
+         *              At level 3, UFOs will only spawn every 4 successful SpawnOpportunities
+         *          "some cool name"
+         *              3 total levels
+         *              Same exact thing as the above except for Asteroids
          *          Ricoshet Shots |ultrakill coins, figure out how to make keybind work right|
          *          Teleport |an upgrade to warp. increase the cooldown and decrease i-frames, but allow control over where you teleport to|
          *          Conversion |some asteroids you hurt will, rather than being split/destroyed, be converted and act as kamikaze-type effects}
          *      ability plans:
-         *          Time Stop
+         *          Time Stop       **DOING**
+         *          4 total levels with a final level
+         *              Upon pressing a keybind (currently will probably be X), time instantly stops an a slight grey rectangle filter is applied beneath the UI
+         *              Stopping time makes all Enemies stop movement, and all spawning will be halted
+         *              The main Level timer will also stop
+         *              You gain i-frames while time is stopped
+         *              Any fired bullets will move a little bit and then stop as well
+         *              All damage dealt to enemies gets applied when time resumes
+         *              The different levels increase the length of the timestop but also increase the cooldown, going from 2 seconds, to 5 seconds, to 9 seconds
+         *              The final upgrade will allow you to end the timestop early, thus preserving energy and gaining a shorter cooldown
+         *              
+         *              
+         *                      (added the ability types)
+         *                      (added the upgrades)
+         *                      (added the upgrade parameters and put them in the pool) (NOT CONFIGURED THE ENERGY YET AND THE COOLDOWN INCREASE SHOULD ACTUALLY SAY THE INCREASE)
+         *                      (make it work)
+         *                      (test)
          *          Time Erase |just the i-frames|
          *          Epitaph |shouldn't be too hard based on how i wrote the code|
          *              Time Erase can be upgraded to also use Epitaph if it has been obtained
@@ -475,15 +515,6 @@ namespace Asteroid
          *      gun plans:
          *          Acid Gun |enemies shot by it get covered in acid, which gradually eats through armor and prevents splitting, but onlt through death via acid|
          *          Mines |shoots explosive mines|
-         *      
-         *      Starting off with the first upgrade, Armor Penetrating Rounds    **DONE**
-         *          This upgrade relates to the armor values of enemies. It will simply increase the Penetration value of all guns. Different levels give different Penetration
-         *                  (make sure it works right)
-         *      
-         *      
-         *      Next, do the second upgrade, Nano-Armor    **LATER**
-         *          This upgrade will act as a barrier that will be able to tank a hit and take time to recharge. Higher levels give more hits and less recharge. No final form
-         *      
          *      
          *      a
          *      
@@ -693,6 +724,23 @@ namespace Asteroid
                 "all touched enemies.", 40, 0, ShieldProgHolder, 4, 1, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
             ShieldProgHolder.Add(ShieldFinal);
 
+            TimeStop1 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop1, "Time Stop", "Press X to stop time", "for 2 seconds. You", "cannot take damage",
+                "and can shoot.", 50, 5, TimeStopProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
+            AllUpgrades.Add(TimeStop1);
+            TimeStopProgHolder.Add(TimeStop1);
+
+            TimeStop2 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop2, "Time Stop+", "Your time stop will", "now last 5 seconds,", "but the cooldown",
+                "is increased.", 40, 0, TimeStopProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
+            TimeStopProgHolder.Add(TimeStop2);
+
+            TimeStop3 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop3, "Time Stop++", "Your time stop will", "now last 9 seconds,", "but the cooldown",
+                "is increased.", 40, 0, TimeStopProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
+            TimeStopProgHolder.Add(TimeStop3);
+
+            TimeStopFinal = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStopFinal, "Your World", "Your time stop can", "be ended early,", "preserving energy",
+                "and thus cooldown.", 30, 0, TimeStopProgHolder, 4, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Yellow, false);
+            TimeStopProgHolder.Add(TimeStopFinal);
+
             //Abilities
 
             //Upgrades
@@ -728,17 +776,17 @@ namespace Asteroid
             DronesFinal.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, ContentLoad2D($"{shipShots}BurningDroneShot"), 0, 1 / 1f, Color.White, 1, true);
             DroneProgHolder.Add(DronesFinal);
 
-            ArmorPen1 = new Upgrade(BurnVec, StatUpgradeType.ArmorPen1, AbilityUpNone, "AP Rounds", "Allows all your guns", "to penetrate 1 extra",
-                "layer of armor.", "(From the default)", 60, 4, ArmorPenProgHolder, 1, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+            ArmorPen1 = new Upgrade(BurnVec, StatUpgradeType.ArmorPen1, AbilityUpNone, "AP Rounds", "Allows all your guns", "to penetrate 1 extra", "layer of armor.",
+                "(From the default)", 60, 4, ArmorPenProgHolder, 1, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             AllUpgrades.Add(ArmorPen1);
             ArmorPenProgHolder.Add(ArmorPen1);
 
-            ArmorPen2 = new Upgrade(BurnVec, StatUpgradeType.ArmorPen2, AbilityUpNone, "AP Rounds+", "Allows all your guns", "to penetrate 2 extra",
-                "layers of armor.", "(From the default)", 40, 0, ArmorPenProgHolder, 2, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+            ArmorPen2 = new Upgrade(BurnVec, StatUpgradeType.ArmorPen2, AbilityUpNone, "AP Rounds+", "Allows all your guns", "to penetrate 2 extra", "layers of armor.",
+                "(From the default)", 35, 0, ArmorPenProgHolder, 2, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             ArmorPenProgHolder.Add(ArmorPen2);
 
-            ArmorPen3 = new Upgrade(BurnVec, StatUpgradeType.ArmorPen3, AbilityUpNone, "AP Rounds++", "Allows all your guns", "to penetrate 3 extra",
-                "layers of armor.", "(From the default)", 40, 0, ArmorPenProgHolder, 3, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+            ArmorPen3 = new Upgrade(BurnVec, StatUpgradeType.ArmorPen3, AbilityUpNone, "AP Rounds++", "Allows all your guns", "to penetrate 3 extra", "layers of armor.",
+                "(From the default)", 20, 0, ArmorPenProgHolder, 3, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             ArmorPenProgHolder.Add(ArmorPen3);
 
             //Upgrades
@@ -1342,15 +1390,10 @@ namespace Asteroid
             {
                 if (ArmorPenProgHolder[i].isActive && !ArmorPenProgHolder[i].inEffect)
                 {
-                    if (i==0)
-                    {
-                        defaultGun.Penetration += 1;
-                        MachineGun.Penetration += 0.75f;
-                    }
-                    defaultGun.Penetration += 1;
-                    MachineGun.Penetration += 0.75f; //lower since it shoots faster
-                    if (i==2) { MachineGun.Penetration = 2; }
-                    //Laser.Penetration += 1; - not needed because it's burning
+                    defaultGun.Penetration += 1; defaultShot.BulletPenInherit(defaultGun);
+                    float a = 0.25f + ((i + (float)Math.Floor((double)i / 2)) * 0.25f);
+                    MachineGun.Penetration += a; MachineGun.GunBullet.BulletPenInherit(MachineGun); //lower from faster firerate
+                    //Laser.Penetration += 1; Laser.GunBullet.BulletPenInherit(Laser);  - not needed because it's burning
                     ArmorPenProgHolder[i].inEffect = true;
                     break;
                 }
