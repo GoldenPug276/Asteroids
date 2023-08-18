@@ -505,6 +505,7 @@ namespace Asteroid
          *                      (added the ability types)
          *                      (added the upgrades)
          *                      (added the upgrade parameters and put them in the pool) (NOT CONFIGURED THE ENERGY YET AND THE COOLDOWN INCREASE SHOULD ACTUALLY SAY THE INCREASE)
+         *                      (made the coodlowns work) [fix the final upgrade not stopping right]
          *                      (make it work)
          *                      (test)
          *          Time Erase |just the i-frames|
@@ -720,7 +721,7 @@ namespace Asteroid
                 50, 0, ShieldProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             ShieldProgHolder.Add(Shield3);
 
-            ShieldFinal = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.ShieldFinal, "Shield Final", "Coat your shield in", "fire, reverting its", "length but melting",
+            ShieldFinal = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.ShieldFinal, "Flaming Guard", "Coat your shield in", "fire, reverting its", "length but melting",
                 "all touched enemies.", 40, 0, ShieldProgHolder, 4, 1, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
             ShieldProgHolder.Add(ShieldFinal);
 
@@ -733,7 +734,7 @@ namespace Asteroid
                 "is increased.", 40, 0, TimeStopProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
             TimeStopProgHolder.Add(TimeStop2);
 
-            TimeStop3 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop3, "Time Stop++", "Your time stop will", "now last 9 seconds,", "but the cooldown",
+            TimeStop3 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop3, "Time Stop++", "Your time stop will", "now last 10 seconds,", "but the cooldown",
                 "is increased.", 40, 0, TimeStopProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
             TimeStopProgHolder.Add(TimeStop3);
 
@@ -771,7 +772,7 @@ namespace Asteroid
                 50, 0, DroneProgHolder, 3, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             DroneProgHolder.Add(Drones3);
 
-            DronesFinal = new Upgrade(BurnVec, StatUpgradeType.DronesFinal, AbilityUpNone, "Drones Final", "Your drones take", "twice as long to", "lock on, but they",
+            DronesFinal = new Upgrade(BurnVec, StatUpgradeType.DronesFinal, AbilityUpNone, "Burning Drones", "Your drones take", "twice as long to", "lock on, but they",
                 "fire burning bullets.", 40, 0, DroneProgHolder, 4, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
             DronesFinal.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, ContentLoad2D($"{shipShots}BurningDroneShot"), 0, 1 / 1f, Color.White, 1, true);
             DroneProgHolder.Add(DronesFinal);
@@ -1525,6 +1526,56 @@ namespace Asteroid
                             ExtraHitboxes.Add(ShieldSprite.Hitbox);
                             ExtraPens.Add(ShieldFinal.Penetration);
                         }
+                    }
+
+                    break;
+                }
+            }
+
+            for (int i = 0; i < TimeStopProgHolder.Count; i++)
+            {
+                if (TimeStopProgHolder[i].isActive)
+                {
+                    TimeStopProgHolder[i].AbilityUpdate();
+                    if (keyboardState.IsKeyDown(Keys.X) && lastKeyboardState.IsKeyUp(Keys.X) && TimeStopProgHolder[i].WillAbilityGetUsed())
+                    {
+                        if (i==3||TimeStopProgHolder[i].energyRemaining.Width>=98)
+                        {
+                            TimeStopProgHolder[i].EnergyGainMultiplier = 0.2f;
+                            float energyUse = 0.9f;
+                            if (i == 1) { energyUse = 0.4f; TimeStopProgHolder[i].EnergyGainMultiplier = 1.5f; }
+                            if (i == 2) { energyUse = 0.2f; TimeStopProgHolder[i].EnergyGainMultiplier = 0.5f; }
+                            if (i == 3) { energyUse = 0.2f; TimeStopProgHolder[i].EnergyGainMultiplier = 0.5f; }
+                            TimeStopProgHolder[i].EnergyUse = energyUse;
+                            TimeStopProgHolder[i].inEffect = true;
+                        }
+                    }
+                    if (TimeStopProgHolder[i].inEffect)
+                    {
+                        TimeStopProgHolder[i].AbilityUse();
+
+                        if (TimeStopProgHolder[i].energyRemaining.Width<=0.5f||(i==3 && keyboardState.IsKeyDown(Keys.X) && lastKeyboardState.IsKeyUp(Keys.X)))
+                        {
+                            float energyGainMultiplier = 7;
+                            if (i == 1) { energyGainMultiplier = 6; }
+                            if (i == 2) { energyGainMultiplier = 5; }
+                            if (i == 3) { energyGainMultiplier = 4; }
+                            TimeStopProgHolder[i].EnergyGainMultiplier = energyGainMultiplier;
+                            TimeStopProgHolder[i].inEffect = false;
+                        }
+                    }
+
+                    if (TimeStopProgHolder[i].inEffect)
+                    {
+                        /*
+                        if (iFrames <= TimeSpan.FromMilliseconds(20)) { iFrames = TimeSpan.FromMilliseconds(20); }
+
+                        if ((i == ShieldFinal.ProgressionLevel - 1) && (!ExtraHitboxes.Contains(ShieldSprite.Hitbox)))
+                        {
+                            ExtraHitboxes.Add(ShieldSprite.Hitbox);
+                            ExtraPens.Add(ShieldFinal.Penetration);
+                        }
+                        */
                     }
 
                     break;
