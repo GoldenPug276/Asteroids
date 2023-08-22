@@ -114,6 +114,7 @@ namespace Asteroid
         Upgrade TimeStop2;
         Upgrade TimeStop3;
         Upgrade TimeStopFinal;
+        public static bool TimeHasStopped = false;
         List<Upgrade> TimeStopProgHolder = new List<Upgrade>();
 
         List<Rectangle> ExtraHitboxes = new List<Rectangle>();
@@ -498,15 +499,31 @@ namespace Asteroid
          *              You gain i-frames while time is stopped
          *              Any fired bullets will move a little bit and then stop as well
          *              All damage dealt to enemies gets applied when time resumes
-         *              The different levels increase the length of the timestop but also increase the cooldown, going from 2 seconds, to 5 seconds, to 9 seconds
+         *              The different levels increase the length of the timestop but also increase the cooldown, going from 2 seconds, to 5 seconds, to 10 seconds
          *              The final upgrade will allow you to end the timestop early, thus preserving energy and gaining a shorter cooldown
+         *              
          *              
          *              
          *                      (added the ability types)
          *                      (added the upgrades)
-         *                      (added the upgrade parameters and put them in the pool) (NOT CONFIGURED THE ENERGY YET AND THE COOLDOWN INCREASE SHOULD ACTUALLY SAY THE INCREASE)
-         *                      (made the coodlowns work) [fix the final upgrade not stopping right]
+         *                      (added the upgrade parameters and put them in the pool)
+         *                      (made the coodlowns work)
          *                      (make it work)
+         *                          (add this to the main thing later)
+         *                          added a public static TimeHasStopped bool to make it easier to determine when time has stopped throught the entire game
+         *                          made it so that when the bool is true, enemy movement and shooting is halted
+         *                          made it so that you cannot take damage while time is stopped
+         *                          made it so that spawning is also paused when frozen
+         *                          made enemy bullets stop immediatly upon time stopping
+         *                          disabled all other abilities
+         *                          made player shots travel for 0.2 seconds before stopping
+         *                              added this via the Bullet Class
+         *                          made bullets stop right on the edge of enemies they were about to collide with in time stop
+         *                          make a way for damage to truly only apply after a time stop
+         *                              giving each enemy a public float stoppedDamage which will add up all armor pen dealt during stopped time
+         *                              then when time is resumed, that damage is applied
+         *                              armor can both be broken and the enemy beneath can take normal damage during stopped time
+         *                          add a little filter to the screen when time is stopped
          *                      (test)
          *          Time Erase |just the i-frames|
          *          Epitaph |shouldn't be too hard based on how i wrote the code|
@@ -572,9 +589,16 @@ namespace Asteroid
                 {
                     if (checkedHitbox.Intersects(bullet.Hitbox))
                     {
-                        CollisionPenetration = bullet.Penetration;
-                        if (!bullet.Burning) { bullets.Remove(bullet); }
-                        return true;
+                        if (TimeHasStopped)
+                        {
+                            bullet.timeStopTravelTime = TimeSpan.Zero;
+                        }
+                        else
+                        {
+                            CollisionPenetration = bullet.Penetration;
+                            if (!bullet.Burning) { bullets.Remove(bullet); }
+                            return true;
+                        }
                     }
                 }
 
@@ -1127,16 +1151,16 @@ namespace Asteroid
             counter = 0;
             foreach (var enemyShot in enemyShots)
             {
-                enemyShot.Move();
+                if (!TimeHasStopped) { enemyShot.Move(); }
 
-                if (ship.Hitbox.Intersects(enemyShot.Hitbox))
+                if (ship.Hitbox.Intersects(enemyShot.Hitbox) && !TimeHasStopped)
                 {
                     enemyShots.Remove(enemyShot);
                     ShipGotHit();
                     break;
                 }
 
-                if (!IsBulletInBounds(enemyShots, counter, playSpace))
+                if (!IsBulletInBounds(enemyShots, counter, playSpace) && !TimeHasStopped)
                 {
                     break;
                 }
@@ -1184,23 +1208,17 @@ namespace Asteroid
                     break;
                 }
 
-                if (asteroid.leSize == Size.LeChonk)
+                if (!TimeHasStopped)
                 {
-                    asteroid.Rotation += 0.005f;
-                }
-                else
-                {
-                    asteroid.Rotation += 0.01f;
-                }
+                    if (asteroid.leSize == Size.LeChonk)    { asteroid.Rotation += 0.005f; }
+                    else                                    { asteroid.Rotation += 0.01f; }
 
-                asteroid.Position = new Vector2(asteroid.Position.X + (float)Math.Sin(asteroid.Rotation) + asteroid.Velocity.X,
-                    asteroid.Position.Y - (float)Math.Cos(asteroid.Rotation) + asteroid.Velocity.Y);
+                    asteroid.Position = new Vector2(asteroid.Position.X + (float)Math.Sin(asteroid.Rotation) + asteroid.Velocity.X,
+                        asteroid.Position.Y - (float)Math.Cos(asteroid.Rotation) + asteroid.Velocity.Y);
 
-                asteroid.IsInBounds(playSpace);
+                    asteroid.IsInBounds(playSpace);
 
-                if (ship.Hitbox.Intersects(asteroid.Hitbox))
-                {
-                    ShipGotHit();
+                    if (ship.Hitbox.Intersects(asteroid.Hitbox)) { ShipGotHit(); }
                 }
                 counter++;
             }
@@ -1224,21 +1242,22 @@ namespace Asteroid
 
                 if (counter >= UFOs.Count) { break; }
 
-                UFO.ShotTimer -= gameTime.ElapsedGameTime;
+                if (!TimeHasStopped)
+                {
+                    UFO.ShotTimer -= gameTime.ElapsedGameTime;
+
+                    UFO.UFOMovement(UFOMovementSpace);
+
+                    UFO.IsInBounds(playSpace);
+
+                    if (ship.Hitbox.Intersects(UFO.Hitbox)) { ShipGotHit(); }
+                }
+
                 if (UFO.ShotTimer <= TimeSpan.Zero)
                 {
                     enemyShots.Add(UFO.Shoot(UFOShotArea, UFOShot));
                     UFO.ShotTimer = UFO.reserveShotTimer;
                     break;
-                }
-
-                UFO.UFOMovement(UFOMovementSpace);
-
-                UFO.IsInBounds(playSpace);
-
-                if (ship.Hitbox.Intersects(UFO.Hitbox))
-                {
-                    ShipGotHit();
                 }
                 counter++;
             }
@@ -1537,46 +1556,33 @@ namespace Asteroid
                 if (TimeStopProgHolder[i].isActive)
                 {
                     TimeStopProgHolder[i].AbilityUpdate();
-                    if (keyboardState.IsKeyDown(Keys.X) && lastKeyboardState.IsKeyUp(Keys.X) && TimeStopProgHolder[i].WillAbilityGetUsed())
+                    if (keyboardState.IsKeyDown(Keys.X) && lastKeyboardState.IsKeyUp(Keys.X)
+                        && TimeStopProgHolder[i].WillAbilityGetUsed() && !TimeHasStopped
+                        && (i==3||TimeStopProgHolder[i].energyRemaining.Width >= 98))
                     {
-                        if (i==3||TimeStopProgHolder[i].energyRemaining.Width>=98)
-                        {
-                            TimeStopProgHolder[i].EnergyGainMultiplier = 0.2f;
-                            float energyUse = 0.9f;
-                            if (i == 1) { energyUse = 0.4f; TimeStopProgHolder[i].EnergyGainMultiplier = 1.5f; }
-                            if (i == 2) { energyUse = 0.2f; TimeStopProgHolder[i].EnergyGainMultiplier = 0.5f; }
-                            if (i == 3) { energyUse = 0.2f; TimeStopProgHolder[i].EnergyGainMultiplier = 0.5f; }
-                            TimeStopProgHolder[i].EnergyUse = energyUse;
-                            TimeStopProgHolder[i].inEffect = true;
-                        }
+                        TimeStopProgHolder[i].EnergyGainMultiplier = 0.2f;
+                        float energyUse = 0.9f;
+                        if (i == 1) { energyUse = 0.4f; TimeStopProgHolder[i].EnergyGainMultiplier = 1.5f; }
+                        if (i == 2) { energyUse = 0.2f; TimeStopProgHolder[i].EnergyGainMultiplier = 0.5f; }
+                        if (i == 3) { energyUse = 0.2f; TimeStopProgHolder[i].EnergyGainMultiplier = 0.5f; }
+                        TimeStopProgHolder[i].EnergyUse = energyUse;
+                        TimeStopProgHolder[i].inEffect = true;
+                        TimeHasStopped = true;
                     }
-                    if (TimeStopProgHolder[i].inEffect)
+                    else if (TimeStopProgHolder[i].energyRemaining.Width<=0.5f
+                        || (i==3 && keyboardState.IsKeyDown(Keys.X) && lastKeyboardState.IsKeyUp(Keys.X))
+                        && TimeHasStopped)
                     {
-                        TimeStopProgHolder[i].AbilityUse();
-
-                        if (TimeStopProgHolder[i].energyRemaining.Width<=0.5f||(i==3 && keyboardState.IsKeyDown(Keys.X) && lastKeyboardState.IsKeyUp(Keys.X)))
-                        {
-                            float energyGainMultiplier = 7;
-                            if (i == 1) { energyGainMultiplier = 6; }
-                            if (i == 2) { energyGainMultiplier = 5; }
-                            if (i == 3) { energyGainMultiplier = 4; }
-                            TimeStopProgHolder[i].EnergyGainMultiplier = energyGainMultiplier;
-                            TimeStopProgHolder[i].inEffect = false;
-                        }
+                        float energyGainMultiplier = 7;
+                        if (i == 1) { energyGainMultiplier = 5; }
+                        if (i == 2) { energyGainMultiplier = 3; }
+                        if (i == 3) { energyGainMultiplier = 3; }
+                        TimeStopProgHolder[i].EnergyGainMultiplier = energyGainMultiplier;
+                        TimeStopProgHolder[i].inEffect = false;
+                        TimeHasStopped = false;
                     }
 
-                    if (TimeStopProgHolder[i].inEffect)
-                    {
-                        /*
-                        if (iFrames <= TimeSpan.FromMilliseconds(20)) { iFrames = TimeSpan.FromMilliseconds(20); }
-
-                        if ((i == ShieldFinal.ProgressionLevel - 1) && (!ExtraHitboxes.Contains(ShieldSprite.Hitbox)))
-                        {
-                            ExtraHitboxes.Add(ShieldSprite.Hitbox);
-                            ExtraPens.Add(ShieldFinal.Penetration);
-                        }
-                        */
-                    }
+                    if (TimeStopProgHolder[i].inEffect) { TimeStopProgHolder[i].AbilityUse(); }
 
                     break;
                 }

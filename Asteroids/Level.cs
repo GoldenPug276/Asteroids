@@ -183,8 +183,11 @@ namespace Asteroid
         {
             Random rand = new Random();
 
-            LevelSpawnTimer -= Game1.gameTime.ElapsedGameTime;
-            SpawnOpportunityTimer -= Game1.gameTime.ElapsedGameTime;
+            if (!Game1.TimeHasStopped)
+            {
+                LevelSpawnTimer -= Game1.gameTime.ElapsedGameTime;
+                SpawnOpportunityTimer -= Game1.gameTime.ElapsedGameTime;
+            }
 
             armorMax = (float)Math.Floor((float)LevelNum / 3);
             if (armorMax > 6) { armorMax = 6; }
