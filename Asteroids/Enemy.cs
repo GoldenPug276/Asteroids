@@ -31,6 +31,13 @@ namespace Asteroid
         public float ArmorValue;
         public Texture2D[] ArmorImages;
 
+        //Time Stop Parameters
+        public float stoppedDamage = 0;
+        public bool broken = false;
+        public float brokenTimes = 0;
+        public int hits = 0;
+        //Time Stop Parameters
+
         public Enemy(Vector2 position, Vector2 velocity, Texture2D image, float rot, float scale, Color color, Game1.Size size, TimeSpan shotTimer, Type type, float armorValue)
             : base(position, image, rot, scale, color)
         {
@@ -71,7 +78,7 @@ namespace Asteroid
             //false = armor broken
             //upon the armor breaking, still return true until the next check so that an armor of 1 doesn't act as an armor of 0
 
-            if (ArmorValue-pen<=0 && ArmorValue!=0)
+            if (ArmorValue-pen<=0 && ArmorValue>0)
             {
                 ArmorValue = 0;
                 DisplayImage = null;
@@ -93,6 +100,21 @@ namespace Asteroid
             }
 
             return true;
+        }
+
+        public void TimeStopDamage()
+        {
+            if (!Game1.TimeHasStopped && stoppedDamage>0)
+            {
+                if (ArmorValue-stoppedDamage<0)
+                {
+                    brokenTimes = (float)Math.Floor(stoppedDamage - ArmorValue);
+                    broken = true;
+                }
+                ArmorValue -= stoppedDamage;
+                ArmorDamage(0);
+                stoppedDamage = 0;
+            }
         }
 
         public static void Sync(List<Enemy> enemyList, List<Enemy> asteroidList, List<Enemy> UFOList)

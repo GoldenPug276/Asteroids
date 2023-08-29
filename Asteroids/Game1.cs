@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Security.Cryptography;
 using System.Text;
+using Windows.Media.Playback;
 using Windows.UI.Notifications;
 using Windows.UI.WebUI;
 using static System.Net.Mime.MediaTypeNames;
@@ -131,6 +132,7 @@ namespace Asteroid
         TimeSpan reserveLaserShotTimer = new TimeSpan(0, 0, 0, 0, 300);
 
         float CollisionPenetration = 0;
+        float extraArmorPenetration = 0;
 
         /*  Old Powerup Code, Archived
         Powerup machine;
@@ -501,6 +503,8 @@ namespace Asteroid
          *              All damage dealt to enemies gets applied when time resumes
          *              The different levels increase the length of the timestop but also increase the cooldown, going from 2 seconds, to 5 seconds, to 10 seconds
          *              The final upgrade will allow you to end the timestop early, thus preserving energy and gaining a shorter cooldown
+         *              All non-gun weapons/abilities will have a penetration value of 1+ArmorPen during stopped time for simplicity
+         *              Progress:
          *              
          *              
          *              
@@ -520,9 +524,17 @@ namespace Asteroid
          *                              added this via the Bullet Class
          *                          made bullets stop right on the edge of enemies they were about to collide with in time stop
          *                          make a way for damage to truly only apply after a time stop
-         *                              giving each enemy a public float stoppedDamage which will add up all armor pen dealt during stopped time
+         *                              gave each enemy a public float stoppedDamage which will add up all armor pen dealt during stopped time
          *                              then when time is resumed, that damage is applied
          *                              armor can both be broken and the enemy beneath can take normal damage during stopped time
+         *                              for enemies without armor, give the bool broken and the float brokenTimes to each enemy
+         *                              these variables will determine how many layers the enemy loses when time resumes while not affecting offspring
+         *                              also added an int hits in order for penetration to not affect enemies without armor
+         *                              made penetration changes for when time is stopped using a float extraArmorPenetration variable in Game1
+         *                                      rn, variable made
+         *                                      effect added
+         *                                      effect not tested
+         *                                              while doing this i had a bug with the shield. fix it
          *                          add a little filter to the screen when time is stopped
          *                      (test)
          *          Time Erase |just the i-frames|
@@ -589,16 +601,9 @@ namespace Asteroid
                 {
                     if (checkedHitbox.Intersects(bullet.Hitbox))
                     {
-                        if (TimeHasStopped)
-                        {
-                            bullet.timeStopTravelTime = TimeSpan.Zero;
-                        }
-                        else
-                        {
-                            CollisionPenetration = bullet.Penetration;
-                            if (!bullet.Burning) { bullets.Remove(bullet); }
-                            return true;
-                        }
+                        CollisionPenetration = bullet.Penetration;
+                        if (!bullet.Burning) { bullets.Remove(bullet); }
+                        return true;
                     }
                 }
 
@@ -606,8 +611,15 @@ namespace Asteroid
 
             if (hitboxes != null)
             {
+                if (TimeHasStopped)
+                {
+                    CollisionPenetration = 1 + extraArmorPenetration;
+                    return true;
+                }
+
                 for (int i = 0; i < hitboxes.Count; i++)
                 {
+                    //if (i>=hitboxes.Count||i>=hitboxPens.Count) { break; }
                     if (checkedHitbox.Intersects(hitboxes[i])) { CollisionPenetration = hitboxPens[i]; return true; }
                 }
             }
@@ -731,39 +743,39 @@ namespace Asteroid
             AllUpgrades.Add(Warp);
 
             Shield1 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield1, "Shield", "Hold Z to activate", "a shield that", "protects you from", "all damage.",
-                50, 1, ShieldProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                50+49, 1, ShieldProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             AllUpgrades.Add(Shield1);
             ShieldProgHolder.Add(Shield1);
             ShieldSprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/ShieldHitbox"), 0, 1 / 1f, Color.White);
             ShieldSprite.DisplayImage = ContentLoad2D("Upgrades/Shield");
 
             Shield2 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield2, "Shield+", "You can have the", "shield active for", "longer.", "",
-                40, 0, ShieldProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                40*2, 0, ShieldProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             ShieldProgHolder.Add(Shield2);
 
             Shield3 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield3, "Shield++", "You can have the", "shield active for", "almost forever.", "",
-                50, 0, ShieldProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                50+49, 0, ShieldProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             ShieldProgHolder.Add(Shield3);
 
             ShieldFinal = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.ShieldFinal, "Flaming Guard", "Coat your shield in", "fire, reverting its", "length but melting",
-                "all touched enemies.", 40, 0, ShieldProgHolder, 4, 1, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
+                "all touched enemies.", 40*2, 0, ShieldProgHolder, 4, 1, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
             ShieldProgHolder.Add(ShieldFinal);
 
             TimeStop1 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop1, "Time Stop", "Press X to stop time", "for 2 seconds. You", "cannot take damage",
-                "and can shoot.", 50, 5, TimeStopProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
+                "and can shoot.", 50+49, 5/5, TimeStopProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
             AllUpgrades.Add(TimeStop1);
             TimeStopProgHolder.Add(TimeStop1);
 
             TimeStop2 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop2, "Time Stop+", "Your time stop will", "now last 5 seconds,", "but the cooldown",
-                "is increased.", 40, 0, TimeStopProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
+                "is increased.", 40*2, 0, TimeStopProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
             TimeStopProgHolder.Add(TimeStop2);
 
             TimeStop3 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop3, "Time Stop++", "Your time stop will", "now last 10 seconds,", "but the cooldown",
-                "is increased.", 40, 0, TimeStopProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
+                "is increased.", 40*2, 0, TimeStopProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
             TimeStopProgHolder.Add(TimeStop3);
 
             TimeStopFinal = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStopFinal, "Your World", "Your time stop can", "be ended early,", "preserving energy",
-                "and thus cooldown.", 30, 0, TimeStopProgHolder, 4, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Yellow, false);
+                "and thus cooldown.", 30*3, 0, TimeStopProgHolder, 4, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Yellow, false);
             TimeStopProgHolder.Add(TimeStopFinal);
 
             //Abilities
@@ -1170,11 +1182,20 @@ namespace Asteroid
 
             foreach (var asteroid in Asteroids)
             {
-                if (EnemyCollisionDetection(asteroid.Hitbox, shots, ExtraHitboxes, ExtraPens))
+                asteroid.TimeStopDamage();
+                if (EnemyCollisionDetection(asteroid.Hitbox, shots, ExtraHitboxes, ExtraPens)||asteroid.broken)
                 {
                     //Archived PowerUp Code: machine.Spawned(Asteroids[i].Position, new Vector2(rand.Next(1, 4), rand.Next(1, 4)), Asteroids[i].leSize);
 
-                    if (asteroid.leSize == Size.LeChonk && !asteroid.ArmorDamage(CollisionPenetration))
+                    if (TimeHasStopped)
+                    {
+                        if (asteroid.ArmorValue-asteroid.stoppedDamage<0)
+                        {
+                            asteroid.hits++;
+                        }
+                        asteroid.stoppedDamage += CollisionPenetration;
+                    }
+                    else if (asteroid.leSize == Size.LeChonk && !asteroid.ArmorDamage(CollisionPenetration)||asteroid.broken)
                     {
                         score += 10;
                         asteroid.leSize++;
@@ -1198,6 +1219,15 @@ namespace Asteroid
                     {
                         score += 50;
                         Asteroids.Remove(asteroid);
+                    }
+
+                    if (asteroid.broken)
+                    {
+                        asteroid.brokenTimes--;
+                        if (asteroid.brokenTimes<=0)
+                        {
+                            asteroid.broken = false;
+                        }
                     }
 
                     break;
@@ -1229,15 +1259,36 @@ namespace Asteroid
 
             foreach (var UFO in UFOs)
             {
-                if (EnemyCollisionDetection(UFO.Hitbox, shots, ExtraHitboxes, ExtraPens) && !UFO.ArmorDamage(CollisionPenetration))
+                UFO.TimeStopDamage();
+                if (EnemyCollisionDetection(UFO.Hitbox, shots, ExtraHitboxes, ExtraPens)||UFO.broken)
                 {
-                    //Archived PowerUp Code: laser.Spawned(UFOs[i].Position, new Vector2(rand.Next(1, 3), rand.Next(1, 3)), UFOs[i].leSize);
+                    if (TimeHasStopped)
+                    {
+                        if (UFO.ArmorValue-UFO.stoppedDamage<0)
+                        {
+                            UFO.hits++;
+                        }
+                        UFO.stoppedDamage += CollisionPenetration;
+                    }
+                    else if (!UFO.ArmorDamage(CollisionPenetration)||UFO.broken)
+                    {
+                        //Archived PowerUp Code: laser.Spawned(UFOs[i].Position, new Vector2(rand.Next(1, 3), rand.Next(1, 3)), UFOs[i].leSize);
 
-                    score += 100 * (((int)UFO.leSize) - 1);
+                        score += 100 * (((int)UFO.leSize) - 1);
 
-                    UFOs.Remove(UFO);
+                        UFOs.Remove(UFO);
 
-                    break;
+                        break;
+                    }
+
+                    if (UFO.broken)
+                    {
+                        UFO.brokenTimes--;
+                        if (UFO.brokenTimes<=0)
+                        {
+                            UFO.broken = false;
+                        }
+                    }
                 }
 
                 if (counter >= UFOs.Count) { break; }
@@ -1414,6 +1465,7 @@ namespace Asteroid
                     float a = 0.25f + ((i + (float)Math.Floor((double)i / 2)) * 0.25f);
                     MachineGun.Penetration += a; MachineGun.GunBullet.BulletPenInherit(MachineGun); //lower from faster firerate
                     //Laser.Penetration += 1; Laser.GunBullet.BulletPenInherit(Laser);  - not needed because it's burning
+                    extraArmorPenetration += 1;
                     ArmorPenProgHolder[i].inEffect = true;
                     break;
                 }
@@ -1525,8 +1577,13 @@ namespace Asteroid
                         if (i == 3) { energyGainMultiplier = 3.8f; }
                         ShieldProgHolder[i].EnergyGainMultiplier = energyGainMultiplier;
                         ShieldProgHolder[i].AbilityUse();
-                        ShieldProgHolder[i].inEffect = true;
                         CanShoot = false;
+                        if (i==ShieldFinal.ProgressionLevel-1 && !ShieldProgHolder[i].inEffect)
+                        {
+                            ExtraHitboxes.Add(ShieldSprite.Hitbox);
+                            ExtraPens.Add(ShieldFinal.Penetration);
+                        }
+                        ShieldProgHolder[i].inEffect = true;
                     }
                     else
                     {
@@ -1539,13 +1596,21 @@ namespace Asteroid
                     if (ShieldProgHolder[i].inEffect)
                     {
                         if (iFrames <= TimeSpan.FromMilliseconds(20)) { iFrames = TimeSpan.FromMilliseconds(20); }
-
+                        /*
                         if ((i == ShieldFinal.ProgressionLevel - 1) && (!ExtraHitboxes.Contains(ShieldSprite.Hitbox)))
                         {
                             ExtraHitboxes.Add(ShieldSprite.Hitbox);
                             ExtraPens.Add(ShieldFinal.Penetration);
                         }
+                        */
                     }
+                    /*
+                    else
+                    {
+                        ExtraHitboxes.Remove(ShieldSprite.Hitbox);
+                        ExtraPens.Remove(ShieldFinal.Penetration);
+                    }
+                    */
 
                     break;
                 }
