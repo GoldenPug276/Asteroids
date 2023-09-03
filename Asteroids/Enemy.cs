@@ -108,12 +108,13 @@ namespace Asteroid
             {
                 if (ArmorValue-stoppedDamage<0)
                 {
-                    brokenTimes = (float)Math.Floor(stoppedDamage - ArmorValue);
+                    brokenTimes = hits;
                     broken = true;
                 }
                 ArmorValue -= stoppedDamage;
                 ArmorDamage(0);
                 stoppedDamage = 0;
+                hits = 0;
             }
         }
 
