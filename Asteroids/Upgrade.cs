@@ -106,13 +106,13 @@ namespace Asteroid
             {
                 for (int i = 0; i < potential.Count; i++)
                 {
-                    if (rand.Next(1, 101) > potential[i].Rarity)
+                    if (rand.Next(1, 101)>potential[i].Rarity)
                     {
                         potential.Remove(potential[i]);
                         i--;
                     }
 
-                    if (potential.Count == 1) { break; }
+                    if (potential.Count==1) { break; }
                 }
             }
 
@@ -128,25 +128,25 @@ namespace Asteroid
                 isActive = true;
 
 
-                if (UpgradeType != Game1.StatUpNone && AbilityType == Game1.AbilityUpNone)
+                if (UpgradeType!=Game1.StatUpNone && AbilityType==Game1.AbilityUpNone)
                 {
                     activeUpgrades.Add(this);
                 }
-                else if (AbilityType != Game1.AbilityUpNone && UpgradeType == Game1.StatUpNone)
+                else if (AbilityType!=Game1.AbilityUpNone && UpgradeType==Game1.StatUpNone)
                 {
                     if (isGun) { activeGuns.Add(this); }
                     else { activeAbilities.Add(this); }
                 }
 
-                if (ProgressionList != null)
+                if (ProgressionList!=null)
                 {
-                    if (ProgressionLevel < ProgressionList.Count)
+                    if (ProgressionLevel<ProgressionList.Count)
                     {
                         possibleUpgrades.Add(ProgressionList[ProgressionLevel]);
                     }
-                    if (ProgressionLevel > 1)
+                    if (ProgressionLevel>1)
                     {
-                        if (ProgressionList[0].UpgradeType != Game1.StatUpgradeType.Drones1)
+                        if (ProgressionList[0].UpgradeType!=Game1.StatUpgradeType.Drones1)
                         {
                             ProgressionList[ProgressionLevel - 2].inEffect = false;
                             ProgressionList[ProgressionLevel - 2].isActive = false;
@@ -180,14 +180,14 @@ namespace Asteroid
 
             energyRegen -= Game1.gameTime.ElapsedGameTime;
 
-            if (energyRegen <= TimeSpan.Zero && energyRemaining.Width < 100)
+            if (energyRegen<=TimeSpan.Zero && energyRemaining.Width<100)
             {
-                if (energyMoveIf > 0)
+                if (energyMoveIf>0)
                 {
                     energyRemaining.Width += energyGain;
                     energyMoveIf *= -1;
                 }
-                else if (energyMoveIf < 0)
+                else if (energyMoveIf<0)
                 {
                     movingEnergy.Width += energyGain;
                     energyMoveIf *= -1;
@@ -196,15 +196,15 @@ namespace Asteroid
                 energyRegen = reserveEnergyRegen / EnergyGainMultiplier;
             }
 
-            if (Overheat && energyRemaining.Width >= energyTotal.Width / 3) { Overheat = false; }
+            if (Overheat && energyRemaining.Width>=energyTotal.Width/3) { Overheat = false; }
 
             if (isGun) { ShotTimer -= Game1.gameTime.ElapsedGameTime; }
-            if (ShotTimer <= TimeSpan.Zero) { readyToFire = true; } else { readyToFire = false; }
+            if (ShotTimer<=TimeSpan.Zero) { readyToFire = true; } else { readyToFire = false; }
         }
 
         public bool WillGunShoot()
         {
-            if (isActive && inEffect && readyToFire && energyRemaining.Width >= EnergyUse && !Overheat)
+            if (isActive && inEffect && readyToFire && energyRemaining.Width>=EnergyUse && !Overheat)
             {
                 usedThisFrame = true;
                 ShotTimer = reserveShotTimer;

@@ -67,7 +67,9 @@ namespace Asteroid
             TimeStop1 = 9,
             TimeStop2 = 10,
             TimeStop3 = 11,
-            TimeStopFinal = 12
+            TimeStopFinal = 12,
+            Mimicry = 13,
+            EGO = 14
         }
         public static AbilityUpgradeType AbilityUpNone = AbilityUpgradeType.None;
         List<Upgrade> AllUpgrades = new List<Upgrade>();
@@ -117,6 +119,9 @@ namespace Asteroid
         Upgrade TimeStopFinal;
         public static bool TimeHasStopped = false;
         List<Upgrade> TimeStopProgHolder = new List<Upgrade>();
+        Upgrade Mimicry;
+        Upgrade EGO;
+        Sprite EGOSprite;
 
         List<Rectangle> ExtraHitboxes = new List<Rectangle>();
         List<float> ExtraPens = new List<float>();
@@ -469,6 +474,7 @@ namespace Asteroid
          *      
          *      
          *      alright, basic ahh upgrades and abilities done. now the hard ones. they will be made using the same process as above
+         *      
          *      upgrade plans:
          *          Armor Penetrating Rounds    **ADDED**
          *              3 total levels
@@ -477,23 +483,31 @@ namespace Asteroid
          *              Different levels give different Penetration
          *                  While doing this, I made sure that a Gun's Bullets inherit the Gun's Penetration when fired
          *                  I decided to add a function in the Bullet Class to do this cuz why the hell not
+         *                  
          *          Nano-Armor
          *              3 total levels
          *              This upgrade will act as a barrier that will be able to tank a hit and take time to recharge
          *              Higher levels give more hits and less recharge
+         *              
          *          ECM/Radio Jammer
          *              3 total levels
          *              For each level, that many UFO spawns get ignored
          *              Like at level 1, UFOs will only spawn every 2 successful SpawnOpportunities
          *              At level 3, UFOs will only spawn every 4 successful SpawnOpportunities
+         *              
          *          "some cool name"
          *              3 total levels
          *              Same exact thing as the above except for Asteroids
-         *          Ricoshet Shots |ultrakill coins, figure out how to make keybind work right|
+         *              
+         *          Ricoshot Shots |ultrakill coins, figure out how to make keybind work right|
+         *          
          *          Teleport |an upgrade to warp. increase the cooldown and decrease i-frames, but allow control over where you teleport to|
+         *          
          *          Conversion |some asteroids you hurt will, rather than being split/destroyed, be converted and act as kamikaze-type effects}
+         *          
+         *          
          *      ability plans:
-         *          Time Stop       **DOING**
+         *          Time Stop       **ADDED**
          *          4 total levels with a final level
          *              Upon pressing a keybind (currently will probably be X), time instantly stops an a slight grey rectangle filter is applied beneath the UI
          *              Stopping time makes all Enemies stop movement, and all spawning will be halted
@@ -505,47 +519,46 @@ namespace Asteroid
          *              The final upgrade will allow you to end the timestop early, thus preserving energy and gaining a shorter cooldown
          *              All non-gun weapons/abilities will have a penetration value of 1+ArmorPen during stopped time for simplicity
          *              Progress:
+         *                  added a public static TimeHasStopped bool to make it easier to determine when time has stopped throught the entire game
+         *                  made it so that when the bool is true, enemy movement and shooting is halted
+         *                  made it so that you cannot take damage while time is stopped
+         *                  made it so that spawning is also paused when frozen
+         *                  made enemy bullets stop immediatly upon time stopping
+         *                  made player shots travel for 0.2 seconds before stopping
+         *                      added this via the Bullet Class
+         *                  made bullets stop right on the edge of enemies they were about to collide with in time stop
+         *                  made a way for damage to truly only apply after a time stop
+         *                      gave each enemy a public float stoppedDamage which will add up all armor pen dealt during stopped time
+         *                      then when time is resumed, that damage is applied
+         *                      armor can both be broken and the enemy beneath can take normal damage during stopped time
+         *                      for enemies without armor, give the bool broken and the float brokenTimes to each enemy
+         *                      these variables will determine how many layers the enemy loses when time resumes while not affecting offspring
+         *                      also added an int hits in order for penetration to not affect enemies without armor
+         *                      made penetration changes for when time is stopped using a float extraArmorPenetration variable in Game1
+         *                          variable made
+         *                          effect added
+         *                          effect tested
+         *                              while doing this i had a bug with the shield [fixed it]
+         *                              fixed via purging the ExtraPens and ExtraHitboxes before adding to them rather than removing individual things
+         *                  added a little filter to the screen when time is stopped
+         *                  
+         *          Mimicry and E.G.O. Manifestion |Mimicry gives Greater Split: Vertical and E.G.O. gives speed and i-frames + turns Mimicry into Horizontal|
+         *              Progress:
+         *                  Added the Upgrades
+         *                  Add something based on Time Stop that stops everything for use in cutscenes and stuff
+         *                  Determine how to add animated things to the game because you know damn well I need it to look cool
          *              
-         *              
-         *              
-         *                      (added the ability types)
-         *                      (added the upgrades)
-         *                      (added the upgrade parameters and put them in the pool)
-         *                      (made the coodlowns work)
-         *                      (make it work)
-         *                          (add this to the main thing later)
-         *                          added a public static TimeHasStopped bool to make it easier to determine when time has stopped throught the entire game
-         *                          made it so that when the bool is true, enemy movement and shooting is halted
-         *                          made it so that you cannot take damage while time is stopped
-         *                          made it so that spawning is also paused when frozen
-         *                          made enemy bullets stop immediatly upon time stopping
-         *                          disabled all other abilities
-         *                          made player shots travel for 0.2 seconds before stopping
-         *                              added this via the Bullet Class
-         *                          made bullets stop right on the edge of enemies they were about to collide with in time stop
-         *                          made a way for damage to truly only apply after a time stop
-         *                              gave each enemy a public float stoppedDamage which will add up all armor pen dealt during stopped time
-         *                              then when time is resumed, that damage is applied
-         *                              armor can both be broken and the enemy beneath can take normal damage during stopped time
-         *                              for enemies without armor, give the bool broken and the float brokenTimes to each enemy
-         *                              these variables will determine how many layers the enemy loses when time resumes while not affecting offspring
-         *                              also added an int hits in order for penetration to not affect enemies without armor
-         *                              made penetration changes for when time is stopped using a float extraArmorPenetration variable in Game1
-         *                                      rn, variable made
-         *                                      effect added
-         *                                      effect tested
-         *                                              while doing this i had a bug with the shield. fix(ed) it
-         *                                              fixed via purging the ExtraPens and ExtraHitboxes before adding to them rather than removing individual things
-         *                          (time stop now fully works)
-         *                          add a little filter to the screen when time is stopped
-         *                      (test)
          *          Time Erase |just the i-frames|
+         *          
          *          Epitaph |shouldn't be too hard based on how i wrote the code|
          *              Time Erase can be upgraded to also use Epitaph if it has been obtained
+         *              
          *          Screen Nuke
-         *          Mimicry or just E.G.O. Manifestion |gives both Greater Splits and Onrush|
+         *          
+         *          
          *      gun plans:
-         *          Acid Gun |enemies shot by it get covered in acid, which gradually eats through armor and prevents splitting, but onlt through death via acid|
+         *          Acid Gun |enemies shot by it get covered in acid, which gradually eats through armor and prevents splitting, but only through death via acid|
+         *          
          *          Mines |shoots explosive mines|
          *      
          *      a
@@ -618,7 +631,7 @@ namespace Asteroid
                     if (checkedHitbox.Intersects(hitboxes[i]))
                     {
                         if (TimeHasStopped) { CollisionPenetration = 1 + extraArmorPenetration; }
-                        else                { CollisionPenetration = hitboxPens[i]; }
+                        else { CollisionPenetration = hitboxPens[i]; }
                         return true;
                     }
                 }
@@ -743,31 +756,31 @@ namespace Asteroid
             AllUpgrades.Add(Warp);
 
             Shield1 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield1, "Shield", "Hold Z to activate", "a shield that", "protects you from", "all damage.",
-                50 + 49, 1, ShieldProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                50, 1, ShieldProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             AllUpgrades.Add(Shield1);
             ShieldProgHolder.Add(Shield1);
             ShieldSprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/ShieldHitbox"), 0, 1 / 1f, Color.White);
             ShieldSprite.DisplayImage = ContentLoad2D("Upgrades/Shield");
 
             Shield2 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield2, "Shield+", "You can have the", "shield active for", "longer.", "",
-                40 * 2, 0, ShieldProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                40, 0, ShieldProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             ShieldProgHolder.Add(Shield2);
 
             Shield3 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield3, "Shield++", "You can have the", "shield active for", "almost forever.", "",
-                50 + 49, 0, ShieldProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                50, 0, ShieldProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
             ShieldProgHolder.Add(Shield3);
 
             ShieldFinal = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.ShieldFinal, "Flaming Guard", "Coat your shield in", "fire, reverting its", "length but melting",
-                "all touched enemies.", 40 * 2, 0, ShieldProgHolder, 4, 1, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
+                "all touched enemies.", 40, 0, ShieldProgHolder, 4, 1, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
             ShieldProgHolder.Add(ShieldFinal);
 
             TimeStop1 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop1, "Time Stop", "Press X to stop time", "for 2 seconds. You", "cannot take damage",
-                "and can shoot.", 50 + 49, 5 / 5, TimeStopProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
+                "and can shoot.", 50, 5, TimeStopProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
             AllUpgrades.Add(TimeStop1);
             TimeStopProgHolder.Add(TimeStop1);
 
             TimeStop2 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop2, "Time Stop+", "Your time stop will", "now last 5 seconds,", "but the cooldown",
-                "is increased.", 40 * 2, 0, TimeStopProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
+                "is increased.", 40, 0, TimeStopProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
             TimeStopProgHolder.Add(TimeStop2);
 
             TimeStop3 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop3, "Time Stop++", "Your time stop will", "now last 10 seconds,", "but the cooldown",
@@ -777,6 +790,14 @@ namespace Asteroid
             TimeStopFinal = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStopFinal, "Your World", "Your time stop can", "be ended early,", "preserving energy",
                 "and thus cooldown.", 30 * 3, 0, TimeStopProgHolder, 4, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Yellow, false);
             TimeStopProgHolder.Add(TimeStopFinal);
+
+            Mimicry = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Mimicry, "Mimicry", "Press Q to", "perform Greater", "Split: Vertical",
+                "in front of you.", 30, 4, null, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Red, false);
+            AllUpgrades.Add(Mimicry);
+
+            EGO = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.EGO, "Manifestation", "Press E to manifest", "your E.G.O., giving", "a speed buff and",
+                "i-frames.", 50, 8, null, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkRed, false);
+            AllUpgrades.Add(EGO);
 
             //Abilities
 
@@ -1204,6 +1225,7 @@ namespace Asteroid
                             asteroid.Velocity.Y * (largeAsteroidVelocity / smallAsteroidVelocity));
                         Asteroids.Add(new Enemy(new Vector2(asteroid.Position.X + 60, asteroid.Position.Y), new Vector2(-asteroid.Velocity.X * 2, -asteroid.Velocity.Y * 2),
                             SmallAsteroid, 0, 1 / 1f, Color.White, Size.Normal, TimeSpan.Zero, Enemy.Type.Asteroid, 0));
+                        asteroid.HitboxRefresh();
                     }
                     else if (asteroid.leSize == Size.Normal)
                     {
@@ -1214,6 +1236,7 @@ namespace Asteroid
                             asteroid.Velocity.Y * (smallAsteroidVelocity / tinyAsteroidVelocity));
                         Asteroids.Add(new Enemy(new Vector2(asteroid.Position.X + 25, asteroid.Position.Y), new Vector2(-asteroid.Velocity.X * 2, -asteroid.Velocity.Y * 2),
                             TinyAsteroid, 0, 1 / 1f, Color.White, Size.Baby, TimeSpan.Zero, Enemy.Type.Asteroid, 0));
+                        asteroid.HitboxRefresh();
                     }
                     else if (asteroid.leSize == Size.Baby)
                     {
@@ -1599,13 +1622,13 @@ namespace Asteroid
                     if (ShieldProgHolder[i].inEffect)
                     {
                         if (iFrames <= TimeSpan.FromMilliseconds(20)) { iFrames = TimeSpan.FromMilliseconds(20); }
-                        
+
                         if ((i == ShieldFinal.ProgressionLevel - 1) /*&& (!ExtraHitboxes.Contains(ShieldSprite.Hitbox))*/)
                         {
                             ExtraHitboxes.Add(ShieldSprite.Hitbox);
                             ExtraPens.Add(ShieldFinal.Penetration);
                         }
-                        
+
                     }
                     /*
                     else
@@ -1764,6 +1787,10 @@ namespace Asteroid
                     if (ability.AbilityType == AbilityUpgradeType.ShieldFinal)
                         ShieldSprite.Color = Color.OrangeRed;
                     ShieldSprite.Draw(_spriteBatch);
+                }
+                if (ability.AbilityType >= AbilityUpgradeType.TimeStop1 && ability.AbilityType <= AbilityUpgradeType.TimeStopFinal && ability.inEffect)
+                {
+                    _spriteBatch.FillRectangle(0, 0, 800, 480, new Color(Color.Black, 75));
                 }
             }
 

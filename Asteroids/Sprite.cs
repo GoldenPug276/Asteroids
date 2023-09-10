@@ -33,6 +33,15 @@ namespace Asteroid
             {
                 return new Rectangle((int)(Position.X - Origin.X), (int)(Position.Y - Origin.Y), (int)(Image.Width * Scale), (int)(Image.Height * Scale));
             }
+            set
+            {
+                HitboxRefresh();
+            }
+        }
+
+        public Rectangle HitboxRefresh()
+        {
+            return new Rectangle((int)(Position.X - Origin.X), (int)(Position.Y - Origin.Y), (int)(Image.Width * Scale), (int)(Image.Height * Scale));
         }
 
 
