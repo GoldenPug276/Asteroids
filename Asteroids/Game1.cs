@@ -38,6 +38,8 @@ namespace Asteroid
         Vector2 BurnVec = new Vector2(0, 0);
         int counter = 0;
 
+        public static bool GameFrozen = false;
+
         public enum StatUpgradeType
         {
             None = 0,
@@ -120,6 +122,7 @@ namespace Asteroid
         public static bool TimeHasStopped = false;
         List<Upgrade> TimeStopProgHolder = new List<Upgrade>();
         Upgrade Mimicry;
+        Sprite MimicrySprite;
         Upgrade EGO;
         Sprite EGOSprite;
 
@@ -545,8 +548,17 @@ namespace Asteroid
          *          Mimicry and E.G.O. Manifestion |Mimicry gives Greater Split: Vertical and E.G.O. gives speed and i-frames + turns Mimicry into Horizontal|
          *              Progress:
          *                  Added the Upgrades
-         *                  Add something based on Time Stop that stops everything for use in cutscenes and stuff
+         *                  Added something based on Time Stop that stops everything for use in cutscenes and stuff
+         *                  Added the Mimicry Sprite
+         *                  Added an E.G.O. Sprite
+         *                      Create Particles to work as the hair
          *                  Determine how to add animated things to the game because you know damn well I need it to look cool
+         *                      https://www.codeandweb.com/texturepacker/tutorials/how-to-create-sprite-sheets-and-animations-with-monogame
+         *                      This can be done by using a Sprite Sheet
+         *                      Using sourceRectangle in the Draw function lets you pick which part of the Sprite Sheet is used
+         *                          Rip the animations for Greater Split directly from Library of Ruina
+         *                          https://drive.google.com/drive/folders/12ifYsKtsT7SdkjCiJOGaH40aJ-0uJ4X9
+         *                          (make an animation of a ball growing in height, going back to base, stretching horizontally, and going back)
          *              
          *          Time Erase |just the i-frames|
          *          
@@ -793,10 +805,12 @@ namespace Asteroid
 
             Mimicry = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Mimicry, "Mimicry", "Press Q to", "perform Greater", "Split: Vertical",
                 "in front of you.", 30, 4, null, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Red, false);
+            MimicrySprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/Mimicry"), 0, 1 / 1f, Color.White);
             AllUpgrades.Add(Mimicry);
 
             EGO = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.EGO, "Manifestation", "Press E to manifest", "your E.G.O., giving", "a speed buff and",
                 "i-frames.", 50, 8, null, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkRed, false);
+            EGOSprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/EGO"), 0, 1 / 1f, Color.White);
             AllUpgrades.Add(EGO);
 
             //Abilities
@@ -962,7 +976,7 @@ namespace Asteroid
             if (laser.isActive) { powerups.Add(laser); }
             */
 
-            ship.Move(keyboardState);
+            if (!GameFrozen) { ship.Move(keyboardState); }
 
             //Gun Code
 
@@ -1184,16 +1198,16 @@ namespace Asteroid
             counter = 0;
             foreach (var enemyShot in enemyShots)
             {
-                if (!TimeHasStopped) { enemyShot.Move(); }
+                if (!TimeHasStopped && !GameFrozen) { enemyShot.Move(); }
 
-                if (ship.Hitbox.Intersects(enemyShot.Hitbox) && !TimeHasStopped)
+                if (ship.Hitbox.Intersects(enemyShot.Hitbox) && (!TimeHasStopped && !GameFrozen))
                 {
                     enemyShots.Remove(enemyShot);
                     ShipGotHit();
                     break;
                 }
 
-                if (!IsBulletInBounds(enemyShots, counter, playSpace) && !TimeHasStopped)
+                if (!IsBulletInBounds(enemyShots, counter, playSpace) && (!TimeHasStopped && !GameFrozen))
                 {
                     break;
                 }
@@ -1208,7 +1222,7 @@ namespace Asteroid
                 {
                     //Archived PowerUp Code: machine.Spawned(Asteroids[i].Position, new Vector2(rand.Next(1, 4), rand.Next(1, 4)), Asteroids[i].leSize);
 
-                    if (TimeHasStopped)
+                    if (TimeHasStopped||GameFrozen)
                     {
                         if (asteroid.ArmorValue-asteroid.stoppedDamage<0)
                         {
@@ -1261,7 +1275,7 @@ namespace Asteroid
                     break;
                 }
 
-                if (!TimeHasStopped)
+                if (!TimeHasStopped && !GameFrozen)
                 {
                     if (asteroid.leSize == Size.LeChonk) { asteroid.Rotation += 0.005f; }
                     else { asteroid.Rotation += 0.01f; }
@@ -1285,7 +1299,7 @@ namespace Asteroid
                 UFO.TimeStopDamage();
                 if (EnemyCollisionDetection(UFO.Hitbox, shots, ExtraHitboxes, ExtraPens) || UFO.broken)
                 {
-                    if (TimeHasStopped)
+                    if (TimeHasStopped||GameFrozen)
                     {
                         if (UFO.ArmorValue-UFO.stoppedDamage<0)
                         {
@@ -1316,7 +1330,7 @@ namespace Asteroid
 
                 if (counter >= UFOs.Count) { break; }
 
-                if (!TimeHasStopped)
+                if (!TimeHasStopped && !GameFrozen)
                 {
                     UFO.ShotTimer -= gameTime.ElapsedGameTime;
 
@@ -1648,7 +1662,7 @@ namespace Asteroid
                 {
                     TimeStopProgHolder[i].AbilityUpdate();
                     if (keyboardState.IsKeyDown(Keys.X) && lastKeyboardState.IsKeyUp(Keys.X)
-                        && TimeStopProgHolder[i].WillAbilityGetUsed() && !TimeHasStopped
+                        && TimeStopProgHolder[i].WillAbilityGetUsed() && (!TimeHasStopped && !GameFrozen)
                         && (i == 3 || TimeStopProgHolder[i].energyRemaining.Width >= 98))
                     {
                         TimeStopProgHolder[i].EnergyGainMultiplier = 0.2f;

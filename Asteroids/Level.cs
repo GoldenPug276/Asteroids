@@ -183,7 +183,7 @@ namespace Asteroid
         {
             Random rand = new Random();
 
-            if (!Game1.TimeHasStopped)
+            if (!Game1.TimeHasStopped && !Game1.GameFrozen)
             {
                 LevelSpawnTimer -= Game1.gameTime.ElapsedGameTime;
                 SpawnOpportunityTimer -= Game1.gameTime.ElapsedGameTime;
