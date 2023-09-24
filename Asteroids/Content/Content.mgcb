@@ -459,6 +459,42 @@
 /processorParam:TextureFormat=Color
 /build:Upgrades/EGO.png
 
+#begin Upgrades/GreaterSplitHorizontalBackground.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Upgrades/GreaterSplitHorizontalBackground.png
+
+#begin Upgrades/GreaterSplitHorizontalSpriteSheet.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Upgrades/GreaterSplitHorizontalSpriteSheet.png
+
+#begin Upgrades/GreaterSplitVerticalSpriteSheet.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Upgrades/GreaterSplitVerticalSpriteSheet.png
+
 #begin Upgrades/Mimicry.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -470,6 +506,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Upgrades/Mimicry.png
+
+#begin Upgrades/MimicrySplitHorizontal.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Upgrades/MimicrySplitHorizontal.png
 
 #begin Upgrades/Shield.png
 /importer:TextureImporter

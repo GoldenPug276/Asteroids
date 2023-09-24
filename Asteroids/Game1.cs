@@ -558,6 +558,10 @@ namespace Asteroid
          *                      Using sourceRectangle in the Draw function lets you pick which part of the Sprite Sheet is used
          *                          Rip the animations for Greater Split directly from Library of Ruina
          *                          https://drive.google.com/drive/folders/12ifYsKtsT7SdkjCiJOGaH40aJ-0uJ4X9
+         *                              Each frame on the SpriteSheet for Vertical is 576 x 480
+         *                              Each frame on the SpriteSheet for Horizontal is 800 x 480
+         *                                  wait, after looking at the animation, the last 4 frames are the horizontal frames while the first 6 frames are the vertical frames
+         *                                  reflect this in one spritesheet at home
          *                          (make an animation of a ball growing in height, going back to base, stretching horizontally, and going back)
          *              
          *          Time Erase |just the i-frames|
@@ -1723,6 +1727,8 @@ namespace Asteroid
                 UFO.Draw(_spriteBatch);
             }
 
+            //for testing sprites
+            //ship.DisplayImage = ContentLoad2D("Upgrades/frame6");
 
             ship.Draw(_spriteBatch);
 
