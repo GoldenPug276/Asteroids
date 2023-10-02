@@ -36,6 +36,7 @@ namespace Asteroid
         SpriteFont upgradeTitleFont;
         SpriteFont upgradeDescFont;
         Vector2 BurnVec = new Vector2(0, 0);
+        bool BoolForRandomTests = false;
         int counter = 0;
 
         public static bool GameFrozen = false;
@@ -556,13 +557,19 @@ namespace Asteroid
          *                      https://www.codeandweb.com/texturepacker/tutorials/how-to-create-sprite-sheets-and-animations-with-monogame
          *                      This can be done by using a Sprite Sheet
          *                      Using sourceRectangle in the Draw function lets you pick which part of the Sprite Sheet is used
-         *                          Rip the animations for Greater Split directly from Library of Ruina
+         *                          Ripped the animations for Greater Split directly from Library of Ruina
          *                          https://drive.google.com/drive/folders/12ifYsKtsT7SdkjCiJOGaH40aJ-0uJ4X9
          *                              Each frame on the SpriteSheet for Vertical is 576 x 480
          *                              Each frame on the SpriteSheet for Horizontal is 800 x 480
-         *                                  wait, after looking at the animation, the last 4 frames are the horizontal frames while the first 6 frames are the vertical frames
-         *                                  reflect this in one spritesheet at home
-         *                          (make an animation of a ball growing in height, going back to base, stretching horizontally, and going back)
+         *                                  Vertical has all the frames
+         *                                  Horizontal will use frames 5-10, though this isn't 100% accurate (don't forget the background will move a bit during it)
+         *                                      wait this whole project is scuffed, who cares
+         *                  Quickly test animating by making Vertical's animation play when pressing P or something
+         *                      First though, tested to see if you can display all the frames by linking each frame to a keybind (Z - / on the keyboard)
+         *                              (NOT FULLY TESTED)
+         *                  Made a function called AnimateFrame that inputs all needed data to display part of a SpriteSheet
+         *                      Then, make a function called Animate that will run AnimateFrame for a defined amount of frames after a defined interval
+         *                              (ANIMATE NOT DONE)
          *              
          *          Time Erase |just the i-frames|
          *          
@@ -619,6 +626,22 @@ namespace Asteroid
          * 
          * Sprite Positions are in the middle of the Sprite rather than the upper right corner
          */
+
+        void Animate(TimeSpan timeBetweenFrames, int totalFrames)
+        {
+            //subtract time
+            //if time has passed
+            //draw frame
+            //change frame number
+            //reset time
+
+            //maybe also add something outside the function to not stay in this function until fully animated
+        }
+
+        void AnimateFrame(Texture2D spritesheet, Vector2 position, int frameSizeX, int frameSizeY, int frameNumber)
+        {
+            _spriteBatch.Draw(spritesheet, position, new Rectangle((frameNumber - 1) * frameSizeX, 0, frameSizeX, frameSizeY), Color.White);
+        }
 
         Texture2D ContentLoad2D(string path)
         {
@@ -1226,9 +1249,9 @@ namespace Asteroid
                 {
                     //Archived PowerUp Code: machine.Spawned(Asteroids[i].Position, new Vector2(rand.Next(1, 4), rand.Next(1, 4)), Asteroids[i].leSize);
 
-                    if (TimeHasStopped||GameFrozen)
+                    if (TimeHasStopped || GameFrozen)
                     {
-                        if (asteroid.ArmorValue-asteroid.stoppedDamage<0)
+                        if (asteroid.ArmorValue - asteroid.stoppedDamage < 0)
                         {
                             asteroid.hits++;
                         }
@@ -1303,9 +1326,9 @@ namespace Asteroid
                 UFO.TimeStopDamage();
                 if (EnemyCollisionDetection(UFO.Hitbox, shots, ExtraHitboxes, ExtraPens) || UFO.broken)
                 {
-                    if (TimeHasStopped||GameFrozen)
+                    if (TimeHasStopped || GameFrozen)
                     {
-                        if (UFO.ArmorValue-UFO.stoppedDamage<0)
+                        if (UFO.ArmorValue - UFO.stoppedDamage < 0)
                         {
                             UFO.hits++;
                         }
@@ -1705,6 +1728,17 @@ namespace Asteroid
             lastKeyboardState = keyboardState;
             lastMouseState = mouseState;
             base.Update(gameTime);
+            //test
+
+            if (keyboardState.IsKeyDown(Keys.P))
+            {
+                BoolForRandomTests = true;
+            }
+            else
+            {
+                BoolForRandomTests = false;
+            }
+            //test
         }
 
         protected override void Draw(GameTime gameTime)
@@ -1825,6 +1859,12 @@ namespace Asteroid
             UpgradeSkip.Draw(_spriteBatch);
 
 
+            //test
+            if (BoolForRandomTests)
+            {
+                AnimateFrame(ContentLoad2D("Upgrades/GreaterSplitVerticalSpriteSheet"), new Vector2(100, 0), 576, 480, 6);
+            }
+            //test
             _spriteBatch.End();
 
             base.Draw(gameTime);
