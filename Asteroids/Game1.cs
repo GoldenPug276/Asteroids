@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
+using MonoGame.Extended.Sprites;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -126,6 +127,16 @@ namespace Asteroid
         Sprite MimicrySprite;
         Upgrade EGO;
         Sprite EGOSprite;
+        TimeSpan SplitV_FrameTimes = new TimeSpan(0, 0, 0, 0, 50);
+        TimeSpan SplitV_reserveFrameTimes = new TimeSpan(0, 0, 0, 0, 50);
+        TimeSpan SplitH_FrameTimes = new TimeSpan(0, 0, 0, 0, 75);
+        TimeSpan SplitH_reserveFrameTimes = new TimeSpan(0, 0, 0, 0, 75);
+        int SplitV_FrameCount = 10;
+        int SplitV_reserveFrameCount = 10;
+        int SplitH_FrameCount = 6;
+        int SplitH_reserveFrameCount = 6;
+        bool SplitV_AnimationRunning = false;
+        bool SplitH_AnimationRunning = false;
 
         List<Rectangle> ExtraHitboxes = new List<Rectangle>();
         List<float> ExtraPens = new List<float>();
@@ -569,7 +580,14 @@ namespace Asteroid
          *                              (NOT FULLY TESTED)
          *                  Made a function called AnimateFrame that inputs all needed data to display part of a SpriteSheet
          *                      Then, make a function called Animate that will run AnimateFrame for a defined amount of frames after a defined interval
-         *                              (ANIMATE NOT DONE)
+         *                      ON SECOND THOUGHT:
+         *                          Decided to make the animation just happen while everything is being drawn
+         *                              The way I made it, there need to be external variables for frames numbers, will be changed when I know how
+         *                              Also added a bool called SplitAnimationRunning for when an animation should be playing so that the function can be run then
+         *                                  For now, the method needs the game to be paused. Make one that doesn't need it later
+         *                                  
+         *                                  (i decided to try and remake the function. verticalis currently using the function, horizontal is using the thing in draw.
+         *                                  the function doesn't work even with identical code. fix this)
          *              
          *          Time Erase |just the i-frames|
          *          
@@ -626,21 +644,27 @@ namespace Asteroid
          * 
          * Sprite Positions are in the middle of the Sprite rather than the upper right corner
          */
-
-        void Animate(TimeSpan timeBetweenFrames, int totalFrames)
+        void AnimateWhileFrozen(bool animRunning, int frameCount, int rFrameCount, TimeSpan frameTimes, TimeSpan rFrameTimes,
+            Texture2D spritesheet, Vector2 position, int frameSize)
         {
-            //subtract time
-            //if time has passed
-            //draw frame
-            //change frame number
-            //reset time
-
-            //maybe also add something outside the function to not stay in this function until fully animated
+                AnimateFrame(spritesheet, position, frameSize, rFrameCount - frameCount + 1);
+                frameTimes -= gameTime.ElapsedGameTime;
+                if (frameTimes <= TimeSpan.Zero)
+                {
+                    frameCount--;
+                    frameTimes = rFrameTimes;
+                    if (frameCount < 0)
+                    {
+                        animRunning = false;
+                        frameCount = rFrameCount;
+                        GameFrozen = false;
+                    }
+                }
         }
-
-        void AnimateFrame(Texture2D spritesheet, Vector2 position, int frameSizeX, int frameSizeY, int frameNumber)
+        void AnimateFrame(Texture2D spritesheet, Vector2 position, int frameSize, int frameNumber)
         {
-            _spriteBatch.Draw(spritesheet, position, new Rectangle((frameNumber - 1) * frameSizeX, 0, frameSizeX, frameSizeY), Color.White);
+            int frameSizeY = spritesheet.Height;
+            _spriteBatch.Draw(spritesheet, position, new Rectangle((frameNumber - 1) * frameSize, 0, frameSize, frameSizeY), Color.White);
         }
 
         Texture2D ContentLoad2D(string path)
@@ -969,7 +993,7 @@ namespace Asteroid
             int height = GraphicsDevice.Viewport.Height;
             gameTime = gameTimer;
 
-
+            
             Window.Title = $"AsteroidsCount: {Asteroids.Count}      UFOCount: {UFOs.Count}      width: {width}      height: {height}        armor: {level.GlobalArmorValue}     levelTimer: {level.LevelSpawnTimer}";
 
             KeyboardState keyboardState = Keyboard.GetState();
@@ -1730,13 +1754,27 @@ namespace Asteroid
             base.Update(gameTime);
             //test
 
-            if (keyboardState.IsKeyDown(Keys.P))
+            if (rand.Next(0,2)==1)
             {
                 BoolForRandomTests = true;
             }
             else
             {
                 BoolForRandomTests = false;
+            }
+
+
+
+
+            if (keyboardState.IsKeyDown(Keys.O))
+            {
+                SplitV_AnimationRunning = true;
+                GameFrozen = true;
+            }
+            if (keyboardState.IsKeyDown(Keys.P))
+            {
+                SplitH_AnimationRunning = true;
+                GameFrozen = true;
             }
             //test
         }
@@ -1860,9 +1898,45 @@ namespace Asteroid
 
 
             //test
-            if (BoolForRandomTests)
+            if (SplitV_AnimationRunning && GameFrozen)
             {
-                AnimateFrame(ContentLoad2D("Upgrades/GreaterSplitVerticalSpriteSheet"), new Vector2(100, 0), 576, 480, 6);
+                AnimateWhileFrozen(SplitV_AnimationRunning, SplitV_FrameCount, SplitV_reserveFrameCount, SplitV_FrameTimes, SplitV_reserveFrameTimes, ContentLoad2D("Upgrades/GreaterSplitVerticalSpriteSheet"), new Vector2(100, 0), 576);
+            }
+
+            if (SplitV_AnimationRunning && GameFrozen)
+            {
+                /*
+                AnimateFrame(ContentLoad2D("Upgrades/GreaterSplitVerticalSpriteSheet"), new Vector2(100, 0), 576, SplitV_reserveFrameCount - SplitV_FrameCount + 1);
+                SplitV_FrameTimes -= gameTime.ElapsedGameTime;
+                if (SplitV_FrameTimes <=TimeSpan.Zero)
+                {
+                    SplitV_FrameCount--;
+                    SplitV_FrameTimes = SplitV_reserveFrameTimes;
+                    if (SplitV_FrameCount<0)
+                    {
+                        SplitV_AnimationRunning = false;
+                        SplitV_FrameCount = SplitV_reserveFrameCount;
+                        GameFrozen = false;
+                    }
+                }
+                */
+            }
+
+            if (SplitH_AnimationRunning && GameFrozen)
+            {
+                AnimateFrame(ContentLoad2D("Upgrades/GreaterSplitHorizontalSpriteSheet"), new Vector2(0, 0), 800, SplitH_reserveFrameCount - SplitH_FrameCount + 1);
+                SplitH_FrameTimes -= gameTime.ElapsedGameTime;
+                if (SplitH_FrameTimes <=TimeSpan.Zero)
+                {
+                    SplitH_FrameCount--;
+                    SplitH_FrameTimes = SplitH_reserveFrameTimes;
+                    if (SplitH_FrameCount<0)
+                    {
+                        SplitH_AnimationRunning = false;
+                        SplitH_FrameCount = SplitH_reserveFrameCount;
+                        GameFrozen = false;
+                    }
+                }
             }
             //test
             _spriteBatch.End();
