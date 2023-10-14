@@ -1,8 +1,9 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Asteroids;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
-using MonoGame.Extended.Sprites;
+//using MonoGame.Extended.Sprites;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -127,16 +128,9 @@ namespace Asteroid
         Sprite MimicrySprite;
         Upgrade EGO;
         Sprite EGOSprite;
-        TimeSpan SplitV_FrameTimes = new TimeSpan(0, 0, 0, 0, 50);
-        TimeSpan SplitV_reserveFrameTimes = new TimeSpan(0, 0, 0, 0, 50);
-        TimeSpan SplitH_FrameTimes = new TimeSpan(0, 0, 0, 0, 75);
-        TimeSpan SplitH_reserveFrameTimes = new TimeSpan(0, 0, 0, 0, 75);
-        int SplitV_FrameCount = 10;
-        int SplitV_reserveFrameCount = 10;
-        int SplitH_FrameCount = 6;
-        int SplitH_reserveFrameCount = 6;
-        bool SplitV_AnimationRunning = false;
-        bool SplitH_AnimationRunning = false;
+        Animation GreaterSplitVertical;
+        Animation GreaterSplitHorizontal;
+
 
         List<Rectangle> ExtraHitboxes = new List<Rectangle>();
         List<float> ExtraPens = new List<float>();
@@ -575,19 +569,17 @@ namespace Asteroid
          *                                  Vertical has all the frames
          *                                  Horizontal will use frames 5-10, though this isn't 100% accurate (don't forget the background will move a bit during it)
          *                                      wait this whole project is scuffed, who cares
-         *                  Quickly test animating by making Vertical's animation play when pressing P or something
-         *                      First though, tested to see if you can display all the frames by linking each frame to a keybind (Z - / on the keyboard)
-         *                              (NOT FULLY TESTED)
+         *                  Made a class called Animation that will hole all Animation parameters
          *                  Made a function called AnimateFrame that inputs all needed data to display part of a SpriteSheet
-         *                      Then, make a function called Animate that will run AnimateFrame for a defined amount of frames after a defined interval
-         *                      ON SECOND THOUGHT:
-         *                          Decided to make the animation just happen while everything is being drawn
-         *                              The way I made it, there need to be external variables for frames numbers, will be changed when I know how
-         *                              Also added a bool called SplitAnimationRunning for when an animation should be playing so that the function can be run then
-         *                                  For now, the method needs the game to be paused. Make one that doesn't need it later
-         *                                  
-         *                                  (i decided to try and remake the function. verticalis currently using the function, horizontal is using the thing in draw.
-         *                                  the function doesn't work even with identical code. fix this)
+         *                      The class holds variables for tme between frames, total frames, frame size, and whether or not the animation is running
+         *                  Made a function called AnimateWhileFrozen that will run AnimateFrame for a defined amount of frames after a defined interval
+         *                      This specific function needs the game to be paused. Make one that doesn't need it later
+         *                  Quickly tested animating by making the animations play when pressing O and P
+         *                      First though, tested to see if you can display all the frames by linking each frame to a keybind (Z - / on the keyboard)
+         *                  Gave the Horizontal background 8 frames to use in a SpriteSheet for easier use
+         *                      I think it's a bit off, but it should work enough to show the movement
+         *                      I only moved the file along. The sprites are the same width, they were just moved since they would still go off of the screen.
+         *                  Make the SpriteSheets for the animations BEFORE the current ones. (The parts with Mimicry swinging.)
          *              
          *          Time Erase |just the i-frames|
          *          
@@ -644,28 +636,6 @@ namespace Asteroid
          * 
          * Sprite Positions are in the middle of the Sprite rather than the upper right corner
          */
-        void AnimateWhileFrozen(bool animRunning, int frameCount, int rFrameCount, TimeSpan frameTimes, TimeSpan rFrameTimes,
-            Texture2D spritesheet, Vector2 position, int frameSize)
-        {
-                AnimateFrame(spritesheet, position, frameSize, rFrameCount - frameCount + 1);
-                frameTimes -= gameTime.ElapsedGameTime;
-                if (frameTimes <= TimeSpan.Zero)
-                {
-                    frameCount--;
-                    frameTimes = rFrameTimes;
-                    if (frameCount < 0)
-                    {
-                        animRunning = false;
-                        frameCount = rFrameCount;
-                        GameFrozen = false;
-                    }
-                }
-        }
-        void AnimateFrame(Texture2D spritesheet, Vector2 position, int frameSize, int frameNumber)
-        {
-            int frameSizeY = spritesheet.Height;
-            _spriteBatch.Draw(spritesheet, position, new Rectangle((frameNumber - 1) * frameSize, 0, frameSize, frameSizeY), Color.White);
-        }
 
         Texture2D ContentLoad2D(string path)
         {
@@ -859,10 +829,16 @@ namespace Asteroid
             MimicrySprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/Mimicry"), 0, 1 / 1f, Color.White);
             AllUpgrades.Add(Mimicry);
 
+            GreaterSplitVertical = new Animation(new Vector2(100, 0), ContentLoad2D("Upgrades/GreaterSplitVerticalSpriteSheet"),
+                new TimeSpan(0, 0, 0, 0, 50), 10 - 1, 576, 0, 1 / 1f, Color.White);
+
             EGO = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.EGO, "Manifestation", "Press E to manifest", "your E.G.O., giving", "a speed buff and",
                 "i-frames.", 50, 8, null, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkRed, false);
             EGOSprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/EGO"), 0, 1 / 1f, Color.White);
             AllUpgrades.Add(EGO);
+
+            GreaterSplitHorizontal = new Animation(new Vector2(0, 0), ContentLoad2D("Upgrades/GreaterSplitHorizontalSpriteSheet"),
+                new TimeSpan(0, 0, 0, 0, 65), 6 - 1, 800, 0, 1 / 1f, Color.White);
 
             //Abilities
 
@@ -1768,14 +1744,15 @@ namespace Asteroid
 
             if (keyboardState.IsKeyDown(Keys.O))
             {
-                SplitV_AnimationRunning = true;
+                GreaterSplitVertical.AnimationRunning = true;
                 GameFrozen = true;
             }
             if (keyboardState.IsKeyDown(Keys.P))
             {
-                SplitH_AnimationRunning = true;
+                GreaterSplitHorizontal.AnimationRunning = true;
                 GameFrozen = true;
             }
+
             //test
         }
 
@@ -1898,45 +1875,15 @@ namespace Asteroid
 
 
             //test
-            if (SplitV_AnimationRunning && GameFrozen)
+            if (GreaterSplitVertical.AnimationRunning && GameFrozen)
             {
-                AnimateWhileFrozen(SplitV_AnimationRunning, SplitV_FrameCount, SplitV_reserveFrameCount, SplitV_FrameTimes, SplitV_reserveFrameTimes, ContentLoad2D("Upgrades/GreaterSplitVerticalSpriteSheet"), new Vector2(100, 0), 576);
+                GreaterSplitVertical.AnimateWhileFrozen(_spriteBatch);
             }
 
-            if (SplitV_AnimationRunning && GameFrozen)
+            if (GreaterSplitHorizontal.AnimationRunning && GameFrozen)
             {
-                /*
-                AnimateFrame(ContentLoad2D("Upgrades/GreaterSplitVerticalSpriteSheet"), new Vector2(100, 0), 576, SplitV_reserveFrameCount - SplitV_FrameCount + 1);
-                SplitV_FrameTimes -= gameTime.ElapsedGameTime;
-                if (SplitV_FrameTimes <=TimeSpan.Zero)
-                {
-                    SplitV_FrameCount--;
-                    SplitV_FrameTimes = SplitV_reserveFrameTimes;
-                    if (SplitV_FrameCount<0)
-                    {
-                        SplitV_AnimationRunning = false;
-                        SplitV_FrameCount = SplitV_reserveFrameCount;
-                        GameFrozen = false;
-                    }
-                }
-                */
-            }
-
-            if (SplitH_AnimationRunning && GameFrozen)
-            {
-                AnimateFrame(ContentLoad2D("Upgrades/GreaterSplitHorizontalSpriteSheet"), new Vector2(0, 0), 800, SplitH_reserveFrameCount - SplitH_FrameCount + 1);
-                SplitH_FrameTimes -= gameTime.ElapsedGameTime;
-                if (SplitH_FrameTimes <=TimeSpan.Zero)
-                {
-                    SplitH_FrameCount--;
-                    SplitH_FrameTimes = SplitH_reserveFrameTimes;
-                    if (SplitH_FrameCount<0)
-                    {
-                        SplitH_AnimationRunning = false;
-                        SplitH_FrameCount = SplitH_reserveFrameCount;
-                        GameFrozen = false;
-                    }
-                }
+                _spriteBatch.Draw(ContentLoad2D("Upgrades/horizontalPreSlash/background"), BurnVec, Color.White);
+                GreaterSplitHorizontal.AnimateWhileFrozen(_spriteBatch);
             }
             //test
             _spriteBatch.End();
