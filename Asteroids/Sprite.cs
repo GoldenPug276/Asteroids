@@ -12,7 +12,7 @@ namespace Asteroid
         public Texture2D Image { get; set; }
         public Texture2D DisplayImage { get; set; }
         public float Scale { get; set; }
-        public virtual Vector2 Origin { get; }
+        public virtual Vector2 Origin { get; set; }
         public float Rotation { get; set; }
         public Color Color { get; set; }
 

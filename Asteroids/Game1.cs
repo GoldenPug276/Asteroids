@@ -130,6 +130,7 @@ namespace Asteroid
         Sprite EGOSprite;
         Animation GreaterSplitVertical;
         Animation GreaterSplitHorizontal;
+        Animation preGreaterSplitHorizontal;
 
 
         List<Rectangle> ExtraHitboxes = new List<Rectangle>();
@@ -576,10 +577,14 @@ namespace Asteroid
          *                      This specific function needs the game to be paused. Make one that doesn't need it later
          *                  Quickly tested animating by making the animations play when pressing O and P
          *                      First though, tested to see if you can display all the frames by linking each frame to a keybind (Z - / on the keyboard)
-         *                  Gave the Horizontal background 8 frames to use in a SpriteSheet for easier use
-         *                      I think it's a bit off, but it should work enough to show the movement
-         *                      I only moved the file along. The sprites are the same width, they were just moved since they would still go off of the screen.
-         *                  Make the SpriteSheets for the animations BEFORE the current ones. (The parts with Mimicry swinging.)
+         *                  Add a function MovementAnimate in Animation to animate via movement rather than a spritesheet
+         *                      For now, still needs to be frozen
+         *                                  (test turn on mimivry with the thing on line 840 and end of program)
+         *                                  (need to test this)
+         *                                      (doesn't work need fix)
+         *                  Make an animation for the horizontal swing
+         *                      It will need to have the background moving and Mimicry swinging
+         *                      Remember that Mimicry is at the top right, swining from what I guess is the guard
          *              
          *          Time Erase |just the i-frames|
          *          
@@ -836,6 +841,18 @@ namespace Asteroid
                 "i-frames.", 50, 8, null, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkRed, false);
             EGOSprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/EGO"), 0, 1 / 1f, Color.White);
             AllUpgrades.Add(EGO);
+
+            preGreaterSplitHorizontal = new Animation(new Vector2(0, 0), ContentLoad2D("Upgrades/MimicrySplitHorizontal"),
+                TimeSpan.Zero, 10, 0, MathHelper.ToRadians(-10), 1 / 1, Color.White);
+                //preGreaterSplitHorizontal.Position = new Vector2(width - preGreaterSplitHorizontal.Image.Width/2 + 100, preGreaterSplitHorizontal.Image.Height/2);
+            preGreaterSplitHorizontal.Position = new Vector2(width+100, height/2-55);
+            preGreaterSplitHorizontal.Origin = new Vector2(preGreaterSplitHorizontal.Image.Width-50, preGreaterSplitHorizontal.Image.Height);
+            /*
+            int b = 40;
+            preGreaterSplitHorizontal.Rotation += MathHelper.ToRadians(-b);
+            preGreaterSplitHorizontal.Position.X += b;
+            preGreaterSplitHorizontal.Position.Y -= b;
+            */
 
             GreaterSplitHorizontal = new Animation(new Vector2(0, 0), ContentLoad2D("Upgrades/GreaterSplitHorizontalSpriteSheet"),
                 new TimeSpan(0, 0, 0, 0, 65), 6 - 1, 800, 0, 1 / 1f, Color.White);
@@ -1752,6 +1769,11 @@ namespace Asteroid
                 GreaterSplitHorizontal.AnimationRunning = true;
                 GameFrozen = true;
             }
+            if (keyboardState.IsKeyDown(Keys.Z))
+            {
+                preGreaterSplitHorizontal.AnimationRunning = true;
+                GameFrozen = true;
+            }
 
             //test
         }
@@ -1882,9 +1904,16 @@ namespace Asteroid
 
             if (GreaterSplitHorizontal.AnimationRunning && GameFrozen)
             {
-                _spriteBatch.Draw(ContentLoad2D("Upgrades/horizontalPreSlash/background"), BurnVec, Color.White);
+                _spriteBatch.Draw(ContentLoad2D("Upgrades/horizontalbackground"), BurnVec, Color.White);
                 GreaterSplitHorizontal.AnimateWhileFrozen(_spriteBatch);
             }
+
+            if (preGreaterSplitHorizontal.AnimationRunning&&GameFrozen)
+            {
+                preGreaterSplitHorizontal.Draw(_spriteBatch);
+                preGreaterSplitHorizontal.MovementAnimate(MathHelper.ToRadians(-40), new Vector2(40, -40), TimeSpan.FromMilliseconds(500), _spriteBatch);
+            }
+            
             //test
             _spriteBatch.End();
 
