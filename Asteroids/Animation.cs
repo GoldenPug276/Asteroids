@@ -22,6 +22,10 @@ namespace Asteroids
         private int reserveFrameCount;
         public int FrameSize;
         public bool AnimationRunning = false;
+        private bool moveAnimTimeDefined = false;
+        private List<TimeSpan> perFrameTimes = new List<TimeSpan>();
+        private float moveAnimBackRot;
+        private Vector2 moveAnimBackPos;
 
         public Animation(Vector2 position, Texture2D spritesheet, TimeSpan frameTimes, int frameCount, int frameSize, float rot, float scale, Color color)
             : base(position, spritesheet, rot, scale, color)
@@ -65,27 +69,36 @@ namespace Asteroids
         {
             sb.Draw(Image, Position, null, Color, Rotation, Origin, Scale, SpriteEffects.None, 0);
 
-            TimeSpan perFrame = moveTime / reserveFrameCount;
-            TimeSpan perFramereserve = perFrame;
+            if (!moveAnimTimeDefined)
+            {
+                perFrameTimes.Clear();
+                for (int i = 0; i <= FrameCount; i++)
+                {
+                    perFrameTimes.Add(moveTime / reserveFrameCount);
+                }
+                moveAnimBackRot = Rotation;
+                moveAnimBackPos = Position;
+            }
+            moveAnimTimeDefined = true;
+
+            int frameNumber = Math.Abs(FrameCount - reserveFrameCount);
 
             float rotPerFrame = totalRotation / reserveFrameCount;
             Vector2 movePerFrame = new Vector2(totalMovement.X / reserveFrameCount, totalMovement.Y / reserveFrameCount);
 
-            perFrame -= Game1.gameTime.ElapsedGameTime;
+            perFrameTimes[frameNumber] -= Game1.gameTime.ElapsedGameTime;
 
-            if (perFrame <= TimeSpan.Zero)
+            if (perFrameTimes[frameNumber] <= TimeSpan.Zero)
             {
                 Rotation += rotPerFrame;
                 Position.X += movePerFrame.X;
                 Position.Y += movePerFrame.Y;
                 FrameCount--;
-
-                perFrame = perFramereserve;
                 if (FrameCount < 0)
                 {
-                    Rotation -= totalRotation;
-                    Position.X -= totalMovement.X;
-                    Position.Y -= totalMovement.Y;
+                    Rotation = moveAnimBackRot;
+                    Position = moveAnimBackPos;
+                    moveAnimTimeDefined = false;
                     AnimationRunning = false;
                     FrameCount = reserveFrameCount;
                     Game1.GameFrozen = false;
