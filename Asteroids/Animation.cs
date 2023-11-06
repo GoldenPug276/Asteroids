@@ -43,7 +43,7 @@ namespace Asteroids
             FrameSize = frameSize;
         }
 
-        public void AnimateWhileFrozen(SpriteBatch sb)
+        public void AnimateWhileFrozen(SpriteBatch sb, ref bool animateAfter)
         {
             animateFrame(reserveFrameCount - FrameCount, sb);
             FrameTimes -= Game1.gameTime.ElapsedGameTime;
@@ -56,6 +56,7 @@ namespace Asteroids
                     AnimationRunning = false;
                     FrameCount = reserveFrameCount;
                     Game1.GameFrozen = false;
+                    if (!animateAfter) { animateAfter = true; }
                 }
             }
         }
@@ -65,7 +66,7 @@ namespace Asteroids
             sb.Draw(Image, Position, new Rectangle((frameNumber) * FrameSize, 0, FrameSize, frameSizeY), Color.White);
         }
 
-        public void MovementAnimate(float totalRotation, Vector2 totalMovement, TimeSpan moveTime, SpriteBatch sb)
+        public void MovementAnimate(float totalRotation, Vector2 totalMovement, TimeSpan moveTime, SpriteBatch sb, ref bool animateAfter)
         {
             sb.Draw(Image, Position, null, Color, Rotation, Origin, Scale, SpriteEffects.None, 0);
 
@@ -102,6 +103,7 @@ namespace Asteroids
                     AnimationRunning = false;
                     FrameCount = reserveFrameCount;
                     Game1.GameFrozen = false;
+                    if (!animateAfter) { animateAfter = true; }
                 }
             }
         }

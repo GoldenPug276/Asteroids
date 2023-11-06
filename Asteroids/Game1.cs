@@ -38,6 +38,7 @@ namespace Asteroid
         SpriteFont upgradeTitleFont;
         SpriteFont upgradeDescFont;
         Vector2 BurnVec = new Vector2(0, 0);
+        bool animBurnBool = true;
         bool BoolForRandomTests = false;
         int counter = 0;
 
@@ -132,6 +133,8 @@ namespace Asteroid
         Animation GreaterSplitHorizontal;
         Animation preGreaterSplitHorizontalSwing;
         Animation preGreaterSplitHorizontalBackground;
+        TimeSpan horizontalSwingToEffect = TimeSpan.Zero;
+        TimeSpan splitBlackBack = TimeSpan.Zero;
 
 
         List<Rectangle> ExtraHitboxes = new List<Rectangle>();
@@ -583,8 +586,9 @@ namespace Asteroid
          *                  Made an animation for the horizontal swing
          *                      It will need to have the background moving and Mimicry swinging
          *                      Remember that Mimicry is at the top right, swinging from what I guess is the guard
-         *                  Combine Greater Split Horizontal the swing with the effect
-         *                  Download the effect/trail of Mimicry
+         *                  Combined Greater Split Horizontal the swing with the effect
+         *                      Added an animateAfter parameter to the Animation functions to trigger other animations after that use bools
+         *                      Bool animBurnBool will be used for animations that don't trigger anything
          *                  Make an animation for the vertical swing
          *                      This one has the following actions:
          *                          Mimicry starts overhead
@@ -599,8 +603,13 @@ namespace Asteroid
          *                                  (just to remember for now,
          *                                  O is for vertical effect
          *                                  P is for horizontal effect
-         *                                  Z is for horizontal swing
+         *                                  Z is for horizontal swing and horizontal effect
          *                                  X is(will be, not made yet) for vertical swing)
+         *                  Download the effect/trail of Mimicry
+         *                  
+         *                                  (first, change animateWhileFrozen to use a time total like MovementAnimate instead of having a defined amount of time per frame
+         *                                  also maybe change it to input the frames of the spritesheet and the total frames to stretch frames over longer intervals)
+         *                  
          *              
          *          Time Erase |just the i-frames|
          *          
@@ -850,9 +859,6 @@ namespace Asteroid
             MimicrySprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/Mimicry"), 0, 1 / 1f, Color.White);
             AllUpgrades.Add(Mimicry);
 
-            GreaterSplitVertical = new Animation(new Vector2(100, 0), ContentLoad2D("Upgrades/GreaterSplitVerticalSpriteSheet"),
-                new TimeSpan(0, 0, 0, 0, 35), 10 - 1, 576, 0, 1 / 1f, Color.White);
-
             EGO = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.EGO, "Manifestation", "Press E to manifest", "your E.G.O., giving", "a speed buff and",
                 "i-frames.", 50, 8, null, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkRed, false);
             EGOSprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/EGO"), 0, 1 / 1f, Color.White);
@@ -860,18 +866,21 @@ namespace Asteroid
 
 
             preGreaterSplitHorizontalSwing = new Animation(new Vector2(0, 0), ContentLoad2D("Upgrades/MimicrySplitHorizontal"),
-                TimeSpan.Zero, 15, 0, MathHelper.ToRadians(-00), 1 / 1, Color.White);
+                TimeSpan.Zero, 24, 0, MathHelper.ToRadians(-00), 1 / 1, Color.White);
             preGreaterSplitHorizontalSwing.Position = new Vector2(width+100, height/2-55);
             preGreaterSplitHorizontalSwing.Origin = new Vector2(preGreaterSplitHorizontalSwing.Image.Width-50, preGreaterSplitHorizontalSwing.Image.Height);
 
             preGreaterSplitHorizontalBackground = new Animation(new Vector2(0, 0), ContentLoad2D("Upgrades/horizontalbackground"),
-                TimeSpan.Zero, 15, 0, 0, 1 / 1, Color.White);
+                TimeSpan.Zero, 24, 0, 0, 1 / 1, Color.White);
             preGreaterSplitHorizontalBackground.Position.X += preGreaterSplitHorizontalBackground.Image.Width / 2;
             preGreaterSplitHorizontalBackground.Position.Y += preGreaterSplitHorizontalBackground.Image.Height / 2;
 
-
             GreaterSplitHorizontal = new Animation(new Vector2(0, 0), ContentLoad2D("Upgrades/GreaterSplitHorizontalSpriteSheet"),
-                new TimeSpan(0, 0, 0, 0, 25), 6 - 1, 800, 0, 1 / 1f, Color.White);
+                new TimeSpan(0, 0, 0, 0, 50), 6 - 1, 800, 0, 1 / 1f, Color.White);
+
+
+            GreaterSplitVertical = new Animation(new Vector2(100, 0), ContentLoad2D("Upgrades/GreaterSplitVerticalSpriteSheet"),
+                new TimeSpan(0, 0, 0, 0, 35), 10 - 1, 576, 0, 1 / 1f, Color.White);
 
             //Abilities
 
@@ -1913,20 +1922,36 @@ namespace Asteroid
 
 
             //test
+            if (splitBlackBack>TimeSpan.Zero)
+            {
+                splitBlackBack -= gameTime.ElapsedGameTime;
+                _spriteBatch.FillRectangle(new Rectangle(0, 0, width, height), Color.Black);
+            }
+
+
+
             if (GreaterSplitVertical.AnimationRunning && GameFrozen)
             {
-                GreaterSplitVertical.AnimateWhileFrozen(_spriteBatch);
+                GreaterSplitVertical.AnimateWhileFrozen(_spriteBatch, ref animBurnBool);
+            }
+
+
+            if (preGreaterSplitHorizontalSwing.AnimationRunning && GameFrozen)
+            {
+                preGreaterSplitHorizontalBackground.MovementAnimate(0, new Vector2(-224, 0), TimeSpan.FromMilliseconds(400), _spriteBatch, ref animBurnBool);
+                preGreaterSplitHorizontalSwing.MovementAnimate(MathHelper.ToRadians(-80), new Vector2(40, -40), TimeSpan.FromMilliseconds(400), _spriteBatch, ref GreaterSplitHorizontal.AnimationRunning);
+                horizontalSwingToEffect = new TimeSpan(0, 0, 0, 0, 200);
+                splitBlackBack = new TimeSpan(0, 0, 0, 0, 700);
+                GameFrozen = true;
             }
 
             if (GreaterSplitHorizontal.AnimationRunning && GameFrozen)
             {
-                GreaterSplitHorizontal.AnimateWhileFrozen(_spriteBatch);
-            }
-
-            if (preGreaterSplitHorizontalSwing.AnimationRunning && GameFrozen)
-            {
-                preGreaterSplitHorizontalBackground.MovementAnimate(0, new Vector2(-224, 0), TimeSpan.FromMilliseconds(400), _spriteBatch);
-                preGreaterSplitHorizontalSwing.MovementAnimate(MathHelper.ToRadians(-80), new Vector2(40, -40), TimeSpan.FromMilliseconds(400), _spriteBatch);
+                horizontalSwingToEffect -= gameTime.ElapsedGameTime;
+                if (horizontalSwingToEffect<=TimeSpan.Zero)
+                {
+                    GreaterSplitHorizontal.AnimateWhileFrozen(_spriteBatch, ref animBurnBool);
+                }
             }
             
 
