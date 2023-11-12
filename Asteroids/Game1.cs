@@ -131,8 +131,10 @@ namespace Asteroid
         Sprite EGOSprite;
         Animation GreaterSplitVertical;
         Animation GreaterSplitHorizontal;
-        Animation preGreaterSplitHorizontalSwing;
-        Animation preGreaterSplitHorizontalBackground;
+        Animation hSplitSwing;
+        Animation hSplitBack;
+        Animation vSplitSwing;
+
         TimeSpan horizontalSwingToEffect = TimeSpan.Zero;
         TimeSpan splitBlackBack = TimeSpan.Zero;
 
@@ -589,13 +591,25 @@ namespace Asteroid
          *                  Combined Greater Split Horizontal the swing with the effect
          *                      Added an animateAfter parameter to the Animation functions to trigger other animations after that use bools
          *                      Bool animBurnBool will be used for animations that don't trigger anything
+         *                  Changed the names of the animation variables and the Split assets
+         *                      preGreaterSplitHorizontalSwing to hSplitSwing
+         *                      preGreaterSplitHorizontalBackground to hSplitBack
+         *                      assets changed with a similar naming scheme
+         *                  Made a function called TimeFromMilli to conserve a little space
+         *                  Made a function called Angle whih runs Angle() to conserve a little space
          *                  Make an animation for the vertical swing
          *                      This one has the following actions:
          *                          Mimicry starts overhead
          *                          Moves into position, being a little angled up
          *                          Moves down slowly for 3 frames, ending horizontal from the grip
          *                          On frame 4, cuts to the effect
+         *                          After the attack, Mimicry should be angled down in after-swing
          *                      Remember that this animation always faces the same way and is a bit to the left of the ship
+         *                      
+         *                          (started making it, it shouldn't take too long or be to hard.
+         *                          already go the posiion and right rotation amount)
+         *                          (need to make sure that the after-swing exists)
+         *                          (basically almost done lol)
          *                  
          *                                  (after testing a thing, i will need to see if these ACTUALLY only work when frozen)
          *                                  (since at least for the movement animate, running one anim won't stop another anim from running)
@@ -604,11 +618,8 @@ namespace Asteroid
          *                                  O is for vertical effect
          *                                  P is for horizontal effect
          *                                  Z is for horizontal swing and horizontal effect
-         *                                  X is(will be, not made yet) for vertical swing)
+         *                                  X is for vertical swing and vertical effect)
          *                  Download the effect/trail of Mimicry
-         *                  
-         *                                  (first, change animateWhileFrozen to use a time total like MovementAnimate instead of having a defined amount of time per frame
-         *                                  also maybe change it to input the frames of the spritesheet and the total frames to stretch frames over longer intervals)
          *                  
          *              
          *          Time Erase |just the i-frames|
@@ -667,6 +678,14 @@ namespace Asteroid
          * Sprite Positions are in the middle of the Sprite rather than the upper right corner
          */
 
+        float Angle(float angle)
+        {
+            return MathHelper.ToRadians(angle);
+        }
+        TimeSpan TimeFromMilli(float time)
+        {
+            return TimeSpan.FromMilliseconds(time);
+        }
         Texture2D ContentLoad2D(string path)
         {
             return Content.Load<Texture2D>(path);
@@ -708,7 +727,7 @@ namespace Asteroid
             {
                 ship.Position = playSpace.Center.ToVector2();
                 lives--;
-                iFrames = TimeSpan.FromMilliseconds(2000);
+                iFrames = TimeFromMilli(2000);
                 ship.Velocity = 0;
             }
         }
@@ -865,22 +884,19 @@ namespace Asteroid
             AllUpgrades.Add(EGO);
 
 
-            preGreaterSplitHorizontalSwing = new Animation(new Vector2(0, 0), ContentLoad2D("Upgrades/MimicrySplitHorizontal"),
-                TimeSpan.Zero, 24, 0, MathHelper.ToRadians(-00), 1 / 1, Color.White);
-            preGreaterSplitHorizontalSwing.Position = new Vector2(width+100, height/2-55);
-            preGreaterSplitHorizontalSwing.Origin = new Vector2(preGreaterSplitHorizontalSwing.Image.Width-50, preGreaterSplitHorizontalSwing.Image.Height);
+            hSplitSwing = new Animation(new Vector2(width + 100, height/2 - 55), ContentLoad2D("Upgrades/hSplitMimicry"), TimeFromMilli(400), 24, 0, 0, 1 / 1, Color.White);
+            hSplitSwing.Origin = new Vector2(hSplitSwing.Image.Width - 50, hSplitSwing.Image.Height);
 
-            preGreaterSplitHorizontalBackground = new Animation(new Vector2(0, 0), ContentLoad2D("Upgrades/horizontalbackground"),
-                TimeSpan.Zero, 24, 0, 0, 1 / 1, Color.White);
-            preGreaterSplitHorizontalBackground.Position.X += preGreaterSplitHorizontalBackground.Image.Width / 2;
-            preGreaterSplitHorizontalBackground.Position.Y += preGreaterSplitHorizontalBackground.Image.Height / 2;
+            hSplitBack = new Animation(new Vector2(0, 0), ContentLoad2D("Upgrades/hSplitBack"), TimeFromMilli(400), 24, 0, 0, 1 / 1, Color.White);
+            hSplitBack.Position += new Vector2(hSplitBack.Image.Width/2, hSplitBack.Image.Height/2);
 
-            GreaterSplitHorizontal = new Animation(new Vector2(0, 0), ContentLoad2D("Upgrades/GreaterSplitHorizontalSpriteSheet"),
-                new TimeSpan(0, 0, 0, 0, 50), 6 - 1, 800, 0, 1 / 1f, Color.White);
+            GreaterSplitHorizontal = new Animation(new Vector2(0, 0), ContentLoad2D("Upgrades/hSplitSpriteSheet"), TimeFromMilli(240), 6 - 1, 800, 0, 1 / 1f, Color.White);
 
 
-            GreaterSplitVertical = new Animation(new Vector2(100, 0), ContentLoad2D("Upgrades/GreaterSplitVerticalSpriteSheet"),
-                new TimeSpan(0, 0, 0, 0, 35), 10 - 1, 576, 0, 1 / 1f, Color.White);
+            vSplitSwing = new Animation(ship.Position, ContentLoad2D("Upgrades/Mimicry"), TimeFromMilli(3330), 5, 0, Angle(90), 1 / 1, Color.White);
+            //since position changes, the position and origin is defined where it is used
+
+            GreaterSplitVertical = new Animation(new Vector2(100, 0), ContentLoad2D("Upgrades/vSplitSpriteSheet"), TimeFromMilli(300), 10 - 1, 576, 0, 1 / 1f, Color.White);
 
             //Abilities
 
@@ -957,7 +973,7 @@ namespace Asteroid
             devGun = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Laser, "Dev Gun",
                 "OP Debug Gun", "", "", "", 0, 0, null, 0, 0, 1, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1, Color.White, false);
             devGun.ShotTimer = devShotTimer;
-            devGun.reserveShotTimer = TimeSpan.FromMilliseconds(25);
+            devGun.reserveShotTimer = TimeFromMilli(25);
 
             //Debug Gun (irrelevant)
 
@@ -995,9 +1011,9 @@ namespace Asteroid
             powerDamages = new Texture2D[] { Content.Load<Texture2D>("PowerUp Images (ARCHIVE)/Hit 0"), Content.Load<Texture2D>("PowerUp Images (ARCHIVE)/Hit 4"), 
                 Content.Load<Texture2D>("PowerUp Images (ARCHIVE)/Hit 3"), Content.Load<Texture2D>("PowerUp Images (ARCHIVE)/Hit 2"), 
                 Content.Load<Texture2D>("PowerUp Images (ARCHIVE)/Hit 1"), Content.Load<Texture2D>("PowerUp Images (ARCHIVE)/Hit 0") };
-            machine = new Powerup(new Vector2(-50, -50), Powerup.Type.Machine, TimeSpan.FromMilliseconds(3500), TimeSpan.FromMilliseconds(4000), new TimeSpan(0, 0, 0, 0, 100),
+            machine = new Powerup(new Vector2(-50, -50), Powerup.Type.Machine, TimeFromMilli(3500), TimeFromMilli(4000), new TimeSpan(0, 0, 0, 0, 100),
                 powerDamages, MachineGun.GunBullet, 60, Content.Load<Texture2D>("PowerUp Images (ARCHIVE)/MachineGunPower"), 0, 1 / 1f, Color.Aqua);
-            laser = new Powerup(new Vector2(-60, -60), Powerup.Type.Laser, TimeSpan.FromMilliseconds(1500), TimeSpan.FromMilliseconds(2000), new TimeSpan(0, 0, 0, 0, 200),
+            laser = new Powerup(new Vector2(-60, -60), Powerup.Type.Laser, TimeFromMilli(1500), TimeFromMilli(2000), new TimeSpan(0, 0, 0, 0, 200),
                 powerDamages, Laser.GunBullet, 40, Content.Load<Texture2D>("PowerUp Images (ARCHIVE)/LaserPower"), 0, 1 / 1f, Color.Yellow);
             */
 
@@ -1026,7 +1042,7 @@ namespace Asteroid
 
             if (keyboardState.CapsLock)
             {
-                iFrames = TimeSpan.FromMilliseconds(300);
+                iFrames = TimeFromMilli(300);
             }
             if (keyboardState.IsKeyDown(Keys.OemOpenBrackets) && lastKeyboardState.IsKeyUp(Keys.OemOpenBrackets))
             {
@@ -1145,7 +1161,7 @@ namespace Asteroid
                 }
                 level = Level.NextLevel(level);
                 ship.Position = playSpace.Center.ToVector2();
-                iFrames = TimeSpan.FromMilliseconds(2000);
+                iFrames = TimeFromMilli(2000);
                 lives++;
                 ship.Velocity = 0;
                 tinyAsteroidVelocity *= 1.05f;
@@ -1448,7 +1464,7 @@ namespace Asteroid
                 if (ShotSpeedProgHolder[i].isActive && !ShotSpeedProgHolder[i].inEffect)
                 {
                     reserveDefaultTimer -= new TimeSpan(0, 0, 0, 0, 250);
-                    reserveDefaultTimer -= TimeSpan.FromMilliseconds(125 * i);
+                    reserveDefaultTimer -= TimeFromMilli(125 * i);
                     MachineGun.EnergyGainMultiplier += 0.5f;
                     Laser.EnergyGainMultiplier += 0.5f;
                     ShotSpeedProgHolder[i].inEffect = true;
@@ -1466,7 +1482,7 @@ namespace Asteroid
                     }
                     for (int k = 0; k < DroneLockOnTimers.Count; k++)
                     {
-                        DroneLockOnTimers[k] = TimeSpan.FromMilliseconds(3000);
+                        DroneLockOnTimers[k] = TimeFromMilli(3000);
                     }
                     DroneProgHolder[0].GunBullet = DronesFinal.GunBullet;
                 }
@@ -1478,9 +1494,9 @@ namespace Asteroid
                     if (i != 3) { DroneProgHolder[0].GunBullet = MachineGun.GunBullet; }
 
                     float a = 0; if (i >= 1) { a = 500; }
-                    reserveDroneShotTimer = TimeSpan.FromMilliseconds(3500 - (1500 * i) - a);
+                    reserveDroneShotTimer = TimeFromMilli(3500 - (1500 * i) - a);
                     DroneShotTimers.Add(reserveDroneShotTimer);
-                    DroneLockOnTimers.Add(TimeSpan.FromMilliseconds(1500));
+                    DroneLockOnTimers.Add(TimeFromMilli(1500));
 
                     DroneTargetValues.Add(-1);
 
@@ -1529,8 +1545,8 @@ namespace Asteroid
                                 }
                                 if (j == AllEnemies.Count - 1)
                                 {
-                                    DroneLockOnTimers[i] = TimeSpan.FromMilliseconds(1500);
-                                    if (DroneProgHolder[3].isActive) { DroneLockOnTimers[i] = TimeSpan.FromMilliseconds(3000); }
+                                    DroneLockOnTimers[i] = TimeFromMilli(1500);
+                                    if (DroneProgHolder[3].isActive) { DroneLockOnTimers[i] = TimeFromMilli(3000); }
                                     DroneTargetValues[i] = rand.Next(0, AllEnemies.Count);
                                     break;
                                 }
@@ -1547,7 +1563,7 @@ namespace Asteroid
                         else { destination = AllEnemies[DroneTargetValues[i]].Position; }
                         between = start - destination;
                         //
-                        float angle = (float)Math.Atan2((double)between.Y, (double)between.X) - MathHelper.ToRadians(90);
+                        float angle = (float)Math.Atan2((double)between.Y, (double)between.X) - Angle(90);
                         DroneList[i].Rotation = angle;
 
                         DroneLockOnTimers[i] -= gameTime.ElapsedGameTime;
@@ -1555,8 +1571,8 @@ namespace Asteroid
                         {
                             shots.Add(Bullet.BulletTypeCopy(DroneProgHolder[0].GunBullet, DroneList[i].Position, angle));
                             DroneShotTimers[i] = reserveDroneShotTimer;
-                            DroneLockOnTimers[i] = TimeSpan.FromMilliseconds(1500);
-                            if (DroneProgHolder[3].isActive) { DroneLockOnTimers[i] = TimeSpan.FromMilliseconds(3000); }
+                            DroneLockOnTimers[i] = TimeFromMilli(1500);
+                            if (DroneProgHolder[3].isActive) { DroneLockOnTimers[i] = TimeFromMilli(3000); }
                             DroneTargetValues[i] = -1;
                         }
                     }
@@ -1704,7 +1720,7 @@ namespace Asteroid
 
                     if (ShieldProgHolder[i].inEffect)
                     {
-                        if (iFrames <= TimeSpan.FromMilliseconds(20)) { iFrames = TimeSpan.FromMilliseconds(20); }
+                        if (iFrames <= TimeFromMilli(20)) { iFrames = TimeFromMilli(20); }
 
                         if ((i == ShieldFinal.ProgressionLevel - 1) /*&& (!ExtraHitboxes.Contains(ShieldSprite.Hitbox))*/)
                         {
@@ -1796,7 +1812,12 @@ namespace Asteroid
             }
             if (keyboardState.IsKeyDown(Keys.Z))
             {
-                preGreaterSplitHorizontalSwing.AnimationRunning = true;
+                hSplitSwing.AnimationRunning = true;
+                GameFrozen = true;
+            }
+            if (keyboardState.IsKeyDown(Keys.X))
+            {
+                vSplitSwing.AnimationRunning = true;
                 GameFrozen = true;
             }
 
@@ -1932,16 +1953,25 @@ namespace Asteroid
 
             if (GreaterSplitVertical.AnimationRunning && GameFrozen)
             {
+                splitBlackBack = new TimeSpan(0, 0, 0, 0, 300);
                 GreaterSplitVertical.AnimateWhileFrozen(_spriteBatch, ref animBurnBool);
             }
 
-
-            if (preGreaterSplitHorizontalSwing.AnimationRunning && GameFrozen)
+            if (vSplitSwing.AnimationRunning && GameFrozen)
             {
-                preGreaterSplitHorizontalBackground.MovementAnimate(0, new Vector2(-224, 0), TimeSpan.FromMilliseconds(400), _spriteBatch, ref animBurnBool);
-                preGreaterSplitHorizontalSwing.MovementAnimate(MathHelper.ToRadians(-80), new Vector2(40, -40), TimeSpan.FromMilliseconds(400), _spriteBatch, ref GreaterSplitHorizontal.AnimationRunning);
-                horizontalSwingToEffect = new TimeSpan(0, 0, 0, 0, 200);
-                splitBlackBack = new TimeSpan(0, 0, 0, 0, 700);
+                vSplitSwing.Position = new Vector2(ship.Position.X - vSplitSwing.Image.Width/2 + 80, ship.Position.Y - vSplitSwing.Image.Height/2 + 20);
+                vSplitSwing.Origin = new Vector2(vSplitSwing.Image.Width, vSplitSwing.Image.Height/ 2);
+                vSplitSwing.MovementAnimate(Angle(-90), new Vector2(0, 0), _spriteBatch, ref GreaterSplitVertical.AnimationRunning);
+                GameFrozen = true;
+            }
+
+
+            if (hSplitSwing.AnimationRunning && GameFrozen)
+            {
+                hSplitBack.MovementAnimate(0, new Vector2(-224, 0), _spriteBatch, ref animBurnBool);
+                hSplitSwing.MovementAnimate(Angle(-80), new Vector2(40, -40), _spriteBatch, ref GreaterSplitHorizontal.AnimationRunning);
+                horizontalSwingToEffect = new TimeSpan(0, 0, 0, 0, 150);
+                splitBlackBack = new TimeSpan(0, 0, 0, 0, 600);
                 GameFrozen = true;
             }
 

@@ -459,7 +459,7 @@
 /processorParam:TextureFormat=Color
 /build:Upgrades/EGO.png
 
-#begin Upgrades/GreaterSplitHorizontalSpriteSheet.png
+#begin Upgrades/hSplitBack.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -469,9 +469,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Upgrades/GreaterSplitHorizontalSpriteSheet.png
+/build:Upgrades/hSplitBack.png
 
-#begin Upgrades/GreaterSplitVerticalSpriteSheet.png
+#begin Upgrades/hSplitMimicry.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -481,9 +481,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Upgrades/GreaterSplitVerticalSpriteSheet.png
+/build:Upgrades/hSplitMimicry.png
 
-#begin Upgrades/horizontalbackground.png
+#begin Upgrades/hSplitSpriteSheet.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -493,7 +493,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Upgrades/horizontalbackground.png
+/build:Upgrades/hSplitSpriteSheet.png
 
 #begin Upgrades/Mimicry.png
 /importer:TextureImporter
@@ -506,18 +506,6 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Upgrades/Mimicry.png
-
-#begin Upgrades/MimicrySplitHorizontal.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Upgrades/MimicrySplitHorizontal.png
 
 #begin Upgrades/Shield.png
 /importer:TextureImporter
@@ -542,6 +530,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Upgrades/ShieldHitbox.png
+
+#begin Upgrades/vSplitSpriteSheet.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Upgrades/vSplitSpriteSheet.png
 
 #begin UpgradeTitleFont.spritefont
 /importer:FontDescriptionImporter

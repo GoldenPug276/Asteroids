@@ -16,18 +16,17 @@ namespace Asteroids
 {
     class Animation : Sprite
     {
-        public TimeSpan FrameTimes;
-        private TimeSpan reserveFrameTimes;
+        public TimeSpan AnimTime;
         public int FrameCount = 10;
         private int reserveFrameCount;
         public int FrameSize;
         public bool AnimationRunning = false;
-        private bool moveAnimTimeDefined = false;
+        private bool AnimTimeDefined = false;
         private List<TimeSpan> perFrameTimes = new List<TimeSpan>();
         private float moveAnimBackRot;
         private Vector2 moveAnimBackPos;
 
-        public Animation(Vector2 position, Texture2D spritesheet, TimeSpan frameTimes, int frameCount, int frameSize, float rot, float scale, Color color)
+        public Animation(Vector2 position, Texture2D spritesheet, TimeSpan animTimes, int frameCount, int frameSize, float rot, float scale, Color color)
             : base(position, spritesheet, rot, scale, color)
         {
             Position = position;
@@ -36,8 +35,7 @@ namespace Asteroids
             Scale = scale;
             Color = color;
 
-            FrameTimes = frameTimes;
-            reserveFrameTimes = FrameTimes;
+            AnimTime = animTimes;
             FrameCount = frameCount;
             reserveFrameCount = FrameCount;
             FrameSize = frameSize;
@@ -45,15 +43,26 @@ namespace Asteroids
 
         public void AnimateWhileFrozen(SpriteBatch sb, ref bool animateAfter)
         {
+            if (!AnimTimeDefined)
+            {
+                perFrameTimes.Clear();
+                for (int i = 0; i <= FrameCount; i++)
+                {
+                    perFrameTimes.Add(AnimTime / reserveFrameCount);
+                }
+            }
+            AnimTimeDefined = true;
+            int frameNumber = Math.Abs(FrameCount - reserveFrameCount);
+
             animateFrame(reserveFrameCount - FrameCount, sb);
-            FrameTimes -= Game1.gameTime.ElapsedGameTime;
-            if (FrameTimes<=TimeSpan.Zero)
+            perFrameTimes[frameNumber] -= Game1.gameTime.ElapsedGameTime;
+            if (perFrameTimes[frameNumber]<=TimeSpan.Zero)
             {
                 FrameCount--;
-                FrameTimes = reserveFrameTimes;
                 if (FrameCount<0)
                 {
                     AnimationRunning = false;
+                    AnimTimeDefined = false;
                     FrameCount = reserveFrameCount;
                     Game1.GameFrozen = false;
                     if (!animateAfter) { animateAfter = true; }
@@ -66,22 +75,21 @@ namespace Asteroids
             sb.Draw(Image, Position, new Rectangle((frameNumber) * FrameSize, 0, FrameSize, frameSizeY), Color.White);
         }
 
-        public void MovementAnimate(float totalRotation, Vector2 totalMovement, TimeSpan moveTime, SpriteBatch sb, ref bool animateAfter)
+        public void MovementAnimate(float totalRotation, Vector2 totalMovement, SpriteBatch sb, ref bool animateAfter)
         {
             sb.Draw(Image, Position, null, Color, Rotation, Origin, Scale, SpriteEffects.None, 0);
 
-            if (!moveAnimTimeDefined)
+            if (!AnimTimeDefined)
             {
                 perFrameTimes.Clear();
                 for (int i = 0; i <= FrameCount; i++)
                 {
-                    perFrameTimes.Add(moveTime / reserveFrameCount);
+                    perFrameTimes.Add(AnimTime / reserveFrameCount);
                 }
                 moveAnimBackRot = Rotation;
                 moveAnimBackPos = Position;
             }
-            moveAnimTimeDefined = true;
-
+            AnimTimeDefined = true;
             int frameNumber = Math.Abs(FrameCount - reserveFrameCount);
 
             float rotPerFrame = totalRotation / reserveFrameCount;
@@ -89,7 +97,7 @@ namespace Asteroids
 
             perFrameTimes[frameNumber] -= Game1.gameTime.ElapsedGameTime;
 
-            if (perFrameTimes[frameNumber] <= TimeSpan.Zero)
+            if (perFrameTimes[frameNumber]<=TimeSpan.Zero)
             {
                 Rotation += rotPerFrame;
                 Position.X += movePerFrame.X;
@@ -99,7 +107,7 @@ namespace Asteroids
                 {
                     Rotation = moveAnimBackRot;
                     Position = moveAnimBackPos;
-                    moveAnimTimeDefined = false;
+                    AnimTimeDefined = false;
                     AnimationRunning = false;
                     FrameCount = reserveFrameCount;
                     Game1.GameFrozen = false;
