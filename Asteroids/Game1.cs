@@ -132,11 +132,16 @@ namespace Asteroid
         Animation GreaterSplitVertical;
         Animation GreaterSplitHorizontal;
         Animation hSplitSwing;
+        Sprite hSplitSwingEffect;
         Animation hSplitBack;
         Animation vSplitSwing;
+        Sprite vSplitSwingEffect;
 
-        TimeSpan horizontalSwingToEffect = TimeSpan.Zero;
-        TimeSpan splitBlackBack = TimeSpan.Zero;
+        TimeSpan hSplitSwingToEffect = TimeSpan.Zero;
+        TimeSpan hSplitPostSwing = TimeSpan.Zero;
+        TimeSpan vSplitPostSwing = TimeSpan.Zero;
+        TimeSpan splitBack = TimeSpan.Zero;
+        Color splitBackColor = Color.Black;
 
 
         List<Rectangle> ExtraHitboxes = new List<Rectangle>();
@@ -597,7 +602,7 @@ namespace Asteroid
          *                      assets changed with a similar naming scheme
          *                  Made a function called TimeFromMilli to conserve a little space
          *                  Made a function called Angle whih runs Angle() to conserve a little space
-         *                  Make an animation for the vertical swing
+         *                  Made an animation for the vertical swing
          *                      This one has the following actions:
          *                          Mimicry starts overhead
          *                          Moves into position, being a little angled up
@@ -605,21 +610,28 @@ namespace Asteroid
          *                          On frame 4, cuts to the effect
          *                          After the attack, Mimicry should be angled down in after-swing
          *                      Remember that this animation always faces the same way and is a bit to the left of the ship
-         *                      
-         *                          (started making it, it shouldn't take too long or be to hard.
-         *                          already go the posiion and right rotation amount)
-         *                          (need to make sure that the after-swing exists)
-         *                          (basically almost done lol)
-         *                  
-         *                                  (after testing a thing, i will need to see if these ACTUALLY only work when frozen)
-         *                                  (since at least for the movement animate, running one anim won't stop another anim from running)
-         *                                  
+         *                          Result isn't perfect, however it is close enough.
+         *                          
          *                                  (just to remember for now,
          *                                  O is for vertical effect
          *                                  P is for horizontal effect
          *                                  Z is for horizontal swing and horizontal effect
          *                                  X is for vertical swing and vertical effect)
-         *                  Download the effect/trail of Mimicry
+         *                  Downloaded the effect/trail of Mimicry
+         *                  Add the trails for both Greater Splits
+         *                      Remember that the effects need to instantly appear then fade out
+         *                          Almost forgot, also add Mimicry's backswing to Split Horizontal
+         *                          Place it based on the effect
+         *                      I think you need to use opacity on the color to do it
+         *                      
+         *                                  (vertical effect placed, displayed, no fade)
+         *                                  (horizontal effect placed, displayed, no fade)
+         *                  
+         *                  
+         *                  
+         *                  
+         *                  (note for when making split vertical attack: the damage should be dealt after the attack, not after the game is unfrozen)
+         *                  (for both splits: there should probably be like 1-2 seconds of i-frames after to not die to new asteroids)
          *                  
          *              
          *          Time Erase |just the i-frames|
@@ -886,6 +898,7 @@ namespace Asteroid
 
             hSplitSwing = new Animation(new Vector2(width + 100, height/2 - 55), ContentLoad2D("Upgrades/hSplitMimicry"), TimeFromMilli(400), 24, 0, 0, 1 / 1, Color.White);
             hSplitSwing.Origin = new Vector2(hSplitSwing.Image.Width - 50, hSplitSwing.Image.Height);
+            hSplitSwingEffect = new Sprite(new Vector2(width/2, height/2), ContentLoad2D("Upgrades/hSplitEffect"), 0, 1 / 1, Color.White);
 
             hSplitBack = new Animation(new Vector2(0, 0), ContentLoad2D("Upgrades/hSplitBack"), TimeFromMilli(400), 24, 0, 0, 1 / 1, Color.White);
             hSplitBack.Position += new Vector2(hSplitBack.Image.Width/2, hSplitBack.Image.Height/2);
@@ -893,10 +906,11 @@ namespace Asteroid
             GreaterSplitHorizontal = new Animation(new Vector2(0, 0), ContentLoad2D("Upgrades/hSplitSpriteSheet"), TimeFromMilli(240), 6 - 1, 800, 0, 1 / 1f, Color.White);
 
 
-            vSplitSwing = new Animation(ship.Position, ContentLoad2D("Upgrades/Mimicry"), TimeFromMilli(3330), 5, 0, Angle(90), 1 / 1, Color.White);
+            vSplitSwing = new Animation(ship.Position, ContentLoad2D("Upgrades/Mimicry"), TimeFromMilli(3330), 4, 0, Angle(90), 1 / 1, Color.White);
             //since position changes, the position and origin is defined where it is used
+            vSplitSwingEffect = new Sprite(new Vector2(0, 0), ContentLoad2D("Upgrades/vSplitEffect"), 0, 1 / 1, Color.White);
 
-            GreaterSplitVertical = new Animation(new Vector2(100, 0), ContentLoad2D("Upgrades/vSplitSpriteSheet"), TimeFromMilli(300), 10 - 1, 576, 0, 1 / 1f, Color.White);
+            GreaterSplitVertical = new Animation(new Vector2(100, 0), ContentLoad2D("Upgrades/vSplitSpriteSheet"), TimeFromMilli(450), 10 - 1, 576, 0, 1 / 1f, Color.White);
 
             //Abilities
 
@@ -1027,7 +1041,7 @@ namespace Asteroid
             int height = GraphicsDevice.Viewport.Height;
             gameTime = gameTimer;
 
-            
+
             Window.Title = $"AsteroidsCount: {Asteroids.Count}      UFOCount: {UFOs.Count}      width: {width}      height: {height}        armor: {level.GlobalArmorValue}     levelTimer: {level.LevelSpawnTimer}";
 
             KeyboardState keyboardState = Keyboard.GetState();
@@ -1943,24 +1957,51 @@ namespace Asteroid
 
 
             //test
-            if (splitBlackBack>TimeSpan.Zero)
+            if (vSplitPostSwing>TimeSpan.Zero)
             {
-                splitBlackBack -= gameTime.ElapsedGameTime;
-                _spriteBatch.FillRectangle(new Rectangle(0, 0, width, height), Color.Black);
+                vSplitPostSwing -= gameTime.ElapsedGameTime;
+                vSplitSwing.Draw(_spriteBatch);
+                vSplitSwingEffect.Position.X = vSplitSwing.Position.X - 65;
+                vSplitSwingEffect.Position.Y = vSplitSwing.Position.Y - 150;
+                vSplitSwingEffect.Draw(_spriteBatch);
+                if (vSplitPostSwing-TimeFromMilli(5)<=TimeSpan.Zero)
+                {
+                    vSplitSwing.Rotation = Angle(90);
+                    GameFrozen = false;
+                }
+            }
+            if (hSplitPostSwing>TimeSpan.Zero)
+            {
+                hSplitPostSwing -= gameTime.ElapsedGameTime;
+                hSplitSwingEffect.Draw(_spriteBatch);
+                if (hSplitPostSwing - TimeFromMilli(5) <= TimeSpan.Zero)
+                {
+                    GameFrozen = false;
+                }
             }
 
+
+            if (splitBack>TimeSpan.Zero)
+            {
+                splitBack -= gameTime.ElapsedGameTime;
+                _spriteBatch.FillRectangle(new Rectangle(0, 0, width, height), splitBackColor);
+            }
 
 
             if (GreaterSplitVertical.AnimationRunning && GameFrozen)
             {
-                splitBlackBack = new TimeSpan(0, 0, 0, 0, 300);
+                splitBackColor = Color.DarkRed;
+                splitBack = new TimeSpan(0, 0, 0, 0, 300);
+                vSplitPostSwing = new TimeSpan(0, 0, 0, 1, 750);
+                vSplitSwing.Rotation = Angle(-30);
                 GreaterSplitVertical.AnimateWhileFrozen(_spriteBatch, ref animBurnBool);
+                GameFrozen = true;
             }
 
             if (vSplitSwing.AnimationRunning && GameFrozen)
             {
                 vSplitSwing.Position = new Vector2(ship.Position.X - vSplitSwing.Image.Width/2 + 80, ship.Position.Y - vSplitSwing.Image.Height/2 + 20);
-                vSplitSwing.Origin = new Vector2(vSplitSwing.Image.Width, vSplitSwing.Image.Height/ 2);
+                vSplitSwing.Origin = new Vector2(vSplitSwing.Image.Width, vSplitSwing.Image.Height/2);
                 vSplitSwing.MovementAnimate(Angle(-90), new Vector2(0, 0), _spriteBatch, ref GreaterSplitVertical.AnimationRunning);
                 GameFrozen = true;
             }
@@ -1970,20 +2011,23 @@ namespace Asteroid
             {
                 hSplitBack.MovementAnimate(0, new Vector2(-224, 0), _spriteBatch, ref animBurnBool);
                 hSplitSwing.MovementAnimate(Angle(-80), new Vector2(40, -40), _spriteBatch, ref GreaterSplitHorizontal.AnimationRunning);
-                horizontalSwingToEffect = new TimeSpan(0, 0, 0, 0, 150);
-                splitBlackBack = new TimeSpan(0, 0, 0, 0, 600);
+                hSplitSwingToEffect = new TimeSpan(0, 0, 0, 0, 150);
+                splitBackColor = Color.Black;
+                splitBack = new TimeSpan(0, 0, 0, 0, 600);
                 GameFrozen = true;
             }
 
             if (GreaterSplitHorizontal.AnimationRunning && GameFrozen)
             {
-                horizontalSwingToEffect -= gameTime.ElapsedGameTime;
-                if (horizontalSwingToEffect<=TimeSpan.Zero)
+                hSplitSwingToEffect -= gameTime.ElapsedGameTime;
+                if (hSplitSwingToEffect<=TimeSpan.Zero)
                 {
                     GreaterSplitHorizontal.AnimateWhileFrozen(_spriteBatch, ref animBurnBool);
                 }
+                hSplitPostSwing = new TimeSpan(0, 0, 0, 1, 000);
+                GameFrozen = true;
             }
-            
+
 
             //test
             _spriteBatch.End();
