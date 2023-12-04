@@ -610,24 +610,24 @@ namespace Asteroid
          *                          On frame 4, cuts to the effect
          *                          After the attack, Mimicry should be angled down in after-swing
          *                      Remember that this animation always faces the same way and is a bit to the left of the ship
-         *                          Result isn't perfect, however it is close enough.
+         *                              Result isn't perfect, however it is close enough.
          *                          
          *                                  (just to remember for now,
          *                                  O is for vertical effect
          *                                  P is for horizontal effect
          *                                  Z is for horizontal swing and horizontal effect
          *                                  X is for vertical swing and vertical effect)
+         *                                  
          *                  Downloaded the effect/trail of Mimicry
-         *                  Add the trails for both Greater Splits
+         *                  Added the trails for both Greater Splits
          *                      Remember that the effects need to instantly appear then fade out
-         *                          Almost forgot, also add Mimicry's backswing to Split Horizontal
-         *                          Place it based on the effect
-         *                      I think you need to use opacity on the color to do it
-         *                      
-         *                                  (vertical effect placed, displayed, no fade)
-         *                                  (horizontal effect placed, displayed, no fade)
-         *                  
-         *                  
+         *                          Almost forgot, also added Mimicry's backswing to Split Horizontal based on the effect
+         *                      The trails will already be there after the animation, so damage should be dealt during the animation
+         *                  Make the Upgrades work (keybind uses split)
+         *                  Make E.G.O. work without any effects just yet
+         *                  Make Vertical turn into Horizontal when in E.G.O.
+         *                  Make the actual attacks (based off of the Time Stop code)
+         *                  Give E.G.O. effects
          *                  
          *                  
          *                  (note for when making split vertical attack: the damage should be dealt after the attack, not after the game is unfrozen)
@@ -1964,19 +1964,44 @@ namespace Asteroid
                 vSplitSwingEffect.Position.X = vSplitSwing.Position.X - 65;
                 vSplitSwingEffect.Position.Y = vSplitSwing.Position.Y - 150;
                 vSplitSwingEffect.Draw(_spriteBatch);
+
+                int b = 450;
+                int c = 255;
+                int a = (int)(c - vSplitPostSwing.TotalMilliseconds + 1.5 * (b - c));
+
+                if (vSplitPostSwing <= TimeFromMilli(b))
+                {
+                    vSplitSwingEffect.Color = new Color(255 - a, 255 - a, 255 - a, 255 - a);
+                    if (a<=0) { vSplitSwingEffect.Color = new Color(Color.Black, 0); }
+                }
+
                 if (vSplitPostSwing-TimeFromMilli(5)<=TimeSpan.Zero)
                 {
                     vSplitSwing.Rotation = Angle(90);
                     GameFrozen = false;
+                    vSplitSwingEffect.Color = Color.White;
                 }
             }
             if (hSplitPostSwing>TimeSpan.Zero)
             {
+                _spriteBatch.Draw(vSplitSwing.Image, new Vector2(hSplitSwingEffect.Position.X + 355, hSplitSwingEffect.Position.Y - 180),
+                    null, Color.White, Angle(-45), new Vector2(vSplitSwing.Image.Width, vSplitSwing.Image.Height/2), 1/1f, SpriteEffects.FlipHorizontally, 0);
                 hSplitPostSwing -= gameTime.ElapsedGameTime;
                 hSplitSwingEffect.Draw(_spriteBatch);
-                if (hSplitPostSwing - TimeFromMilli(5) <= TimeSpan.Zero)
+
+                int b = 450;
+                int c = 255;
+                int a = (int)(c - hSplitPostSwing.TotalMilliseconds + 1.5*(b - c));
+
+                if (hSplitPostSwing<=TimeFromMilli(b))
+                {
+                    hSplitSwingEffect.Color = new Color(255 - a, 255 - a, 255 - a, 255 - a);
+                    if (a<=0) { hSplitSwingEffect.Color = new Color(Color.Black, 0); }
+                }
+                if (hSplitPostSwing-TimeFromMilli(5)<=TimeSpan.Zero)
                 {
                     GameFrozen = false;
+                    hSplitSwingEffect.Color = Color.White;
                 }
             }
 
@@ -1992,7 +2017,7 @@ namespace Asteroid
             {
                 splitBackColor = Color.DarkRed;
                 splitBack = new TimeSpan(0, 0, 0, 0, 300);
-                vSplitPostSwing = new TimeSpan(0, 0, 0, 1, 750);
+                vSplitPostSwing = new TimeSpan(0, 0, 0, 1, 450);
                 vSplitSwing.Rotation = Angle(-30);
                 GreaterSplitVertical.AnimateWhileFrozen(_spriteBatch, ref animBurnBool);
                 GameFrozen = true;
