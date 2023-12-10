@@ -609,25 +609,40 @@ namespace Asteroid
          *                          Moves down slowly for 3 frames, ending horizontal from the grip
          *                          On frame 4, cuts to the effect
          *                          After the attack, Mimicry should be angled down in after-swing
-         *                      Remember that this animation always faces the same way and is a bit to the left of the ship
+         *                      This animation always faces the same way and is a bit to the left of the ship
          *                              Result isn't perfect, however it is close enough.
          *                          
          *                                  (just to remember for now,
          *                                  O is for vertical effect
          *                                  P is for horizontal effect
          *                                  Z is for horizontal swing and horizontal effect
-         *                                  X is for vertical swing and vertical effect)
+         *                                  x is for vertical swing and vertical effect)
          *                                  
          *                  Downloaded the effect/trail of Mimicry
          *                  Added the trails for both Greater Splits
          *                      Remember that the effects need to instantly appear then fade out
          *                          Almost forgot, also added Mimicry's backswing to Split Horizontal based on the effect
          *                      The trails will already be there after the animation, so damage should be dealt during the animation
-         *                  Make the Upgrades work (keybind uses split)
-         *                  Make E.G.O. work without any effects just yet
-         *                  Make Vertical turn into Horizontal when in E.G.O.
+         *                  Made the Upgrades work (keybinds and upgrades, no effects yet) (both Split and E.G.O.)
+         *                      Split's cooldown is twice that of level 3 Time Stop (roughly 20 seconds)
+         *                  Make sure no energy changes if GameFrozen is true
+         *                      Will probably edit AbilityUpdate and AbilityUse to not function if GameFrozen is true
+         *                  Make E.G.O. work without any VFX
+         *                      E.G.O. acts as something you can activate once per level
+         *                      Lasts 15-30 seconds (not decided yet, 23 seconds while programming it)
+         *                      Gives speed buff
+         *                      Makes you not take damage
+         *                      With the right upgrade turns Vertical into Horizontal (make sure to not make it decease while GameFrozen==true)
+         *                      
+         *                                  (none of this done yet)
+         *                  Make all cooldowns refresh when entering a new level
+         *                  Create a system to create dependencies (like if you have Upgrade1 and Upgrade2, Upgrade3 is added to the pool)
+         *                  Make an upgrade to turn Vertical turn into Horizontal when in E.G.O. if you have both Greater Split: Vertical and Manifestation
+         *                      Also halves Split cooldown to be that of max level Time Stop (roughly 10 seconds)
          *                  Make the actual attacks (based off of the Time Stop code)
-         *                  Give E.G.O. effects
+         *                      Use the effect sprites as the hitboxes
+         *                  Give E.G.O. VFX
+         *                  Move Split and EGO things in the Draw function into the right section
          *                  
          *                  
          *                  (note for when making split vertical attack: the damage should be dealt after the attack, not after the game is unfrozen)
@@ -878,20 +893,20 @@ namespace Asteroid
             TimeStopProgHolder.Add(TimeStop2);
 
             TimeStop3 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop3, "Time Stop++", "Your time stop will", "now last 10 seconds,", "but the cooldown",
-                "is increased.", 40 * 2, 0, TimeStopProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
+                "is increased.", 40, 0, TimeStopProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
             TimeStopProgHolder.Add(TimeStop3);
 
             TimeStopFinal = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStopFinal, "Your World", "Your time stop can", "be ended early,", "preserving energy",
-                "and thus cooldown.", 30 * 3, 0, TimeStopProgHolder, 4, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Yellow, false);
+                "and thus cooldown.", 30, 0, TimeStopProgHolder, 4, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Yellow, false);
             TimeStopProgHolder.Add(TimeStopFinal);
 
             Mimicry = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Mimicry, "Mimicry", "Press Q to", "perform Greater", "Split: Vertical",
-                "in front of you.", 30, 4, null, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Red, false);
+                "in front of you.", 30     *3, 4     /4, null, 1, 100, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Red, false);
             MimicrySprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/Mimicry"), 0, 1 / 1f, Color.White);
             AllUpgrades.Add(Mimicry);
 
-            EGO = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.EGO, "Manifestation", "Press E to manifest", "your E.G.O., giving", "a speed buff and",
-                "i-frames.", 50, 8, null, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkRed, false);
+            EGO = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.EGO, "Manifestation", "Press V to manifest", "your E.G.O., giving", "a speed buff and",
+                "i-frames.", 50     +45, 8     /8, null, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkRed, false);
             EGOSprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/EGO"), 0, 1 / 1f, Color.White);
             AllUpgrades.Add(EGO);
 
@@ -1792,6 +1807,47 @@ namespace Asteroid
                 }
             }
 
+            if (Mimicry.isActive)
+            {
+                if (!Mimicry.inEffect)
+                {
+                    Mimicry.EnergyGainMultiplier = 1.5f;
+
+                    //add the effect of the horizontal upgrade halving the cooldown
+
+                    Mimicry.AbilityUpdate();
+                    if (keyboardState.IsKeyDown(Keys.Q) && Mimicry.WillAbilityGetUsed())
+                    {
+                        vSplitSwing.AnimationRunning = true;
+                        Mimicry.AbilityUse();
+                        Mimicry.inEffect = true;
+                        GameFrozen = true;
+                    }
+                }
+            }
+            if (EGO.isActive)
+            {
+                EGO.AbilityUpdate();
+                if (!EGO.inEffect)
+                {
+                    if (keyboardState.IsKeyDown(Keys.V) && lastKeyboardState.IsKeyUp(Keys.V) && EGO.WillAbilityGetUsed() && EGO.energyRemaining.Width>=99.5f)
+                    {
+                        //EFFECT NOT YET PUT IN
+                        EGO.inEffect = true;
+                        EGO.EnergyGainMultiplier = 2.5f;
+                        EGO.EnergyUse = 0.2f;
+                    }
+                }
+                if (EGO.energyRemaining.Width<=0.5f && EGO.inEffect)
+                {
+                    EGO.inEffect = false;
+                    EGO.EnergyGainMultiplier = 0.1f;
+                }
+                if (EGO.inEffect) { EGO.AbilityUse(); }
+            }
+
+                //insert horizontal upgrade
+
             //Ability Effect Code
 
 
@@ -1946,6 +2002,13 @@ namespace Asteroid
             }
 
 
+                //Red Mist Upgrades
+
+
+
+                //Red Mist Upgrades
+
+
             //Ability and Upgrade Effects
 
 
@@ -1957,16 +2020,17 @@ namespace Asteroid
 
 
             //test
+            int b = 450;
+            int c = 255;
+
             if (vSplitPostSwing>TimeSpan.Zero)
             {
                 vSplitPostSwing -= gameTime.ElapsedGameTime;
                 vSplitSwing.Draw(_spriteBatch);
-                vSplitSwingEffect.Position.X = vSplitSwing.Position.X - 65;
-                vSplitSwingEffect.Position.Y = vSplitSwing.Position.Y - 150;
+                vSplitSwingEffect.Position.X = vSplitSwing.Position.X - 90;
+                vSplitSwingEffect.Position.Y = vSplitSwing.Position.Y - 120;
                 vSplitSwingEffect.Draw(_spriteBatch);
 
-                int b = 450;
-                int c = 255;
                 int a = (int)(c - vSplitPostSwing.TotalMilliseconds + 1.5 * (b - c));
 
                 if (vSplitPostSwing <= TimeFromMilli(b))
@@ -1980,6 +2044,7 @@ namespace Asteroid
                     vSplitSwing.Rotation = Angle(90);
                     GameFrozen = false;
                     vSplitSwingEffect.Color = Color.White;
+                    Mimicry.inEffect = false;
                 }
             }
             if (hSplitPostSwing>TimeSpan.Zero)
@@ -1989,8 +2054,6 @@ namespace Asteroid
                 hSplitPostSwing -= gameTime.ElapsedGameTime;
                 hSplitSwingEffect.Draw(_spriteBatch);
 
-                int b = 450;
-                int c = 255;
                 int a = (int)(c - hSplitPostSwing.TotalMilliseconds + 1.5*(b - c));
 
                 if (hSplitPostSwing<=TimeFromMilli(b))
@@ -2002,16 +2065,15 @@ namespace Asteroid
                 {
                     GameFrozen = false;
                     hSplitSwingEffect.Color = Color.White;
+                    Mimicry.inEffect = false;
                 }
             }
-
 
             if (splitBack>TimeSpan.Zero)
             {
                 splitBack -= gameTime.ElapsedGameTime;
                 _spriteBatch.FillRectangle(new Rectangle(0, 0, width, height), splitBackColor);
             }
-
 
             if (GreaterSplitVertical.AnimationRunning && GameFrozen)
             {
@@ -2022,7 +2084,6 @@ namespace Asteroid
                 GreaterSplitVertical.AnimateWhileFrozen(_spriteBatch, ref animBurnBool);
                 GameFrozen = true;
             }
-
             if (vSplitSwing.AnimationRunning && GameFrozen)
             {
                 vSplitSwing.Position = new Vector2(ship.Position.X - vSplitSwing.Image.Width/2 + 80, ship.Position.Y - vSplitSwing.Image.Height/2 + 20);
@@ -2030,7 +2091,6 @@ namespace Asteroid
                 vSplitSwing.MovementAnimate(Angle(-90), new Vector2(0, 0), _spriteBatch, ref GreaterSplitVertical.AnimationRunning);
                 GameFrozen = true;
             }
-
 
             if (hSplitSwing.AnimationRunning && GameFrozen)
             {
@@ -2041,7 +2101,6 @@ namespace Asteroid
                 splitBack = new TimeSpan(0, 0, 0, 0, 600);
                 GameFrozen = true;
             }
-
             if (GreaterSplitHorizontal.AnimationRunning && GameFrozen)
             {
                 hSplitSwingToEffect -= gameTime.ElapsedGameTime;
