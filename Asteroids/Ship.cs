@@ -25,32 +25,42 @@ namespace Asteroid
 
         public void Move(KeyboardState keyboardState)
         {
+            float a = 1;
+            float d = 1;
+            float t = 1;
+            if (Game1.EGOManifested)
+            {
+                a += 2;
+                d += 1.5f;
+                t += 0.5f;
+            }
+
             isAccelerating = false;
             if (keyboardState.IsKeyDown(Keys.W) || keyboardState.IsKeyDown(Keys.Up))
             {
                 isAccelerating = true;
-                acceleration += 0.001f;
-                decceleration -= 0.002f;
+                acceleration += 0.001f * a;
+                decceleration -= 0.002f * d;
             }
             else
             {
                 isAccelerating = false;
-                decceleration += 0.001f;
-                acceleration -= 0.002f;
+                decceleration += 0.001f * d;
+                acceleration -= 0.002f * a;
             }
             if (keyboardState.IsKeyDown(Keys.S) || keyboardState.IsKeyDown(Keys.Down))
             {
                 isAccelerating = false;
-                decceleration += 0.002f;
-                acceleration -= 0.002f;
+                decceleration += 0.002f * d;
+                acceleration -= 0.002f * a;
             }
             if (keyboardState.IsKeyDown(Keys.A) || keyboardState.IsKeyDown(Keys.Left))
             {
-                Rotation -= 0.065f;
+                Rotation -= 0.065f * t;
             }
             if (keyboardState.IsKeyDown(Keys.D) || keyboardState.IsKeyDown(Keys.Right))
             {
-                Rotation += 0.065f;
+                Rotation += 0.065f * t;
             }
 
             if (isAccelerating)

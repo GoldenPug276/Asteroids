@@ -126,8 +126,8 @@ namespace Asteroid
         public static bool TimeHasStopped = false;
         List<Upgrade> TimeStopProgHolder = new List<Upgrade>();
         Upgrade Mimicry;
-        Sprite MimicrySprite;
         Upgrade EGO;
+        public static bool EGOManifested = false;
         Sprite EGOSprite;
         Animation GreaterSplitVertical;
         Animation GreaterSplitHorizontal;
@@ -622,27 +622,38 @@ namespace Asteroid
          *                  Added the trails for both Greater Splits
          *                      Remember that the effects need to instantly appear then fade out
          *                          Almost forgot, also added Mimicry's backswing to Split Horizontal based on the effect
-         *                      The trails will already be there after the animation, so damage should be dealt during the animation
+         *                      The effects will already be present when the screen stops being black
+         *                      The damage is dealt right around when the effect starts to fade out
          *                  Made the Upgrades work (keybinds and upgrades, no effects yet) (both Split and E.G.O.)
          *                      Split's cooldown is twice that of level 3 Time Stop (roughly 20 seconds)
-         *                  Make sure no energy changes if GameFrozen is true
-         *                      Will probably edit AbilityUpdate and AbilityUse to not function if GameFrozen is true
-         *                  Make E.G.O. work without any VFX
+         *                  Made sure no energy changes if GameFrozen is true
+         *                  Made all cooldowns refresh when entering a new level
+         *                      Made a function in Upgrade called RefreshEnergy that does that
+         *                      Future upgrades with limited uses will likely use hidden energy and be efreshed by this as well
+         *                      It also stops abilities from being inEffect
+         *                  Made a variable called EGOManifested to control the effects
+         *                  Made E.G.O. work without any VFX
          *                      E.G.O. acts as something you can activate once per level
-         *                      Lasts 15-30 seconds (not decided yet, 23 seconds while programming it)
-         *                      Gives speed buff
-         *                      Makes you not take damage
-         *                      With the right upgrade turns Vertical into Horizontal (make sure to not make it decease while GameFrozen==true)
-         *                      
-         *                                  (none of this done yet)
-         *                  Make all cooldowns refresh when entering a new level
+         *                      Lasts 15-25 seconds (not decided yet, 23 seconds while programming it. will probably be like 20)
+         *                      Gives speed buff (adds the following to the movement multipliers: 2x acceleration, 1.5x deceleration, and 0.5x rotation)
+         *                      Makes you not take damage (I-Frames like when caps lock is on)
+         *                      Changes the Ship's DisplayImage to EGOSprite.Image
+         *                      With the right upgrade turns Vertical into Horizontal
          *                  Create a system to create dependencies (like if you have Upgrade1 and Upgrade2, Upgrade3 is added to the pool)
+         *                      Will use the function called UpgradeDependency in Upgrade
+         *                      
+         *                      
+         *                                      (at this moment does nothing and hasn't been put anywhere0
+         *                      Also gave Upgrades a new variable at the end before isActive: Dependencies (Upgrade[])
+         *                          The function will take in the active list and check to see if the upgrades in the list are present, then return true or false
+         *                          If the input is null, it is treated as a true
          *                  Make an upgrade to turn Vertical turn into Horizontal when in E.G.O. if you have both Greater Split: Vertical and Manifestation
          *                      Also halves Split cooldown to be that of max level Time Stop (roughly 10 seconds)
          *                  Make the actual attacks (based off of the Time Stop code)
          *                      Use the effect sprites as the hitboxes
          *                  Give E.G.O. VFX
          *                  Move Split and EGO things in the Draw function into the right section
+         *                  Delete the temp activations
          *                  
          *                  
          *                  (note for when making split vertical attack: the damage should be dealt after the attack, not after the game is unfrozen)
@@ -772,15 +783,15 @@ namespace Asteroid
 
             Upgrade None1 = new Upgrade(baseNone.Position, baseNone.UpgradeType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, baseNone.Rarity, baseNone.LevelAvailability,
-               baseNone.ProgressionList, baseNone.ProgressionLevel, 0, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
+               baseNone.ProgressionList, baseNone.ProgressionLevel, 0, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, null, false);
 
             Upgrade None2 = new Upgrade(baseNone.Position, baseNone.UpgradeType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, baseNone.Rarity, baseNone.LevelAvailability,
-               baseNone.ProgressionList, baseNone.ProgressionLevel, 0, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
+               baseNone.ProgressionList, baseNone.ProgressionLevel, 0, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, null, false);
 
             Upgrade None3 = new Upgrade(baseNone.Position, baseNone.UpgradeType, baseNone.AbilityType, baseNone.UpgradeName, baseNone.UpgradeDescription1,
                baseNone.UpgradeDescription2, baseNone.UpgradeDescription3, baseNone.UpgradeDescription4, baseNone.Rarity, baseNone.LevelAvailability,
-               baseNone.ProgressionList, baseNone.ProgressionLevel, 0, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, false);
+               baseNone.ProgressionList, baseNone.ProgressionLevel, 0, 0, baseNone.Image, baseNone.Rotation, baseNone.Scale, baseNone.Color, null, false);
 
             nones.Add(None1);
             nones.Add(None2);
@@ -861,52 +872,51 @@ namespace Asteroid
             //Abilities
 
             Warp = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Warp, "Warp", "Press M2 to warp", "to a random point", "on screen. Gain 0.4", "seconds of i-frames.",
-                65, 1, null, 0, 99, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkGray, false);
+                65, 1, null, 0, 99, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkGray, null, false);
             AllUpgrades.Add(Warp);
 
             Shield1 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield1, "Shield", "Hold Z to activate", "a shield that", "protects you from", "all damage.",
-                50, 1, ShieldProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                50, 1, ShieldProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, null, false);
             AllUpgrades.Add(Shield1);
             ShieldProgHolder.Add(Shield1);
             ShieldSprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/ShieldHitbox"), 0, 1 / 1f, Color.White);
             ShieldSprite.DisplayImage = ContentLoad2D("Upgrades/Shield");
 
             Shield2 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield2, "Shield+", "You can have the", "shield active for", "longer.", "",
-                40, 0, ShieldProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                40, 0, ShieldProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, null, false);
             ShieldProgHolder.Add(Shield2);
 
             Shield3 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield3, "Shield++", "You can have the", "shield active for", "almost forever.", "",
-                50, 0, ShieldProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                50, 0, ShieldProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, null, false);
             ShieldProgHolder.Add(Shield3);
 
             ShieldFinal = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.ShieldFinal, "Flaming Guard", "Coat your shield in", "fire, reverting its", "length but melting",
-                "all touched enemies.", 40, 0, ShieldProgHolder, 4, 1, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
+                "all touched enemies.", 40, 0, ShieldProgHolder, 4, 1, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, null, false);
             ShieldProgHolder.Add(ShieldFinal);
 
             TimeStop1 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop1, "Time Stop", "Press X to stop time", "for 2 seconds. You", "cannot take damage",
-                "and can shoot.", 50, 5, TimeStopProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
+                "and can shoot.", 50, 5, TimeStopProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, null, false);
             AllUpgrades.Add(TimeStop1);
             TimeStopProgHolder.Add(TimeStop1);
 
             TimeStop2 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop2, "Time Stop+", "Your time stop will", "now last 5 seconds,", "but the cooldown",
-                "is increased.", 40, 0, TimeStopProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
+                "is increased.", 40, 0, TimeStopProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, null, false);
             TimeStopProgHolder.Add(TimeStop2);
 
             TimeStop3 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop3, "Time Stop++", "Your time stop will", "now last 10 seconds,", "but the cooldown",
-                "is increased.", 40, 0, TimeStopProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, false);
+                "is increased.", 40, 0, TimeStopProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, null, false);
             TimeStopProgHolder.Add(TimeStop3);
 
             TimeStopFinal = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStopFinal, "Your World", "Your time stop can", "be ended early,", "preserving energy",
-                "and thus cooldown.", 30, 0, TimeStopProgHolder, 4, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Yellow, false);
+                "and thus cooldown.", 30, 0, TimeStopProgHolder, 4, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Yellow, null, false);
             TimeStopProgHolder.Add(TimeStopFinal);
 
             Mimicry = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Mimicry, "Mimicry", "Press Q to", "perform Greater", "Split: Vertical",
-                "in front of you.", 30     *3, 4     /4, null, 1, 100, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Red, false);
-            MimicrySprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/Mimicry"), 0, 1 / 1f, Color.White);
+                "in front of you.", 30     *3, 4     /4, null, 1, 100, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Red, null, false);
             AllUpgrades.Add(Mimicry);
 
-            EGO = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.EGO, "Manifestation", "Press V to manifest", "your E.G.O., giving", "a speed buff and",
-                "i-frames.", 50     +45, 8     /8, null, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkRed, false);
+            EGO = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.EGO, "Manifestation", "Press V to manifest", "your E.G.O., giving", "various buffs and",
+                "i-frames.", 50     +45, 8     /8, null, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkRed, null, false);
             EGOSprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/EGO"), 0, 1 / 1f, Color.White);
             AllUpgrades.Add(EGO);
 
@@ -932,47 +942,47 @@ namespace Asteroid
             //Upgrades
 
             ShotSpeedUp1 = new Upgrade(BurnVec, StatUpgradeType.ShotSpeedUp1, AbilityUpNone, "Shot Speed+", "Reduces the time bet-", "-ween default shots",
-                "and increases special", "gun energy gain.", 60, 1, ShotSpeedProgHolder, 1, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                "and increases special", "gun energy gain.", 60, 1, ShotSpeedProgHolder, 1, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, null, false);
             AllUpgrades.Add(ShotSpeedUp1);
             ShotSpeedProgHolder.Add(ShotSpeedUp1);
 
             ShotSpeedUp2 = new Upgrade(BurnVec, StatUpgradeType.ShotSpeedUp1, AbilityUpNone, "Shot Speed++", "Increases fire speed", "and special gun", "energy gain more.", "",
-                50, 0, ShotSpeedProgHolder, 2, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                50, 0, ShotSpeedProgHolder, 2, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, null, false);
             ShotSpeedProgHolder.Add(ShotSpeedUp2);
 
             ShotSpeedUp3 = new Upgrade(BurnVec, StatUpgradeType.ShotSpeedUp1, AbilityUpNone, "Shot Speed+++", "You can now shoot", "really fast and", "really often.", "",
-                40, 0, ShotSpeedProgHolder, 3, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                40, 0, ShotSpeedProgHolder, 3, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, null, false);
             ShotSpeedProgHolder.Add(ShotSpeedUp3);
 
             Drones1 = new Upgrade(BurnVec, StatUpgradeType.Drones1, AbilityUpNone, "Drones", "Gain a drone that", "stays near you and", "shoots enemies", "every 5 seconds.",
-                40, 3, DroneProgHolder, 1, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                40, 3, DroneProgHolder, 1, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, null, false);
             AllUpgrades.Add(Drones1);
             DroneProgHolder.Add(Drones1);
 
             Drones2 = new Upgrade(BurnVec, StatUpgradeType.Drones2, AbilityUpNone, "Drones+", "Gain an additional", "drone. Your drones", "shoot every 3 sec.", "",
-                45, 0, DroneProgHolder, 2, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                45, 0, DroneProgHolder, 2, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, null, false);
             DroneProgHolder.Add(Drones2);
 
             Drones3 = new Upgrade(BurnVec, StatUpgradeType.Drones3, AbilityUpNone, "Drones++", "Gain one more drone.", "Your drones shoot", "every 1.5 seconds.", "",
-                50, 0, DroneProgHolder, 3, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                50, 0, DroneProgHolder, 3, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, null, false);
             DroneProgHolder.Add(Drones3);
 
             DronesFinal = new Upgrade(BurnVec, StatUpgradeType.DronesFinal, AbilityUpNone, "Burning Drones", "Your drones take", "twice as long to", "lock on, but they",
-                "fire burning bullets.", 40, 0, DroneProgHolder, 4, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, false);
+                "fire burning bullets.", 40, 0, DroneProgHolder, 4, 0, 0.5f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.OrangeRed, null, false);
             DronesFinal.GunBullet = new Bullet(new Vector2(-20, -20), shotVelocity * 1.1f, ContentLoad2D($"{shipShots}BurningDroneShot"), 0, 1 / 1f, Color.White, 1, true);
             DroneProgHolder.Add(DronesFinal);
 
             ArmorPen1 = new Upgrade(BurnVec, StatUpgradeType.ArmorPen1, AbilityUpNone, "AP Rounds", "Allows all your guns", "to penetrate 1 extra", "layer of armor.",
-                "(From the default)", 60, 4, ArmorPenProgHolder, 1, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                "(From the default)", 60, 4, ArmorPenProgHolder, 1, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, null, false);
             AllUpgrades.Add(ArmorPen1);
             ArmorPenProgHolder.Add(ArmorPen1);
 
             ArmorPen2 = new Upgrade(BurnVec, StatUpgradeType.ArmorPen2, AbilityUpNone, "AP Rounds+", "Allows all your guns", "to penetrate 2 extra", "layers of armor.",
-                "(From the default)", 35, 0, ArmorPenProgHolder, 2, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                "(From the default)", 35, 0, ArmorPenProgHolder, 2, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, null, false);
             ArmorPenProgHolder.Add(ArmorPen2);
 
             ArmorPen3 = new Upgrade(BurnVec, StatUpgradeType.ArmorPen3, AbilityUpNone, "AP Rounds++", "Allows all your guns", "to penetrate 3 extra", "layers of armor.",
-                "(From the default)", 20, 0, ArmorPenProgHolder, 3, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, false);
+                "(From the default)", 20, 0, ArmorPenProgHolder, 3, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, null, false);
             ArmorPenProgHolder.Add(ArmorPen3);
 
             //Upgrades
@@ -980,13 +990,13 @@ namespace Asteroid
             //Guns
 
             MachineGun = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Machine, "Machine Gun", "Gives you a rapid-", "-firing machine gun.", "", "",
-                45, 2, null, 0, 7, 0.25f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkSlateGray, false);
+                45, 2, null, 0, 7, 0.25f, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkSlateGray, null, false);
             MachineGun.ShotTimer = MachineGunShotTimer;
             MachineGun.reserveShotTimer = reserveMachineGunShotTimer;
             AllUpgrades.Add(MachineGun);
 
             Laser = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Laser, "Laser", "Gives you a", "searing and piercing", "laser gun.", "",
-                35, 3, null, 0, 33, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Red, false);
+                35, 3, null, 0, 33, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Red, null, false);
             Laser.ShotTimer = LaserShotTimer;
             Laser.reserveShotTimer = reserveLaserShotTimer;
             AllUpgrades.Add(Laser);
@@ -1000,7 +1010,7 @@ namespace Asteroid
 
             devBullets = new Bullet(new Vector2(-20, -20), 20, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1f, Color.White, 1, true);
             devGun = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Laser, "Dev Gun",
-                "OP Debug Gun", "", "", "", 0, 0, null, 0, 0, 1, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1, Color.White, false);
+                "OP Debug Gun", "", "", "", 0, 0, null, 0, 0, 1, ContentLoad2D($"{shipShots}LaserShot"), 0, 1 / 1, Color.White, null, false);
             devGun.ShotTimer = devShotTimer;
             devGun.reserveShotTimer = TimeFromMilli(25);
 
@@ -1017,7 +1027,7 @@ namespace Asteroid
             }
 
             None = new Upgrade(BurnVec, StatUpNone, AbilityUpNone, "Cold Treasure",
-                "We will not", "become stronger.", "", "", 100, 0, null, 0, 0, 1, ContentLoad2D($"{upgradeImages}Cold Treasure"), 0, 1 / 1, Color.White, false);
+                "We will not", "become stronger.", "", "", 100, 0, null, 0, 0, 1, ContentLoad2D($"{upgradeImages}Cold Treasure"), 0, 1 / 1, Color.White, null, false);
 
             NoneRefresh(NoneHolder, None);
 
@@ -1215,6 +1225,9 @@ namespace Asteroid
                 }
                 UpgradeChosen = false;
                 UpgradeTime = 0;
+                foreach (var upgrade in ActiveUpgrades) { upgrade.RefreshEnergy(); }
+                foreach (var ability in ActiveAbilities) { ability.RefreshEnergy(); }
+                foreach (var gun in ActiveGuns) { gun.RefreshEnergy(); }
             }
 
             //Level Code
@@ -1788,9 +1801,9 @@ namespace Asteroid
                         TimeStopProgHolder[i].inEffect = true;
                         TimeHasStopped = true;
                     }
-                    else if (TimeStopProgHolder[i].energyRemaining.Width <= 0.5f
+                    else if ((TimeStopProgHolder[i].energyRemaining.Width <= 0.5f
                         || (i == 3 && keyboardState.IsKeyDown(Keys.X) && lastKeyboardState.IsKeyUp(Keys.X))
-                        && TimeHasStopped)
+                        && TimeHasStopped)||!TimeStopProgHolder[i].inEffect)
                     {
                         float energyGainMultiplier = 7;
                         if (i == 1) { energyGainMultiplier = 5; }
@@ -1834,16 +1847,24 @@ namespace Asteroid
                     {
                         //EFFECT NOT YET PUT IN
                         EGO.inEffect = true;
+                        EGOManifested = true;
                         EGO.EnergyGainMultiplier = 2.5f;
                         EGO.EnergyUse = 0.2f;
                     }
                 }
-                if (EGO.energyRemaining.Width<=0.5f && EGO.inEffect)
+                if ((EGO.energyRemaining.Width<=0.5f && EGO.inEffect)||!EGOManifested)
                 {
                     EGO.inEffect = false;
+                    EGOManifested = false;
+                    ship.DisplayImage = null;
                     EGO.EnergyGainMultiplier = 0.1f;
                 }
-                if (EGO.inEffect) { EGO.AbilityUse(); }
+                if (EGOManifested)
+                {
+                    EGO.AbilityUse();
+                    ship.DisplayImage = EGOSprite.Image;
+                    iFrames = TimeFromMilli(300);
+                }
             }
 
                 //insert horizontal upgrade
@@ -2079,7 +2100,7 @@ namespace Asteroid
             {
                 splitBackColor = Color.DarkRed;
                 splitBack = new TimeSpan(0, 0, 0, 0, 300);
-                vSplitPostSwing = new TimeSpan(0, 0, 0, 1, 450);
+                vSplitPostSwing = new TimeSpan(0, 0, 0, 1, 450 + 350);
                 vSplitSwing.Rotation = Angle(-30);
                 GreaterSplitVertical.AnimateWhileFrozen(_spriteBatch, ref animBurnBool);
                 GameFrozen = true;
@@ -2108,7 +2129,7 @@ namespace Asteroid
                 {
                     GreaterSplitHorizontal.AnimateWhileFrozen(_spriteBatch, ref animBurnBool);
                 }
-                hSplitPostSwing = new TimeSpan(0, 0, 0, 1, 000);
+                hSplitPostSwing = new TimeSpan(0, 0, 0, 1, 0);
                 GameFrozen = true;
             }
 

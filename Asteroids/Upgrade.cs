@@ -46,10 +46,11 @@ namespace Asteroid
         private bool usedLastFrame = false;
         public bool Overheat = false;
         public float Penetration = 0;
+        public Upgrade[] Dependencies;
 
         public Upgrade(Vector2 position, Game1.StatUpgradeType statype, Game1.AbilityUpgradeType ability,
             string name, string descrip1, string descrip2, string descrip3, string descrip4, int rarity, int levelSeen, List<Upgrade> progList, int progLevel, float energy, float pen,
-            Texture2D image, float rot, float scale, Color color, bool active) : base(position, image, rot, scale, color)
+            Texture2D image, float rot, float scale, Color color, Upgrade[] dependencies, bool active) : base(position, image, rot, scale, color)
         {
             Position = position;
             UpgradeType = statype;
@@ -87,11 +88,17 @@ namespace Asteroid
             Color = color;
             isActive = active;
             Penetration = pen;
+            Dependencies = dependencies;
         }
 
         public void RarityChange(int rarity)
         {
             Rarity = rarity;
+        }
+
+        public void UpgradeDependency()
+        {
+
         }
 
         public static Upgrade Generation(List<Upgrade> PossibleUpgrades)
@@ -165,41 +172,47 @@ namespace Asteroid
 
         public void AbilityUse()
         {
-            energyRemaining.Width -= EnergyUse;
-            movingEnergy.Width -= EnergyUse;
+            if (!Game1.GameFrozen)
+            {
+                energyRemaining.Width -= EnergyUse;
+                movingEnergy.Width -= EnergyUse;
+            }
         }
 
         public void AbilityUpdate()
         {
-            usedLastFrame = usedThisFrame;
-            usedThisFrame = false;
-
-            float energyGain;
-            if (EnergyGainMultiplier < 10) { energyGain = 1; }
-            else { energyGain = EnergyGainMultiplier / 10; }
-
-            energyRegen -= Game1.gameTime.ElapsedGameTime;
-
-            if (energyRegen<=TimeSpan.Zero && energyRemaining.Width<100)
+            if (!Game1.GameFrozen)
             {
-                if (energyMoveIf>0)
+                usedLastFrame = usedThisFrame;
+                usedThisFrame = false;
+
+                float energyGain;
+                if (EnergyGainMultiplier < 10) { energyGain = 1; }
+                else { energyGain = EnergyGainMultiplier / 10; }
+
+                energyRegen -= Game1.gameTime.ElapsedGameTime;
+
+                if (energyRegen<=TimeSpan.Zero && energyRemaining.Width<100)
                 {
-                    energyRemaining.Width += energyGain;
-                    energyMoveIf *= -1;
-                }
-                else if (energyMoveIf<0)
-                {
-                    movingEnergy.Width += energyGain;
-                    energyMoveIf *= -1;
+                    if (energyMoveIf>0)
+                    {
+                        energyRemaining.Width += energyGain;
+                        energyMoveIf *= -1;
+                    }
+                    else if (energyMoveIf<0)
+                    {
+                        movingEnergy.Width += energyGain;
+                        energyMoveIf *= -1;
+                    }
+
+                    energyRegen = reserveEnergyRegen / EnergyGainMultiplier;
                 }
 
-                energyRegen = reserveEnergyRegen / EnergyGainMultiplier;
+                if (Overheat && energyRemaining.Width>=energyTotal.Width/3) { Overheat = false; }
+
+                if (isGun) { ShotTimer -= Game1.gameTime.ElapsedGameTime; }
+                if (ShotTimer<=TimeSpan.Zero) { readyToFire = true; } else { readyToFire = false; }
             }
-
-            if (Overheat && energyRemaining.Width>=energyTotal.Width/3) { Overheat = false; }
-
-            if (isGun) { ShotTimer -= Game1.gameTime.ElapsedGameTime; }
-            if (ShotTimer<=TimeSpan.Zero) { readyToFire = true; } else { readyToFire = false; }
         }
 
         public bool WillGunShoot()
@@ -257,6 +270,12 @@ namespace Asteroid
                 }
             }
             */
+        }
+
+        public void RefreshEnergy()
+        {
+            energyRemaining.Width = 100;
+            if (AbilityType!=Game1.AbilityUpNone && !isGun) { inEffect = false; }
         }
 
         public void Draw(SpriteFont title, SpriteFont desc, SpriteBatch sb)
