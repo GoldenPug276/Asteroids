@@ -57,6 +57,7 @@ namespace Asteroid
             ArmorPen1 = 8,
             ArmorPen2 = 9,
             ArmorPen3 = 10,
+            EGOSplit = 11,
 
         }
         public static StatUpgradeType StatUpNone = StatUpgradeType.None;
@@ -75,7 +76,7 @@ namespace Asteroid
             TimeStop3 = 11,
             TimeStopFinal = 12,
             Mimicry = 13,
-            EGO = 14
+            EGO = 14,
         }
         public static AbilityUpgradeType AbilityUpNone = AbilityUpgradeType.None;
         List<Upgrade> AllUpgrades = new List<Upgrade>();
@@ -84,6 +85,7 @@ namespace Asteroid
         List<Upgrade> ActiveUpgrades = new List<Upgrade>();
         List<Upgrade> ActiveAbilities = new List<Upgrade>();
         List<Upgrade> ActiveGuns = new List<Upgrade>();
+        List<Upgrade> AllActiveItems = new List<Upgrade>();
         int CurrentActiveGunIndex = 0;
         List<Upgrade> NoneHolder = new List<Upgrade>();
 
@@ -136,6 +138,7 @@ namespace Asteroid
         Animation hSplitBack;
         Animation vSplitSwing;
         Sprite vSplitSwingEffect;
+        Upgrade EGOSplit;
 
         TimeSpan hSplitSwingToEffect = TimeSpan.Zero;
         TimeSpan hSplitPostSwing = TimeSpan.Zero;
@@ -639,16 +642,22 @@ namespace Asteroid
          *                      Makes you not take damage (I-Frames like when caps lock is on)
          *                      Changes the Ship's DisplayImage to EGOSprite.Image
          *                      With the right upgrade turns Vertical into Horizontal
-         *                  Create a system to create dependencies (like if you have Upgrade1 and Upgrade2, Upgrade3 is added to the pool)
-         *                      Will use the function called UpgradeDependency in Upgrade
-         *                      
-         *                      
-         *                                      (at this moment does nothing and hasn't been put anywhere0
-         *                      Also gave Upgrades a new variable at the end before isActive: Dependencies (Upgrade[])
-         *                          The function will take in the active list and check to see if the upgrades in the list are present, then return true or false
+         *                  Created a system to create dependencies (like if you have Upgrade1 and Upgrade2, Upgrade3 is added to the pool)
+         *                      Uses the bool function called UpgradeDependency in Upgrade
+         *                      Also gave Upgrades a new variable at the end before isActive to use with it: Dependencies (Upgrade[])
+         *                          The function takes in the active list and checks to see if the upgrades in the list are present, then return true or false
          *                          If the input is null, it is treated as a true
+         *                      Works but only with an impossible level number and not being able to force the level it appears in
+         *                      (could probably fix that but who actually cares)
+         *                  Made a List<Upgrade> AllActiveItems which holds all currently active upgrades/abilities/guns in a way similar to AllEnemies
+         *                      Added Sync function to Upgrade similar to Enemy as well but not Split
+         *                      Changed everything that used multiple of these lists to AllActiveItems instead
+         *                      
+         *                              (not changed yet)
          *                  Make an upgrade to turn Vertical turn into Horizontal when in E.G.O. if you have both Greater Split: Vertical and Manifestation
          *                      Also halves Split cooldown to be that of max level Time Stop (roughly 10 seconds)
+         *                      
+         *                              (upgrade made, does nothing yet. might wanna also change color)
          *                  Make the actual attacks (based off of the Time Stop code)
          *                      Use the effect sprites as the hitboxes
          *                  Give E.G.O. VFX
@@ -985,6 +994,10 @@ namespace Asteroid
                 "(From the default)", 20, 0, ArmorPenProgHolder, 3, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, null, false);
             ArmorPenProgHolder.Add(ArmorPen3);
 
+            EGOSplit = new Upgrade(BurnVec, StatUpgradeType.EGOSplit, AbilityUpNone, "The Red Mist", "Q performs Greater", "Split: Horizontal", "when in E.G.O. and",
+                "halves cooldown.", 50     +45, 42069, null, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkRed, new Upgrade[2] { Mimicry, EGO }, false);
+            AllUpgrades.Add(EGOSplit);
+
             //Upgrades
 
             //Guns
@@ -1076,6 +1089,8 @@ namespace Asteroid
             Enemy.Sync(AllEnemies, Asteroids, UFOs);
             Enemy.Split(AllEnemies, Asteroids, UFOs);
             lastEnemies = AllEnemies;
+
+            Upgrade.Sync(AllActiveItems, ActiveUpgrades, ActiveAbilities, ActiveGuns);
 
             score0s = "";
 
@@ -1211,14 +1226,14 @@ namespace Asteroid
                 Asteroids.Add(Enemy.InitialSpawn(playSpace, largeAsteroidVelocity, BigAsteroid, ship, level.GlobalArmorValue));
                 foreach (var upgrade in PossibleUpgrades)
                 {
-                    if (upgrade.Rarity < 75)
+                    if (upgrade.Rarity<75)
                     {
                         upgrade.RarityChange(upgrade.Rarity + 5);
                     }
                 }
                 foreach (var upgrade in AllUpgrades)
                 {
-                    if (upgrade.LevelAvailability == level.LevelNum)
+                    if (upgrade.LevelAvailability==level.LevelNum||(upgrade.UpgradeDependency(AllActiveItems) && upgrade.Dependencies!=null))
                     {
                         PossibleUpgrades.Add(upgrade);
                     }

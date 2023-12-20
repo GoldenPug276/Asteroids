@@ -5,6 +5,7 @@ using MonoGame.Extended;
 using MonoGame.Extended.BitmapFonts;
 using System;
 using System.Collections.Generic;
+using System.Runtime.Versioning;
 using System.Text;
 using Windows.Media.Capture;
 
@@ -38,7 +39,7 @@ namespace Asteroid
         private TimeSpan reserveEnergyRegen = TimeSpan.FromMilliseconds(125.5);
         public float EnergyGainMultiplier = 1;
 
-        public bool isGun = false;
+        public bool isGun;
         public TimeSpan ShotTimer;
         private bool readyToFire = false;
         public TimeSpan reserveShotTimer;
@@ -96,9 +97,28 @@ namespace Asteroid
             Rarity = rarity;
         }
 
-        public void UpgradeDependency()
+        public bool UpgradeDependency(List<Upgrade> all)
         {
+            if (Dependencies==null)
+            {
+                return true;
+            }
 
+            List<bool> found = new List<bool>();
+
+            foreach (Upgrade Upgrade in all)
+            {
+                foreach (Upgrade upgrade in Dependencies)
+                {
+                    if (Upgrade==upgrade)
+                    {
+                        found.Add(true);
+                    }
+                }
+            }
+
+            if (found.Count==Dependencies.Length) { return true; }
+            else { return false; }
         }
 
         public static Upgrade Generation(List<Upgrade> PossibleUpgrades)
@@ -302,6 +322,16 @@ namespace Asteroid
                 sb.DrawRectangle(energyTotal, Color);
                 sb.FillRectangle(movingEnergy, Color.Lerp(tColor, Color.Transparent, 0.5f));
             }
+        }
+
+
+
+        public static void Sync(List<Upgrade> allActive, List<Upgrade> activeUpgrades, List<Upgrade> activeAbilities, List<Upgrade> activeGuns)
+        {
+            allActive.Clear();
+            foreach (var upgrade in activeUpgrades) { allActive.Add(upgrade); }
+            foreach (var ability in activeAbilities) { allActive.Add(ability); }
+            foreach (var gun in activeGuns) { allActive.Add(gun); }
         }
     }
 }
