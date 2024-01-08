@@ -12,6 +12,7 @@ using System.Reflection.Metadata;
 using System.Security.Cryptography;
 using System.Text;
 using Windows.Media.Playback;
+using Windows.Security.Authentication.Web.Provider;
 using Windows.UI.Notifications;
 using Windows.UI.WebUI;
 using static System.Net.Mime.MediaTypeNames;
@@ -651,13 +652,16 @@ namespace Asteroid
          *                      (could probably fix that but who actually cares)
          *                  Made a List<Upgrade> AllActiveItems which holds all currently active upgrades/abilities/guns in a way similar to AllEnemies
          *                      Added Sync function to Upgrade similar to Enemy as well but not Split
-         *                      Changed everything that used multiple of these lists to AllActiveItems instead
-         *                      
-         *                              (not changed yet)
-         *                  Make an upgrade to turn Vertical turn into Horizontal when in E.G.O. if you have both Greater Split: Vertical and Manifestation
-         *                      Also halves Split cooldown to be that of max level Time Stop (roughly 10 seconds)
-         *                      
-         *                              (upgrade made, does nothing yet. might wanna also change color)
+         *                      Changed (probably) everything that used multiple of these lists to AllActiveItems instead
+         *                  Made an upgrade to turn Vertical turn into Horizontal when in E.G.O. if you have both Greater Split: Vertical and Manifestation
+         *                      Also halves Split cooldown outside of EGO to be that of max level Time Stop (roughly 10 seconds)
+         *                  Lowered the UpgradeFont font size by 2 and updated descriptions.
+         *                  
+         *                              (partially finished. updated:
+         *                              Red Mist Upgrades
+         *                              Warp)
+         *                              
+         *                              (also look into some bug with level changing not giving upgrades sometimes at higher levels)
          *                  Make the actual attacks (based off of the Time Stop code)
          *                      Use the effect sprites as the hitboxes
          *                  Give E.G.O. VFX
@@ -666,6 +670,7 @@ namespace Asteroid
          *                  
          *                  
          *                  (note for when making split vertical attack: the damage should be dealt after the attack, not after the game is unfrozen)
+         *                  (split horizontal should be basically be a screen nuke, usable once in E.G.O. with cooldown refresh upon entereing and leaving E.G.O.)
          *                  (for both splits: there should probably be like 1-2 seconds of i-frames after to not die to new asteroids)
          *                  
          *              
@@ -673,8 +678,6 @@ namespace Asteroid
          *          
          *          Epitaph |shouldn't be too hard based on how i wrote the code|
          *              Time Erase can be upgraded to also use Epitaph if it has been obtained
-         *              
-         *          Screen Nuke
          *          
          *          
          *      gun plans:
@@ -871,7 +874,7 @@ namespace Asteroid
             UpgradeChoiceList = new Button[] { UpgradeChoice1, UpgradeChoice2, UpgradeChoice3 };
 
 
-            //Upgrade Stuff (each description row can fit around 20-21 characters, tested with capital A's)
+            //Upgrade Stuff (each description row can fit around 22-23 characters, tested with capital A's)
 
             // Example = new Upgrade(position, StatUpgradeType.statype, AbilityUpgradeType.ability, name, string descrip1, string descrip2, string descrip3, string descrip4,
             // int rarity, int levelSeen, List<Upgrade> progList, int progLevel, float energy, float pen, Texture2D image, float rot, float scale, Color color, bool active)
@@ -880,11 +883,11 @@ namespace Asteroid
 
             //Abilities
 
-            Warp = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Warp, "Warp", "Press M2 to warp", "to a random point", "on screen. Gain 0.4", "seconds of i-frames.",
+            Warp = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Warp, "Warp", "Press M2 to warp to", "a random point on the", "screen with .4 seconds", "of i-frames.",
                 65, 1, null, 0, 99, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkGray, null, false);
             AllUpgrades.Add(Warp);
 
-            Shield1 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield1, "Shield", "Hold Z to activate", "a shield that", "protects you from", "all damage.",
+            Shield1 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Shield1, "Shield", "Hold Z to activate a", "shield that protects", "you from all damage.", "",
                 50, 1, ShieldProgHolder, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, null, false);
             AllUpgrades.Add(Shield1);
             ShieldProgHolder.Add(Shield1);
@@ -920,11 +923,11 @@ namespace Asteroid
                 "and thus cooldown.", 30, 0, TimeStopProgHolder, 4, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Yellow, null, false);
             TimeStopProgHolder.Add(TimeStopFinal);
 
-            Mimicry = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Mimicry, "Mimicry", "Press Q to", "perform Greater", "Split: Vertical",
-                "in front of you.", 30     *3, 4     /4, null, 1, 100, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Red, null, false);
+            Mimicry = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Mimicry, "Mimicry", "Press Q to perform", "Greater Split: Vertical", "in front of you.",
+                "", 30     *3, 4     /4, null, 1, 100, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Red, null, false);
             AllUpgrades.Add(Mimicry);
 
-            EGO = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.EGO, "Manifestation", "Press V to manifest", "your E.G.O., giving", "various buffs and",
+            EGO = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.EGO, "Manifestation", "Press V to manifest", "your E.G.O., giving", "speed buffs and",
                 "i-frames.", 50     +45, 8     /8, null, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkRed, null, false);
             EGOSprite = new Sprite(BurnVec, ContentLoad2D("Upgrades/EGO"), 0, 1 / 1f, Color.White);
             AllUpgrades.Add(EGO);
@@ -994,8 +997,8 @@ namespace Asteroid
                 "(From the default)", 20, 0, ArmorPenProgHolder, 3, 0, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.White, null, false);
             ArmorPenProgHolder.Add(ArmorPen3);
 
-            EGOSplit = new Upgrade(BurnVec, StatUpgradeType.EGOSplit, AbilityUpNone, "The Red Mist", "Q performs Greater", "Split: Horizontal", "when in E.G.O. and",
-                "halves cooldown.", 50     +45, 42069, null, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkRed, new Upgrade[2] { Mimicry, EGO }, false);
+            EGOSplit = new Upgrade(BurnVec, StatUpgradeType.EGOSplit, AbilityUpNone, "The Red Mist", "Mimicry does Greater", "Split: Horizontal if", "in E.G.O. and halves",
+                "Split's CD out of it.", 50     +45, 42069, null, 1, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.DarkRed, new Upgrade[2] { Mimicry, EGO }, false);
             AllUpgrades.Add(EGOSplit);
 
             //Upgrades
@@ -1240,9 +1243,7 @@ namespace Asteroid
                 }
                 UpgradeChosen = false;
                 UpgradeTime = 0;
-                foreach (var upgrade in ActiveUpgrades) { upgrade.RefreshEnergy(); }
-                foreach (var ability in ActiveAbilities) { ability.RefreshEnergy(); }
-                foreach (var gun in ActiveGuns) { gun.RefreshEnergy(); }
+                foreach (var upgrade in AllActiveItems) { upgrade.RefreshEnergy(); }
             }
 
             //Level Code
@@ -1841,15 +1842,21 @@ namespace Asteroid
                 {
                     Mimicry.EnergyGainMultiplier = 1.5f;
 
-                    //add the effect of the horizontal upgrade halving the cooldown
+                    if (EGOSplit.isActive && !EGOManifested)
+                    {
+                        Mimicry.EnergyGainMultiplier += 1.1f;
+                        EGOSplit.inEffect = true;
+                    }
+
 
                     Mimicry.AbilityUpdate();
                     if (keyboardState.IsKeyDown(Keys.Q) && Mimicry.WillAbilityGetUsed())
                     {
-                        vSplitSwing.AnimationRunning = true;
                         Mimicry.AbilityUse();
                         Mimicry.inEffect = true;
                         GameFrozen = true;
+                        if (EGOSplit.isActive && EGOManifested) { hSplitSwing.AnimationRunning = true; }
+                        else                                    { vSplitSwing.AnimationRunning = true; }
                     }
                 }
             }
@@ -1860,7 +1867,6 @@ namespace Asteroid
                 {
                     if (keyboardState.IsKeyDown(Keys.V) && lastKeyboardState.IsKeyUp(Keys.V) && EGO.WillAbilityGetUsed() && EGO.energyRemaining.Width>=99.5f)
                     {
-                        //EFFECT NOT YET PUT IN
                         EGO.inEffect = true;
                         EGOManifested = true;
                         EGO.EnergyGainMultiplier = 2.5f;
@@ -1869,10 +1875,14 @@ namespace Asteroid
                 }
                 if ((EGO.energyRemaining.Width<=0.5f && EGO.inEffect)||!EGOManifested)
                 {
-                    EGO.inEffect = false;
-                    EGOManifested = false;
-                    ship.DisplayImage = null;
                     EGO.EnergyGainMultiplier = 0.1f;
+                    if (EGOManifested)
+                    {
+                        EGO.inEffect = false;
+                        EGOManifested = false;
+                        ship.DisplayImage = null;
+
+                    }
                 }
                 if (EGOManifested)
                 {
@@ -1881,8 +1891,6 @@ namespace Asteroid
                     iFrames = TimeFromMilli(300);
                 }
             }
-
-                //insert horizontal upgrade
 
             //Ability Effect Code
 
