@@ -101,7 +101,7 @@ namespace Asteroid
         {
             if (Dependencies==null)
             {
-                return true;
+                return false;
             }
 
             List<bool> found = new List<bool>();
@@ -332,6 +332,20 @@ namespace Asteroid
             foreach (var upgrade in activeUpgrades) { allActive.Add(upgrade); }
             foreach (var ability in activeAbilities) { allActive.Add(ability); }
             foreach (var gun in activeGuns) { allActive.Add(gun); }
+        }
+
+        public static void Split(List<Upgrade> allActive, List<Upgrade> activeUpgrades, List<Upgrade> activeAbilities, List<Upgrade> activeGuns)
+        {
+            activeUpgrades.Clear();
+            activeAbilities.Clear();
+            activeGuns.Clear();
+
+            foreach (var upgrade in allActive)
+            {
+                if      (upgrade.isGun)                                         { activeGuns.Add(upgrade); }
+                else if (upgrade.AbilityType!=Game1.AbilityUpgradeType.None)    { activeAbilities.Add(upgrade); }
+                else if (upgrade.UpgradeType!=Game1.StatUpgradeType.None)       { activeUpgrades.Add(upgrade); }
+            }
         }
     }
 }

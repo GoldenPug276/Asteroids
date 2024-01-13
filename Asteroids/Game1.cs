@@ -651,19 +651,19 @@ namespace Asteroid
          *                      Works but only with an impossible level number and not being able to force the level it appears in
          *                      (could probably fix that but who actually cares)
          *                  Made a List<Upgrade> AllActiveItems which holds all currently active upgrades/abilities/guns in a way similar to AllEnemies
-         *                      Added Sync function to Upgrade similar to Enemy as well but not Split
+         *                      Added Sync function to Upgrade similar to Enemy as well
+         *                      Add Split too later just because
          *                      Changed (probably) everything that used multiple of these lists to AllActiveItems instead
          *                  Made an upgrade to turn Vertical turn into Horizontal when in E.G.O. if you have both Greater Split: Vertical and Manifestation
          *                      Also halves Split cooldown outside of EGO to be that of max level Time Stop (roughly 10 seconds)
          *                  Lowered the UpgradeFont font size by 2 and updated descriptions.
-         *                  
-         *                              (partially finished. updated:
-         *                              Red Mist Upgrades
-         *                              Warp)
-         *                              
-         *                              (also look into some bug with level changing not giving upgrades sometimes at higher levels)
+         *                  Fixed a bug where picking the Horizontal upgrade breaks new upgrades (it was my lack of braincells forgetting a !isActive)
+         *                  Make the effects for the post swings quickly fade in after a second
+         *                                  (currently working on making v split work)
          *                  Make the actual attacks (based off of the Time Stop code)
          *                      Use the effect sprites as the hitboxes
+         *                          First test it by coloring Asteroids hit Red when they are supposed to take damage
+         *                          Then make the damage
          *                  Give E.G.O. VFX
          *                  Move Split and EGO things in the Draw function into the right section
          *                  Delete the temp activations
@@ -911,12 +911,12 @@ namespace Asteroid
             AllUpgrades.Add(TimeStop1);
             TimeStopProgHolder.Add(TimeStop1);
 
-            TimeStop2 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop2, "Time Stop+", "Your time stop will", "now last 5 seconds,", "but the cooldown",
-                "is increased.", 40, 0, TimeStopProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, null, false);
+            TimeStop2 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop2, "Time Stop+", "Your time stop will", "now last 5 seconds,", "but the cooldown is",
+                "increased.", 40, 0, TimeStopProgHolder, 2, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, null, false);
             TimeStopProgHolder.Add(TimeStop2);
 
-            TimeStop3 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop3, "Time Stop++", "Your time stop will", "now last 10 seconds,", "but the cooldown",
-                "is increased.", 40, 0, TimeStopProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, null, false);
+            TimeStop3 = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStop3, "Time Stop++", "Your time stop will", "now last 10 seconds,", "but the cooldown is",
+                "increased.", 40, 0, TimeStopProgHolder, 3, 1, 0, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.LightYellow, null, false);
             TimeStopProgHolder.Add(TimeStop3);
 
             TimeStopFinal = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.TimeStopFinal, "Your World", "Your time stop can", "be ended early,", "preserving energy",
@@ -1011,7 +1011,7 @@ namespace Asteroid
             MachineGun.reserveShotTimer = reserveMachineGunShotTimer;
             AllUpgrades.Add(MachineGun);
 
-            Laser = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Laser, "Laser", "Gives you a", "searing and piercing", "laser gun.", "",
+            Laser = new Upgrade(BurnVec, StatUpNone, AbilityUpgradeType.Laser, "Laser", "Gives you a searing", "and piercing laser gun.", "", "",
                 35, 3, null, 0, 33, 1, ContentLoad2D($"{tempIdiot}"), 0, 1 / 1, Color.Red, null, false);
             Laser.ShotTimer = LaserShotTimer;
             Laser.reserveShotTimer = reserveLaserShotTimer;
@@ -1094,6 +1094,7 @@ namespace Asteroid
             lastEnemies = AllEnemies;
 
             Upgrade.Sync(AllActiveItems, ActiveUpgrades, ActiveAbilities, ActiveGuns);
+            Upgrade.Split(AllActiveItems, ActiveUpgrades, ActiveAbilities, ActiveGuns);
 
             score0s = "";
 
@@ -1206,6 +1207,7 @@ namespace Asteroid
                 }
 
                 UpgradeTime++;
+                GameFrozen = true;
             }
             if (UpgradeChosen == true)
             {
@@ -1236,13 +1238,14 @@ namespace Asteroid
                 }
                 foreach (var upgrade in AllUpgrades)
                 {
-                    if (upgrade.LevelAvailability==level.LevelNum||(upgrade.UpgradeDependency(AllActiveItems) && upgrade.Dependencies!=null))
+                    if (upgrade.LevelAvailability==level.LevelNum||(upgrade.UpgradeDependency(AllActiveItems) && !upgrade.isActive && !PossibleUpgrades.Contains(upgrade)))
                     {
                         PossibleUpgrades.Add(upgrade);
                     }
                 }
                 UpgradeChosen = false;
                 UpgradeTime = 0;
+                GameFrozen = false;
                 foreach (var upgrade in AllActiveItems) { upgrade.RefreshEnergy(); }
             }
 
@@ -2073,6 +2076,24 @@ namespace Asteroid
                 vSplitSwing.Draw(_spriteBatch);
                 vSplitSwingEffect.Position.X = vSplitSwing.Position.X - 90;
                 vSplitSwingEffect.Position.Y = vSplitSwing.Position.Y - 120;
+
+                /*
+                if (vSplitPostSwing <= TimeFromMilli(1250))
+                {
+                    vSplitSwingEffect.Draw(_spriteBatch);
+                }
+                */
+
+                vSplitSwingEffect.Draw(_spriteBatch);
+
+                int a1 = (int)(c + vSplitPostSwing.TotalMilliseconds + 1.5 * (1450 - c));
+
+                if (vSplitPostSwing <= TimeFromMilli(1450))
+                {
+                    vSplitSwingEffect.Color = new Color(255, 255, 255, a1);
+                    if (a1 >= 255) { vSplitSwingEffect.Color = new Color(Color.White, 255); }
+                }
+
                 vSplitSwingEffect.Draw(_spriteBatch);
 
                 int a = (int)(c - vSplitPostSwing.TotalMilliseconds + 1.5 * (b - c));
@@ -2124,6 +2145,7 @@ namespace Asteroid
                 splitBackColor = Color.DarkRed;
                 splitBack = new TimeSpan(0, 0, 0, 0, 300);
                 vSplitPostSwing = new TimeSpan(0, 0, 0, 1, 450 + 350);
+                vSplitSwingEffect.Color = new Color(0, 0, 0, 0);
                 vSplitSwing.Rotation = Angle(-30);
                 GreaterSplitVertical.AnimateWhileFrozen(_spriteBatch, ref animBurnBool);
                 GameFrozen = true;
