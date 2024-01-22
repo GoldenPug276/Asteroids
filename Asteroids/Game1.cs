@@ -658,11 +658,11 @@ namespace Asteroid
          *                      Also halves Split cooldown outside of EGO to be that of max level Time Stop (roughly 10 seconds)
          *                  Lowered the UpgradeFont font size by 2 and updated descriptions.
          *                  Fixed a bug where picking the Horizontal upgrade breaks new upgrades (it was my lack of braincells forgetting a !isActive)
-         *                  Make the effects for the post swings quickly fade in after a second
-         *                                  (currently working on making v split work)
+         *                  Made the effects for the post swings quickly fade in after a second
          *                  Make the actual attacks (based off of the Time Stop code)
          *                      Use the effect sprites as the hitboxes
          *                          First test it by coloring Asteroids hit Red when they are supposed to take damage
+         *                                  (this is done)
          *                          Then make the damage
          *                  Give E.G.O. VFX
          *                  Move Split and EGO things in the Draw function into the right section
@@ -1363,6 +1363,14 @@ namespace Asteroid
 
             foreach (var asteroid in Asteroids)
             {
+                if (GameFrozen && vSplitPostSwing>TimeSpan.Zero && vSplitSwingEffect.Color.A>=180 && asteroid.Hitbox.Intersects(vSplitSwingEffect.Hitbox))
+                {
+                    asteroid.Color = Color.Red;
+                }
+                else
+                {
+                    asteroid.Color = Color.White;
+                }
                 asteroid.TimeStopDamage();
                 if (EnemyCollisionDetection(asteroid.Hitbox, shots, ExtraHitboxes, ExtraPens) || asteroid.broken)
                 {
@@ -2077,24 +2085,15 @@ namespace Asteroid
                 vSplitSwingEffect.Position.X = vSplitSwing.Position.X - 90;
                 vSplitSwingEffect.Position.Y = vSplitSwing.Position.Y - 120;
 
-                /*
-                if (vSplitPostSwing <= TimeFromMilli(1250))
-                {
-                    vSplitSwingEffect.Draw(_spriteBatch);
-                }
-                */
-
                 vSplitSwingEffect.Draw(_spriteBatch);
 
-                int a1 = (int)(c + vSplitPostSwing.TotalMilliseconds + 1.5 * (1450 - c));
+                int a1 = (int)((1390 - vSplitPostSwing.TotalMilliseconds) * 4);
 
-                if (vSplitPostSwing <= TimeFromMilli(1450))
+                if (vSplitPostSwing >= TimeFromMilli(1300) && vSplitPostSwing < TimeFromMilli(1380))
                 {
-                    vSplitSwingEffect.Color = new Color(255, 255, 255, a1);
+                    vSplitSwingEffect.Color = new Color(a1, a1, a1, a1);
                     if (a1 >= 255) { vSplitSwingEffect.Color = new Color(Color.White, 255); }
                 }
-
-                vSplitSwingEffect.Draw(_spriteBatch);
 
                 int a = (int)(c - vSplitPostSwing.TotalMilliseconds + 1.5 * (b - c));
 
@@ -2118,6 +2117,14 @@ namespace Asteroid
                     null, Color.White, Angle(-45), new Vector2(vSplitSwing.Image.Width, vSplitSwing.Image.Height/2), 1/1f, SpriteEffects.FlipHorizontally, 0);
                 hSplitPostSwing -= gameTime.ElapsedGameTime;
                 hSplitSwingEffect.Draw(_spriteBatch);
+
+                int a1 = (int)((870 - hSplitPostSwing.TotalMilliseconds) * 4);
+
+                if (hSplitPostSwing >= TimeFromMilli(780) && hSplitPostSwing < TimeFromMilli(860))
+                {
+                    hSplitSwingEffect.Color = new Color(a1, a1, a1, a1);
+                    if (a1 >= 255) { hSplitSwingEffect.Color = new Color(Color.White, 255); }
+                }
 
                 int a = (int)(c - hSplitPostSwing.TotalMilliseconds + 1.5*(b - c));
 
@@ -2174,7 +2181,8 @@ namespace Asteroid
                 {
                     GreaterSplitHorizontal.AnimateWhileFrozen(_spriteBatch, ref animBurnBool);
                 }
-                hSplitPostSwing = new TimeSpan(0, 0, 0, 1, 0);
+                hSplitPostSwing = new TimeSpan(0, 0, 0, 1, 150);
+                hSplitSwingEffect.Color = new Color(0, 0, 0, 0);
                 GameFrozen = true;
             }
 
