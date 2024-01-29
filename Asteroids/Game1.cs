@@ -15,6 +15,7 @@ using Windows.Media.Playback;
 using Windows.Security.Authentication.Web.Provider;
 using Windows.UI.Notifications;
 using Windows.UI.WebUI;
+using WinRT;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace Asteroid
@@ -660,10 +661,11 @@ namespace Asteroid
          *                  Fixed a bug where picking the Horizontal upgrade breaks new upgrades (it was my lack of braincells forgetting a !isActive)
          *                  Made the effects for the post swings quickly fade in after a second
          *                  Make the actual attacks (based off of the Time Stop code)
-         *                      Use the effect sprites as the hitboxes
-         *                          First test it by coloring Asteroids hit Red when they are supposed to take damage
-         *                                  (this is done)
+         *                      Used the effect sprites as the hitboxes
+         *                          First tested it by coloring Asteroids hit Red when they are supposed to take damage
          *                          Then make the damage
+         *                                      (made the damage, need to come up with the right way to make it only hit once
+         *                                      also i modified the way broken works. it is currently super unoptimized and just a "it works" thing. fix that)
          *                  Give E.G.O. VFX
          *                  Move Split and EGO things in the Draw function into the right section
          *                  Delete the temp activations
@@ -762,7 +764,7 @@ namespace Asteroid
                 {
                     if (checkedHitbox.Intersects(hitboxes[i]))
                     {
-                        if (TimeHasStopped) { CollisionPenetration = 1 + extraArmorPenetration; }
+                        if (TimeHasStopped||GameFrozen) { CollisionPenetration = 1 + extraArmorPenetration; }
                         else { CollisionPenetration = hitboxPens[i]; }
                         return true;
                     }
@@ -1363,7 +1365,7 @@ namespace Asteroid
 
             foreach (var asteroid in Asteroids)
             {
-                if (GameFrozen && vSplitPostSwing>TimeSpan.Zero && vSplitSwingEffect.Color.A>=180 && asteroid.Hitbox.Intersects(vSplitSwingEffect.Hitbox))
+                if (GameFrozen && vSplitPostSwing>TimeSpan.Zero && vSplitSwingEffect.Color.A>=210 && asteroid.Hitbox.Intersects(vSplitSwingEffect.Hitbox))
                 {
                     asteroid.Color = Color.Red;
                 }
@@ -1376,15 +1378,46 @@ namespace Asteroid
                 {
                     //Archived PowerUp Code: machine.Spawned(Asteroids[i].Position, new Vector2(rand.Next(1, 4), rand.Next(1, 4)), Asteroids[i].leSize);
 
+                    bool a = false;
+                    bool b = false;
+                    bool c = false;
+
+                    if (asteroid.broken==true)
+                    {
+                        switch (asteroid.leSize)
+                        {
+                            case Size.LeChonk:
+                                {
+                                    a = true;
+                                    break;
+                                }
+                            case Size.Normal:
+                                {
+                                    b = true;
+                                    break;
+                                }
+                            case Size.Baby:
+                                {
+                                    c = true;
+                                    break;
+                                }
+                        }
+                    }
+
+
                     if (TimeHasStopped || GameFrozen)
                     {
                         if (asteroid.ArmorValue - asteroid.stoppedDamage < 0)
                         {
                             asteroid.hits++;
+                            if (Mimicry.inEffect)
+                            {
+                                asteroid.hits++;
+                            }
                         }
                         asteroid.stoppedDamage += CollisionPenetration;
                     }
-                    else if (asteroid.leSize == Size.LeChonk && (!asteroid.ArmorDamage(CollisionPenetration) || asteroid.broken))
+                    else if (asteroid.leSize == Size.LeChonk && (!asteroid.ArmorDamage(CollisionPenetration) || a))
                     {
                         score += 10;
                         asteroid.leSize++;
@@ -1394,8 +1427,13 @@ namespace Asteroid
                         Asteroids.Add(new Enemy(new Vector2(asteroid.Position.X + 60, asteroid.Position.Y), new Vector2(-asteroid.Velocity.X * 2, -asteroid.Velocity.Y * 2),
                             SmallAsteroid, 0, 1 / 1f, Color.White, Size.Normal, TimeSpan.Zero, Enemy.Type.Asteroid, 0));
                         asteroid.HitboxRefresh();
+                        if (a)
+                        {
+                            Asteroids[Asteroids.Count - 1].brokenTimes = asteroid.brokenTimes/2;
+                            Asteroids[Asteroids.Count - 1].broken = true;
+                        }
                     }
-                    else if (asteroid.leSize == Size.Normal)
+                    else if (asteroid.leSize == Size.Normal || b)
                     {
                         score += 30;
                         asteroid.leSize++;
@@ -1405,8 +1443,13 @@ namespace Asteroid
                         Asteroids.Add(new Enemy(new Vector2(asteroid.Position.X + 25, asteroid.Position.Y), new Vector2(-asteroid.Velocity.X * 2, -asteroid.Velocity.Y * 2),
                             TinyAsteroid, 0, 1 / 1f, Color.White, Size.Baby, TimeSpan.Zero, Enemy.Type.Asteroid, 0));
                         asteroid.HitboxRefresh();
+                        if (b)
+                        {
+                            Asteroids[Asteroids.Count - 1].brokenTimes = asteroid.brokenTimes / 2;
+                            Asteroids[Asteroids.Count - 1].broken = true;
+                        }
                     }
-                    else if (asteroid.leSize == Size.Baby)
+                    else if (asteroid.leSize == Size.Baby || c)
                     {
                         score += 50;
                         Asteroids.Remove(asteroid);
@@ -1421,13 +1464,10 @@ namespace Asteroid
                         }
                     }
 
-                    break;
+                    if (!GameFrozen && !TimeHasStopped) { break; }
                 }
 
-                if (counter >= Asteroids.Count)
-                {
-                    break;
-                }
+                if (counter>=Asteroids.Count) { break; }
 
                 if (!TimeHasStopped && !GameFrozen)
                 {
@@ -2080,6 +2120,9 @@ namespace Asteroid
 
             if (vSplitPostSwing>TimeSpan.Zero)
             {
+                ExtraHitboxes.Add(vSplitSwingEffect.Hitbox);
+                ExtraPens.Add(1);
+
                 vSplitPostSwing -= gameTime.ElapsedGameTime;
                 vSplitSwing.Draw(_spriteBatch);
                 vSplitSwingEffect.Position.X = vSplitSwing.Position.X - 90;

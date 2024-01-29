@@ -104,7 +104,7 @@ namespace Asteroid
 
         public void TimeStopDamage()
         {
-            if (!Game1.TimeHasStopped && stoppedDamage>0)
+            if (!Game1.TimeHasStopped && !Game1.GameFrozen && stoppedDamage>0)
             {
                 if (ArmorValue-stoppedDamage<0)
                 {
