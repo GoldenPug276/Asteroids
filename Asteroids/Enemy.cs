@@ -30,6 +30,7 @@ namespace Asteroid
         public bool HasCollided = false;
         public float ArmorValue;
         public Texture2D[] ArmorImages;
+        public bool dummy = false;
 
         //Time Stop Parameters
         public float stoppedDamage = 0;

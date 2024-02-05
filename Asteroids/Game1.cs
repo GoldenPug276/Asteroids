@@ -147,6 +147,7 @@ namespace Asteroid
         TimeSpan vSplitPostSwing = TimeSpan.Zero;
         TimeSpan splitBack = TimeSpan.Zero;
         Color splitBackColor = Color.Black;
+        int splitHit = 0;
 
 
         List<Rectangle> ExtraHitboxes = new List<Rectangle>();
@@ -664,8 +665,19 @@ namespace Asteroid
          *                      Used the effect sprites as the hitboxes
          *                          First tested it by coloring Asteroids hit Red when they are supposed to take damage
          *                          Then make the damage
+         *                              Made a splitHit bool to signify when there shoulndn't be more hitboxes
          *                                      (made the damage, need to come up with the right way to make it only hit once
          *                                      also i modified the way broken works. it is currently super unoptimized and just a "it works" thing. fix that)
+         *                  
+         *                  Added new dev shortcuts:
+         *                      Numpad 7 spawns a dummy Asteroid with max armor to the left of the ship
+         *                      Numpad 8 spawns a dummy Asteroid with no armor to the right of the ship
+         *                      Numpad 9 spawns a dummy UFO with max armor beneath the ship with a 5 second shotTimer
+         *                          Also added a new bool dummy to Enemy to control whether or not an enemy moves. Dummies pass on their dummy trait when split
+         *                  Finally making it so that Mimicry flips around if you are facing right
+         *                      Also added a function DrawSpecial to Sprite and a function MoveAnimSpec to Animation to draw with SpriteEffects
+         *                      
+         *                              (works except for the location of Mimicry after the Split (should be fast), but the trigger for it to flips hasn't been made)
          *                  Give E.G.O. VFX
          *                  Move Split and EGO things in the Draw function into the right section
          *                  Delete the temp activations
@@ -1109,6 +1121,24 @@ namespace Asteroid
                 devGun.isActive = true;
                 ActiveGuns.Add(devGun);
             }
+            if (keyboardState.IsKeyDown(Keys.NumPad7) && lastKeyboardState.IsKeyUp(Keys.NumPad7))
+            {
+                Asteroids.Add(new Enemy(ship.Position, BurnVec, BigAsteroid, 0, 1, Color.White, Size.LeChonk, TimeSpan.Zero, Enemy.Type.Asteroid, 6));
+                Asteroids[Asteroids.Count - 1].Position.X -= 120;
+                Asteroids[Asteroids.Count - 1].dummy = true;
+            }
+            if (keyboardState.IsKeyDown(Keys.NumPad8) && lastKeyboardState.IsKeyUp(Keys.NumPad8))
+            {
+                Asteroids.Add(new Enemy(ship.Position, BurnVec, BigAsteroid, 0, 1, Color.White, Size.LeChonk, TimeSpan.Zero, Enemy.Type.Asteroid, 0));
+                Asteroids[Asteroids.Count - 1].Position.X += 120;
+                Asteroids[Asteroids.Count - 1].dummy = true;
+            }
+            if (keyboardState.IsKeyDown(Keys.NumPad9) && lastKeyboardState.IsKeyUp(Keys.NumPad9))
+            {
+                UFOs.Add(new Enemy(ship.Position, BurnVec, BigSaucer, 0, 1, Color.White, Size.Normal, new TimeSpan(0, 0, 5), Enemy.Type.UFO, 3));
+                UFOs[UFOs.Count - 1].Position.Y += 60;
+                UFOs[UFOs.Count - 1].dummy = true;
+            }
 
             /*  Old Powerup Code, Archived
             machine.Update(gameTime.ElapsedGameTime, shots);
@@ -1365,6 +1395,7 @@ namespace Asteroid
 
             foreach (var asteroid in Asteroids)
             {
+                //testestest
                 if (GameFrozen && vSplitPostSwing>TimeSpan.Zero && vSplitSwingEffect.Color.A>=210 && asteroid.Hitbox.Intersects(vSplitSwingEffect.Hitbox))
                 {
                     asteroid.Color = Color.Red;
@@ -1373,6 +1404,8 @@ namespace Asteroid
                 {
                     asteroid.Color = Color.White;
                 }
+                //testestest
+
                 asteroid.TimeStopDamage();
                 if (EnemyCollisionDetection(asteroid.Hitbox, shots, ExtraHitboxes, ExtraPens) || asteroid.broken)
                 {
@@ -1405,15 +1438,12 @@ namespace Asteroid
                     }
 
 
+
                     if (TimeHasStopped || GameFrozen)
                     {
                         if (asteroid.ArmorValue - asteroid.stoppedDamage < 0)
                         {
-                            asteroid.hits++;
-                            if (Mimicry.inEffect)
-                            {
-                                asteroid.hits++;
-                            }
+                            asteroid.hits++;        
                         }
                         asteroid.stoppedDamage += CollisionPenetration;
                     }
@@ -1426,6 +1456,7 @@ namespace Asteroid
                             asteroid.Velocity.Y * (largeAsteroidVelocity / smallAsteroidVelocity));
                         Asteroids.Add(new Enemy(new Vector2(asteroid.Position.X + 60, asteroid.Position.Y), new Vector2(-asteroid.Velocity.X * 2, -asteroid.Velocity.Y * 2),
                             SmallAsteroid, 0, 1 / 1f, Color.White, Size.Normal, TimeSpan.Zero, Enemy.Type.Asteroid, 0));
+                        if (asteroid.dummy) { Asteroids[Asteroids.Count - 1].dummy = true; }
                         asteroid.HitboxRefresh();
                         if (a)
                         {
@@ -1442,6 +1473,7 @@ namespace Asteroid
                             asteroid.Velocity.Y * (smallAsteroidVelocity / tinyAsteroidVelocity));
                         Asteroids.Add(new Enemy(new Vector2(asteroid.Position.X + 25, asteroid.Position.Y), new Vector2(-asteroid.Velocity.X * 2, -asteroid.Velocity.Y * 2),
                             TinyAsteroid, 0, 1 / 1f, Color.White, Size.Baby, TimeSpan.Zero, Enemy.Type.Asteroid, 0));
+                        if (asteroid.dummy) { Asteroids[Asteroids.Count - 1].dummy = true; }
                         asteroid.HitboxRefresh();
                         if (b)
                         {
@@ -1471,11 +1503,14 @@ namespace Asteroid
 
                 if (!TimeHasStopped && !GameFrozen)
                 {
-                    if (asteroid.leSize == Size.LeChonk) { asteroid.Rotation += 0.005f; }
-                    else { asteroid.Rotation += 0.01f; }
+                    if (!asteroid.dummy)
+                    {
+                        if (asteroid.leSize == Size.LeChonk) { asteroid.Rotation += 0.005f; }
+                        else { asteroid.Rotation += 0.01f; }
 
-                    asteroid.Position = new Vector2(asteroid.Position.X + (float)Math.Sin(asteroid.Rotation) + asteroid.Velocity.X,
-                        asteroid.Position.Y - (float)Math.Cos(asteroid.Rotation) + asteroid.Velocity.Y);
+                        asteroid.Position = new Vector2(asteroid.Position.X + (float)Math.Sin(asteroid.Rotation) + asteroid.Velocity.X,
+                            asteroid.Position.Y - (float)Math.Cos(asteroid.Rotation) + asteroid.Velocity.Y);
+                    }
 
                     asteroid.IsInBounds(playSpace);
 
@@ -1490,6 +1525,17 @@ namespace Asteroid
 
             foreach (var UFO in UFOs)
             {
+                //testestest
+                if (GameFrozen && vSplitPostSwing > TimeSpan.Zero && vSplitSwingEffect.Color.A >= 210 && UFO.Hitbox.Intersects(vSplitSwingEffect.Hitbox))
+                {
+                    UFO.Color = Color.Red;
+                }
+                else
+                {
+                    UFO.Color = Color.White;
+                }
+                //testestest
+
                 UFO.TimeStopDamage();
                 if (EnemyCollisionDetection(UFO.Hitbox, shots, ExtraHitboxes, ExtraPens) || UFO.broken)
                 {
@@ -1526,9 +1572,12 @@ namespace Asteroid
 
                 if (!TimeHasStopped && !GameFrozen)
                 {
-                    UFO.ShotTimer -= gameTime.ElapsedGameTime;
+                    if (!UFO.dummy)
+                    {
+                        UFO.UFOMovement(UFOMovementSpace);
+                    }
 
-                    UFO.UFOMovement(UFOMovementSpace);
+                    UFO.ShotTimer -= gameTime.ElapsedGameTime;
 
                     UFO.IsInBounds(playSpace);
 
@@ -2117,18 +2166,29 @@ namespace Asteroid
             //test
             int b = 450;
             int c = 255;
+            int dir = 1;
+            if (1==1)
+            {
+                dir = -1;
+            }
 
             if (vSplitPostSwing>TimeSpan.Zero)
             {
-                ExtraHitboxes.Add(vSplitSwingEffect.Hitbox);
-                ExtraPens.Add(1);
+                if (vSplitSwingEffect.Color.A>=210 && splitHit<4)
+                {
+                    ExtraHitboxes.Add(vSplitSwingEffect.Hitbox);
+                    ExtraPens.Add(3);
+                    splitHit++;
+                }
 
                 vSplitPostSwing -= gameTime.ElapsedGameTime;
-                vSplitSwing.Draw(_spriteBatch);
-                vSplitSwingEffect.Position.X = vSplitSwing.Position.X - 90;
+                if (dir==1)  { vSplitSwing.Draw(_spriteBatch); }
+                if (dir==-1) { vSplitSwing.DrawSpecial(_spriteBatch, SpriteEffects.FlipHorizontally); }
+                vSplitSwingEffect.Position.X = vSplitSwing.Position.X - (90 * dir);
                 vSplitSwingEffect.Position.Y = vSplitSwing.Position.Y - 120;
 
-                vSplitSwingEffect.Draw(_spriteBatch);
+                if (dir==1)  { vSplitSwingEffect.Draw(_spriteBatch); }
+                if (dir==-1) { vSplitSwingEffect.DrawSpecial(_spriteBatch, SpriteEffects.FlipHorizontally); }
 
                 int a1 = (int)((1390 - vSplitPostSwing.TotalMilliseconds) * 4);
 
@@ -2152,6 +2212,7 @@ namespace Asteroid
                     GameFrozen = false;
                     vSplitSwingEffect.Color = Color.White;
                     Mimicry.inEffect = false;
+                    splitHit = 0;
                 }
             }
             if (hSplitPostSwing>TimeSpan.Zero)
@@ -2196,15 +2257,18 @@ namespace Asteroid
                 splitBack = new TimeSpan(0, 0, 0, 0, 300);
                 vSplitPostSwing = new TimeSpan(0, 0, 0, 1, 450 + 350);
                 vSplitSwingEffect.Color = new Color(0, 0, 0, 0);
-                vSplitSwing.Rotation = Angle(-30);
+                if (dir==1)  { vSplitSwing.Rotation = Angle(-30); }
+                if (dir==-1) { vSplitSwing.Rotation = Angle(30); }
                 GreaterSplitVertical.AnimateWhileFrozen(_spriteBatch, ref animBurnBool);
                 GameFrozen = true;
             }
             if (vSplitSwing.AnimationRunning && GameFrozen)
             {
-                vSplitSwing.Position = new Vector2(ship.Position.X - vSplitSwing.Image.Width/2 + 80, ship.Position.Y - vSplitSwing.Image.Height/2 + 20);
+                vSplitSwing.Position = new Vector2(ship.Position.X - vSplitSwing.Image.Width/2 + 80 + (15 * (1 - dir)), ship.Position.Y - vSplitSwing.Image.Height/2 + 20);
                 vSplitSwing.Origin = new Vector2(vSplitSwing.Image.Width, vSplitSwing.Image.Height/2);
-                vSplitSwing.MovementAnimate(Angle(-90), new Vector2(0, 0), _spriteBatch, ref GreaterSplitVertical.AnimationRunning);
+                if (dir==1)  { vSplitSwing.MovementAnimate(Angle(-90), new Vector2(0, 0), _spriteBatch, ref GreaterSplitVertical.AnimationRunning); }
+                if (dir==-1) { vSplitSwing.MoveAnimSpec(Angle(90), new Vector2(0, 0), _spriteBatch, ref GreaterSplitVertical.AnimationRunning, SpriteEffects.FlipVertically); }
+                
                 GameFrozen = true;
             }
 

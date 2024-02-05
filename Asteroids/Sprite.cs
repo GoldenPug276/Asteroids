@@ -59,6 +59,20 @@ namespace Asteroid
 
             sb.Draw(pic, Position, null, Color, Rotation, origin, Scale, SpriteEffects.None, 0);
         }
+        public virtual void DrawSpecial(SpriteBatch sb, SpriteEffects effect)
+        {
+            //sb.Draw(Image, Hitbox, Color);
+
+            Texture2D pic = Image;
+            Vector2 origin = Origin;
+            if (DisplayImage != null)
+            {
+                pic = DisplayImage;
+                origin = new Vector2(DisplayImage.Width / 2, DisplayImage.Height / 2);
+            }
+
+            sb.Draw(pic, Position, null, Color, Rotation, origin, Scale, effect, 0);
+        }
 
     }
 }

@@ -115,5 +115,45 @@ namespace Asteroids
                 }
             }
         }
+        public void MoveAnimSpec(float totalRotation, Vector2 totalMovement, SpriteBatch sb, ref bool animateAfter, SpriteEffects effect)
+        {
+            sb.Draw(Image, Position, null, Color, Rotation, Origin, Scale, effect, 0);
+
+            if (!AnimTimeDefined)
+            {
+                perFrameTimes.Clear();
+                for (int i = 0; i <= FrameCount; i++)
+                {
+                    perFrameTimes.Add(AnimTime / reserveFrameCount);
+                }
+                moveAnimBackRot = Rotation;
+                moveAnimBackPos = Position;
+            }
+            AnimTimeDefined = true;
+            int frameNumber = Math.Abs(FrameCount - reserveFrameCount);
+
+            float rotPerFrame = totalRotation / reserveFrameCount;
+            Vector2 movePerFrame = new Vector2(totalMovement.X / reserveFrameCount, totalMovement.Y / reserveFrameCount);
+
+            perFrameTimes[frameNumber] -= Game1.gameTime.ElapsedGameTime;
+
+            if (perFrameTimes[frameNumber] <= TimeSpan.Zero)
+            {
+                Rotation += rotPerFrame;
+                Position.X += movePerFrame.X;
+                Position.Y += movePerFrame.Y;
+                FrameCount--;
+                if (FrameCount < 0)
+                {
+                    Rotation = moveAnimBackRot;
+                    Position = moveAnimBackPos;
+                    AnimTimeDefined = false;
+                    AnimationRunning = false;
+                    FrameCount = reserveFrameCount;
+                    Game1.GameFrozen = false;
+                    if (!animateAfter) { animateAfter = true; }
+                }
+            }
+        }
     }
 }
