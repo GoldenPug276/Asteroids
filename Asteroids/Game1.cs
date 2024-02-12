@@ -666,18 +666,20 @@ namespace Asteroid
          *                          First tested it by coloring Asteroids hit Red when they are supposed to take damage
          *                          Then make the damage
          *                              Made a splitHit bool to signify when there shoulndn't be more hitboxes
-         *                                      (made the damage, need to come up with the right way to make it only hit once
-         *                                      also i modified the way broken works. it is currently super unoptimized and just a "it works" thing. fix that)
+         *                                      (only did vertical so far
+         *                                      also i modified the way broken works. it is currently super unoptimized and just a "it works" thing. fix that and put the info here)
          *                  
          *                  Added new dev shortcuts:
          *                      Numpad 7 spawns a dummy Asteroid with max armor to the left of the ship
          *                      Numpad 8 spawns a dummy Asteroid with no armor to the right of the ship
          *                      Numpad 9 spawns a dummy UFO with max armor beneath the ship with a 5 second shotTimer
          *                          Also added a new bool dummy to Enemy to control whether or not an enemy moves. Dummies pass on their dummy trait when split
-         *                  Finally making it so that Mimicry flips around if you are facing right
+         *                  Finally made it so that Mimicry flips around if you are facing right
          *                      Also added a function DrawSpecial to Sprite and a function MoveAnimSpec to Animation to draw with SpriteEffects
-         *                      
-         *                              (works except for the location of Mimicry after the Split (should be fast), but the trigger for it to flips hasn't been made)
+         *                  Added a new read-only Direction property to Sprite that returns 1 if the Sprite is facing right and returns -1 if the Srpite is facing left
+         *                  
+         *                  
+         *                          (make horizontal also rotate if you want)
          *                  Give E.G.O. VFX
          *                  Move Split and EGO things in the Draw function into the right section
          *                  Delete the temp activations
@@ -2166,11 +2168,6 @@ namespace Asteroid
             //test
             int b = 450;
             int c = 255;
-            int dir = 1;
-            if (1==1)
-            {
-                dir = -1;
-            }
 
             if (vSplitPostSwing>TimeSpan.Zero)
             {
@@ -2182,13 +2179,14 @@ namespace Asteroid
                 }
 
                 vSplitPostSwing -= gameTime.ElapsedGameTime;
-                if (dir==1)  { vSplitSwing.Draw(_spriteBatch); }
-                if (dir==-1) { vSplitSwing.DrawSpecial(_spriteBatch, SpriteEffects.FlipHorizontally); }
-                vSplitSwingEffect.Position.X = vSplitSwing.Position.X - (90 * dir);
-                vSplitSwingEffect.Position.Y = vSplitSwing.Position.Y - 120;
+                if (ship.Direction==-1)  { vSplitSwing.Draw(_spriteBatch); }
+                if (ship.Direction==1) { vSplitSwing.DrawSpecial(_spriteBatch, SpriteEffects.FlipHorizontally); }
+                if (ship.Direction==1) { vSplitSwing.Position = new Vector2(ship.Position.X + vSplitSwing.Image.Width/2 + 80, ship.Position.Y + vSplitSwing.Image.Height/2 + 60); }
+                vSplitSwingEffect.Position.X = vSplitSwing.Position.X - 90;
+                vSplitSwingEffect.Position.Y = vSplitSwing.Position.Y - 120 - (50 * (1+ship.Direction));
 
-                if (dir==1)  { vSplitSwingEffect.Draw(_spriteBatch); }
-                if (dir==-1) { vSplitSwingEffect.DrawSpecial(_spriteBatch, SpriteEffects.FlipHorizontally); }
+                if (ship.Direction==-1)  { vSplitSwingEffect.Draw(_spriteBatch); }
+                if (ship.Direction==1) { vSplitSwingEffect.DrawSpecial(_spriteBatch, SpriteEffects.FlipHorizontally); }
 
                 int a1 = (int)((1390 - vSplitPostSwing.TotalMilliseconds) * 4);
 
@@ -2257,17 +2255,18 @@ namespace Asteroid
                 splitBack = new TimeSpan(0, 0, 0, 0, 300);
                 vSplitPostSwing = new TimeSpan(0, 0, 0, 1, 450 + 350);
                 vSplitSwingEffect.Color = new Color(0, 0, 0, 0);
-                if (dir==1)  { vSplitSwing.Rotation = Angle(-30); }
-                if (dir==-1) { vSplitSwing.Rotation = Angle(30); }
+                if (ship.Direction==-1)  { vSplitSwing.Rotation = Angle(-30); }
+                if (ship.Direction==1) { vSplitSwing.Rotation = Angle(30); }
                 GreaterSplitVertical.AnimateWhileFrozen(_spriteBatch, ref animBurnBool);
                 GameFrozen = true;
             }
             if (vSplitSwing.AnimationRunning && GameFrozen)
             {
-                vSplitSwing.Position = new Vector2(ship.Position.X - vSplitSwing.Image.Width/2 + 80 + (15 * (1 - dir)), ship.Position.Y - vSplitSwing.Image.Height/2 + 20);
+                vSplitSwing.Position = new Vector2(ship.Position.X - vSplitSwing.Image.Width/2 + 80 + (15 * (1+ship.Direction)), ship.Position.Y - vSplitSwing.Image.Height/2 + 20);
                 vSplitSwing.Origin = new Vector2(vSplitSwing.Image.Width, vSplitSwing.Image.Height/2);
-                if (dir==1)  { vSplitSwing.MovementAnimate(Angle(-90), new Vector2(0, 0), _spriteBatch, ref GreaterSplitVertical.AnimationRunning); }
-                if (dir==-1) { vSplitSwing.MoveAnimSpec(Angle(90), new Vector2(0, 0), _spriteBatch, ref GreaterSplitVertical.AnimationRunning, SpriteEffects.FlipVertically); }
+                if (ship.Direction==-1)  { vSplitSwing.MovementAnimate(Angle(-90), new Vector2(0, 0), _spriteBatch, ref GreaterSplitVertical.AnimationRunning); }
+                    SpriteEffects effect = SpriteEffects.FlipVertically;
+                if (ship.Direction==1) { vSplitSwing.MoveAnimSpec(Angle(90), new Vector2(0, 0), _spriteBatch, ref GreaterSplitVertical.AnimationRunning, effect); }
                 
                 GameFrozen = true;
             }
