@@ -666,8 +666,13 @@ namespace Asteroid
          *                          First tested it by coloring Asteroids hit Red when they are supposed to take damage
          *                          Then make the damage
          *                              Made a splitHit bool to signify when there shoulndn't be more hitboxes
-         *                                      (only did vertical so far
+         *                                      (did both vertical and horizontal, thought horizontal is kinda slow when there's a lot to be culled.
+         *                                      so speed up up horizontal (probably by making it just flat out remove the asteroids instead of breaking them into normal and small)
          *                                      also i modified the way broken works. it is currently super unoptimized and just a "it works" thing. fix that and put the info here)
+         *                                      
+         *                                      (add and put here the thing that makes the damage apply at the right time instead of at the end)
+         *                  
+         *                  
          *                  
          *                  Added new dev shortcuts:
          *                      Numpad 7 spawns a dummy Asteroid with max armor to the left of the ship
@@ -676,10 +681,9 @@ namespace Asteroid
          *                          Also added a new bool dummy to Enemy to control whether or not an enemy moves. Dummies pass on their dummy trait when split
          *                  Finally made it so that Mimicry flips around if you are facing right
          *                      Also added a function DrawSpecial to Sprite and a function MoveAnimSpec to Animation to draw with SpriteEffects
+         *                  Made the post-swing of Horizontal flip in the same way
+         *                      During this, also changed the effect timings slightly
          *                  Added a new read-only Direction property to Sprite that returns 1 if the Sprite is facing right and returns -1 if the Srpite is facing left
-         *                  
-         *                  
-         *                          (make horizontal also rotate if you want)
          *                  Give E.G.O. VFX
          *                  Move Split and EGO things in the Draw function into the right section
          *                  Delete the temp activations
@@ -2179,14 +2183,14 @@ namespace Asteroid
                 }
 
                 vSplitPostSwing -= gameTime.ElapsedGameTime;
-                if (ship.Direction==-1)  { vSplitSwing.Draw(_spriteBatch); }
+                if (ship.Direction==-1){ vSplitSwing.Draw(_spriteBatch); }
                 if (ship.Direction==1) { vSplitSwing.DrawSpecial(_spriteBatch, SpriteEffects.FlipHorizontally); }
                 if (ship.Direction==1) { vSplitSwing.Position = new Vector2(ship.Position.X + vSplitSwing.Image.Width/2 + 80, ship.Position.Y + vSplitSwing.Image.Height/2 + 60); }
                 vSplitSwingEffect.Position.X = vSplitSwing.Position.X - 90;
                 vSplitSwingEffect.Position.Y = vSplitSwing.Position.Y - 120 - (50 * (1+ship.Direction));
 
                 if (ship.Direction==-1)  { vSplitSwingEffect.Draw(_spriteBatch); }
-                if (ship.Direction==1) { vSplitSwingEffect.DrawSpecial(_spriteBatch, SpriteEffects.FlipHorizontally); }
+                if (ship.Direction==1)   { vSplitSwingEffect.DrawSpecial(_spriteBatch, SpriteEffects.FlipHorizontally); }
 
                 int a1 = (int)((1390 - vSplitPostSwing.TotalMilliseconds) * 4);
 
@@ -2215,14 +2219,22 @@ namespace Asteroid
             }
             if (hSplitPostSwing>TimeSpan.Zero)
             {
-                _spriteBatch.Draw(vSplitSwing.Image, new Vector2(hSplitSwingEffect.Position.X + 355, hSplitSwingEffect.Position.Y - 180),
-                    null, Color.White, Angle(-45), new Vector2(vSplitSwing.Image.Width, vSplitSwing.Image.Height/2), 1/1f, SpriteEffects.FlipHorizontally, 0);
+                if (hSplitSwingEffect.Color.A >= 210 && splitHit < 4)
+                {
+                    ExtraHitboxes.Add(hSplitSwingEffect.Hitbox);
+                    ExtraPens.Add(7);
+                    splitHit++;
+                }
+
+                _spriteBatch.Draw(vSplitSwing.Image,new Vector2(hSplitSwingEffect.Position.X + 70 + (285*ship.Direction),hSplitSwingEffect.Position.Y - 110 - (70*ship.Direction)),
+                    null,Color.White, Angle(45*-ship.Direction), new Vector2(vSplitSwing.Image.Width, vSplitSwing.Image.Height/2), 1/1f, (SpriteEffects)((1+ship.Direction)/2), 0);
                 hSplitPostSwing -= gameTime.ElapsedGameTime;
-                hSplitSwingEffect.Draw(_spriteBatch);
+                if (ship.Direction==1)  { hSplitSwingEffect.Draw(_spriteBatch); }
+                if (ship.Direction==-1) { hSplitSwingEffect.DrawSpecial(_spriteBatch, SpriteEffects.FlipHorizontally); }
+                
+                int a1 = (int)((1370 - hSplitPostSwing.TotalMilliseconds) * 4);
 
-                int a1 = (int)((870 - hSplitPostSwing.TotalMilliseconds) * 4);
-
-                if (hSplitPostSwing >= TimeFromMilli(780) && hSplitPostSwing < TimeFromMilli(860))
+                if (hSplitPostSwing >= TimeFromMilli(1280) && hSplitPostSwing < TimeFromMilli(1360))
                 {
                     hSplitSwingEffect.Color = new Color(a1, a1, a1, a1);
                     if (a1 >= 255) { hSplitSwingEffect.Color = new Color(Color.White, 255); }
@@ -2240,6 +2252,7 @@ namespace Asteroid
                     GameFrozen = false;
                     hSplitSwingEffect.Color = Color.White;
                     Mimicry.inEffect = false;
+                    splitHit = 0;
                 }
             }
 
@@ -2287,7 +2300,7 @@ namespace Asteroid
                 {
                     GreaterSplitHorizontal.AnimateWhileFrozen(_spriteBatch, ref animBurnBool);
                 }
-                hSplitPostSwing = new TimeSpan(0, 0, 0, 1, 150);
+                hSplitPostSwing = new TimeSpan(0, 0, 0, 1, 300 + 350);
                 hSplitSwingEffect.Color = new Color(0, 0, 0, 0);
                 GameFrozen = true;
             }
