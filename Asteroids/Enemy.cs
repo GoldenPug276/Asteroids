@@ -31,6 +31,7 @@ namespace Asteroid
         public float ArmorValue;
         public Texture2D[] ArmorImages;
         public bool dummy = false;
+        public bool cull = false;
 
         //Time Stop Parameters
         public float stoppedDamage = 0;

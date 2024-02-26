@@ -11,6 +11,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Security.Cryptography;
 using System.Text;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Media.Playback;
 using Windows.Security.Authentication.Web.Provider;
 using Windows.UI.Notifications;
@@ -668,6 +669,7 @@ namespace Asteroid
          *                              Made a splitHit bool to signify when there shoulndn't be more hitboxes
          *                                      (did both vertical and horizontal, thought horizontal is kinda slow when there's a lot to be culled.
          *                                      so speed up up horizontal (probably by making it just flat out remove the asteroids instead of breaking them into normal and small)
+         *                                              did this on lines 1472-1478 and added an Enemy.cull, test if works and write about it soon
          *                                      also i modified the way broken works. it is currently super unoptimized and just a "it works" thing. fix that and put the info here)
          *                                      
          *                                      (add and put here the thing that makes the damage apply at the right time instead of at the end)
@@ -684,6 +686,13 @@ namespace Asteroid
          *                  Made the post-swing of Horizontal flip in the same way
          *                      During this, also changed the effect timings slightly
          *                  Added a new read-only Direction property to Sprite that returns 1 if the Sprite is facing right and returns -1 if the Srpite is facing left
+         *                  (ADD INFO SOON)
+         *                  
+         *                  
+         *                                              (tried to implement fixes to asteroids being unreachable at high speeds with this:
+         *                                              limiting the speed on lines 1531-1347
+         *                                              removing asteroids that are outside he bounds at level end on lines 1210-1216
+         *                                              see if these work later)
          *                  Give E.G.O. VFX
          *                  Move Split and EGO things in the Draw function into the right section
          *                  Delete the temp activations
@@ -1198,6 +1207,14 @@ namespace Asteroid
             level.Update(playSpace, Asteroids, UFOs);
             UFOShot.Velocity = level.UFOShotSpeed;
 
+            for (int i = 0; i < Asteroids.Count; i++)
+            {
+                if (level.Finished && !Asteroids[i].Hitbox.Intersects(playSpace))
+                {
+                    Asteroids.Remove(Asteroids[i]);
+                }
+            }
+
             if (Asteroids.Count == 0 && UFOs.Count == 0 && level.Finished ||
                 keyboardState.IsKeyDown(Keys.OemCloseBrackets) && lastKeyboardState.IsKeyUp(Keys.OemCloseBrackets))
             {
@@ -1445,13 +1462,19 @@ namespace Asteroid
 
 
 
-                    if (TimeHasStopped || GameFrozen)
+                    if (TimeHasStopped||GameFrozen)
                     {
                         if (asteroid.ArmorValue - asteroid.stoppedDamage < 0)
                         {
-                            asteroid.hits++;        
+                            asteroid.hits++;
                         }
                         asteroid.stoppedDamage += CollisionPenetration;
+                        if (asteroid.hits>=3) { asteroid.cull = true; }
+                    }
+                    else if (asteroid.cull)
+                    {
+                        score += 70;
+                        Asteroids.Remove(asteroid);
                     }
                     else if (asteroid.leSize == Size.LeChonk && (!asteroid.ArmorDamage(CollisionPenetration) || a))
                     {
@@ -1503,6 +1526,24 @@ namespace Asteroid
                     }
 
                     if (!GameFrozen && !TimeHasStopped) { break; }
+                }
+
+                int j = 25;
+                if (asteroid.Velocity.X>=j)
+                {
+                    asteroid.Velocity.X = j;
+                }
+                if (asteroid.Velocity.X <= -j)
+                {
+                    asteroid.Velocity.X = -j;
+                }
+                if (asteroid.Velocity.Y >= j)
+                {
+                    asteroid.Velocity.Y = j;
+                }
+                if (asteroid.Velocity.Y <= -j)
+                {
+                    asteroid.Velocity.Y = -j;
                 }
 
                 if (counter>=Asteroids.Count) { break; }
@@ -2219,9 +2260,10 @@ namespace Asteroid
             }
             if (hSplitPostSwing>TimeSpan.Zero)
             {
-                if (hSplitSwingEffect.Color.A >= 210 && splitHit < 4)
+                if (hSplitSwingEffect.Color.A >= 210 && splitHit < 5)
                 {
                     ExtraHitboxes.Add(hSplitSwingEffect.Hitbox);
+                    //ExtraHitboxes.Add(new Rectangle(-1000000, -1000000, 2000000, 2000000));
                     ExtraPens.Add(7);
                     splitHit++;
                 }
