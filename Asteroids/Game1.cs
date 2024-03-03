@@ -511,7 +511,7 @@ namespace Asteroid
          *              Different levels give different Penetration
          *                  While doing this, I made sure that a Gun's Bullets inherit the Gun's Penetration when fired
          *                  I decided to add a function in the Bullet Class to do this cuz why the hell not
-         *                  
+         *          
          *          Nano-Armor
          *              3 total levels
          *              This upgrade will act as a barrier that will be able to tank a hit and take time to recharge
@@ -657,6 +657,7 @@ namespace Asteroid
          *                      Added Sync function to Upgrade similar to Enemy as well
          *                      Add Split too later just because
          *                      Changed (probably) everything that used multiple of these lists to AllActiveItems instead
+         *                          Later realized the DefaultGun was broken with this, fixed.
          *                  Made an upgrade to turn Vertical turn into Horizontal when in E.G.O. if you have both Greater Split: Vertical and Manifestation
          *                      Also halves Split cooldown outside of EGO to be that of max level Time Stop (roughly 10 seconds)
          *                  Lowered the UpgradeFont font size by 2 and updated descriptions.
@@ -669,10 +670,11 @@ namespace Asteroid
          *                              Made a splitHit bool to signify when there shoulndn't be more hitboxes
          *                                      (did both vertical and horizontal, thought horizontal is kinda slow when there's a lot to be culled.
          *                                      so speed up up horizontal (probably by making it just flat out remove the asteroids instead of breaking them into normal and small)
-         *                                              did this on lines 1472-1478 and added an Enemy.cull, test if works and write about it soon
+         *                                              did this on lines 1472-1478-ish and added an Enemy.cull, test if works and write about it soon
          *                                      also i modified the way broken works. it is currently super unoptimized and just a "it works" thing. fix that and put the info here)
          *                                      
          *                                      (add and put here the thing that makes the damage apply at the right time instead of at the end)
+         *                                      (just need to finish this and add the E.G.O. effects then we'll be done with the splits. finally almost done)
          *                  
          *                  
          *                  
@@ -686,12 +688,15 @@ namespace Asteroid
          *                  Made the post-swing of Horizontal flip in the same way
          *                      During this, also changed the effect timings slightly
          *                  Added a new read-only Direction property to Sprite that returns 1 if the Sprite is facing right and returns -1 if the Srpite is facing left
+         *                  Slightly modified bullet collision by making it use a hitbox slightly different to the bullet
+         *                  Realized that Droness till work when GameFrozen is true, fixed that
+         *                  Added 1.3 seconds of i-frames to the end of both Splits to make sure you don't instantly die after using it
          *                  (ADD INFO SOON)
          *                  
          *                  
          *                                              (tried to implement fixes to asteroids being unreachable at high speeds with this:
-         *                                              limiting the speed on lines 1531-1347
-         *                                              removing asteroids that are outside he bounds at level end on lines 1210-1216
+         *                                              limiting the speed on lines 1531-1541-ish
+         *                                              removing asteroids that are outside he bounds at level end on lines 1210-1216-ish
          *                                              see if these work later)
          *                  Give E.G.O. VFX
          *                  Move Split and EGO things in the Draw function into the right section
@@ -700,7 +705,6 @@ namespace Asteroid
          *                  
          *                  (note for when making split vertical attack: the damage should be dealt after the attack, not after the game is unfrozen)
          *                  (split horizontal should be basically be a screen nuke, usable once in E.G.O. with cooldown refresh upon entereing and leaving E.G.O.)
-         *                  (for both splits: there should probably be like 1-2 seconds of i-frames after to not die to new asteroids)
          *                  
          *              
          *          Time Erase |just the i-frames|
@@ -775,7 +779,7 @@ namespace Asteroid
             {
                 foreach (Bullet bullet in bullets)
                 {
-                    if (checkedHitbox.Intersects(bullet.Hitbox))
+                    if (checkedHitbox.Intersects(new Rectangle(bullet.Hitbox.X-4, bullet.Hitbox.Y-4, bullet.Hitbox.Width+8, bullet.Hitbox.Height+8)))
                     {
                         CollisionPenetration = bullet.Penetration;
                         if (!bullet.Burning) { bullets.Remove(bullet); }
@@ -1084,6 +1088,7 @@ namespace Asteroid
             defaultGun.GunBullet = defaultShot;
             defaultGun.ShotTimer = defaultTimer;
             defaultGun.reserveShotTimer = reserveDefaultTimer;
+            defaultGun.isGun = true;
             ActiveGuns.Add(defaultGun);
 
 
@@ -1528,22 +1533,14 @@ namespace Asteroid
                     if (!GameFrozen && !TimeHasStopped) { break; }
                 }
 
-                int j = 25;
-                if (asteroid.Velocity.X>=j)
+                int j = 5;
+                if (Math.Abs(asteroid.Velocity.X)>=j)
                 {
-                    asteroid.Velocity.X = j;
+                    asteroid.Velocity.X = j * Math.Sign(asteroid.Velocity.X);
                 }
-                if (asteroid.Velocity.X <= -j)
+                if (Math.Abs(asteroid.Velocity.Y)>=j)
                 {
-                    asteroid.Velocity.X = -j;
-                }
-                if (asteroid.Velocity.Y >= j)
-                {
-                    asteroid.Velocity.Y = j;
-                }
-                if (asteroid.Velocity.Y <= -j)
-                {
-                    asteroid.Velocity.Y = -j;
+                    asteroid.Velocity.Y = j * Math.Sign(asteroid.Velocity.Y);
                 }
 
                 if (counter>=Asteroids.Count) { break; }
@@ -1691,12 +1688,12 @@ namespace Asteroid
                     }
                     DroneProgHolder[0].GunBullet = DronesFinal.GunBullet;
                 }
-                if (i == 3 && DroneProgHolder[3].inEffect) { break; }
+                if (i==3 && DroneProgHolder[3].inEffect) { break; }
 
                 if (DroneProgHolder[i].isActive && !DroneProgHolder[i].inEffect)
                 {
                     DroneList.Add(new Ship(BurnVec, 0, Content.Load<Texture2D>("Upgrades/Drone"), 0, 1 / 1f, Color.White));
-                    if (i != 3) { DroneProgHolder[0].GunBullet = MachineGun.GunBullet; }
+                    if (i!=3) { DroneProgHolder[0].GunBullet = MachineGun.GunBullet; }
 
                     float a = 0; if (i >= 1) { a = 500; }
                     reserveDroneShotTimer = TimeFromMilli(3500 - (1500 * i) - a);
@@ -1709,7 +1706,7 @@ namespace Asteroid
                     break;
                 }
 
-                if (DroneProgHolder[i].inEffect)
+                if (DroneProgHolder[i].inEffect && !GameFrozen)
                 {
                     /*
                     In case I ever need this code again
@@ -1731,24 +1728,24 @@ namespace Asteroid
                     */
 
                     DroneShotTimers[i] -= gameTime.ElapsedGameTime;
-                    if (DroneShotTimers[i] <= TimeSpan.Zero)
+                    if (DroneShotTimers[i]<=TimeSpan.Zero)
                     {
-                        if (DroneTargetValues[i] == -1 || DroneTargetValues[i] >= AllEnemies.Count)
+                        if (DroneTargetValues[i]==-1||DroneTargetValues[i]>=AllEnemies.Count)
                         {
                             DroneTargetValues[i] = rand.Next(0, AllEnemies.Count);
                         }
 
-                        if (lastEnemies.Count > 0 && AllEnemies.Count > 0 && i < lastEnemies.Count && i < AllEnemies.Count &&
-                            lastEnemies[DroneTargetValues[i]] != AllEnemies[DroneTargetValues[i]])
+                        if (lastEnemies.Count>0 && AllEnemies.Count>0 && i<lastEnemies.Count && i<AllEnemies.Count &&
+                            lastEnemies[DroneTargetValues[i]]!=AllEnemies[DroneTargetValues[i]])
                         {
                             for (int j = 0; j < AllEnemies.Count; j++)
                             {
-                                if (AllEnemies[j] == lastEnemies[DroneTargetValues[i]])
+                                if (AllEnemies[j]==lastEnemies[DroneTargetValues[i]])
                                 {
                                     DroneTargetValues[i] = j;
                                     break;
                                 }
-                                if (j == AllEnemies.Count - 1)
+                                if (j==AllEnemies.Count-1)
                                 {
                                     DroneLockOnTimers[i] = TimeFromMilli(1500);
                                     if (DroneProgHolder[3].isActive) { DroneLockOnTimers[i] = TimeFromMilli(3000); }
@@ -1764,7 +1761,7 @@ namespace Asteroid
                         Vector2 between;
                         //
                         start = DroneList[i].Hitbox.Center.ToVector2();
-                        if (DroneTargetValues[i] == -1 || AllEnemies.Count == 0) { destination = BurnVec; }
+                        if (DroneTargetValues[i]==-1||AllEnemies.Count==0) { destination = BurnVec; }
                         else { destination = AllEnemies[DroneTargetValues[i]].Position; }
                         between = start - destination;
                         //
@@ -1772,7 +1769,7 @@ namespace Asteroid
                         DroneList[i].Rotation = angle;
 
                         DroneLockOnTimers[i] -= gameTime.ElapsedGameTime;
-                        if (DroneLockOnTimers[i] <= TimeSpan.Zero)
+                        if (DroneLockOnTimers[i]<=TimeSpan.Zero)
                         {
                             shots.Add(Bullet.BulletTypeCopy(DroneProgHolder[0].GunBullet, DroneList[i].Position, angle));
                             DroneShotTimers[i] = reserveDroneShotTimer;
@@ -1824,12 +1821,12 @@ namespace Asteroid
             {
                 bool swapped = false;
 
-                if (keyboardState.IsKeyDown(Keys.D1 + i) && lastKeyboardState.IsKeyUp(Keys.D1 + i))
+                if (keyboardState.IsKeyDown(Keys.D1+i) && lastKeyboardState.IsKeyUp(Keys.D1+i))
                 {
                     swapped = true;
                 }
 
-                if (mouseState.ScrollWheelValue != lastMouseState.ScrollWheelValue)
+                if (mouseState.ScrollWheelValue!=lastMouseState.ScrollWheelValue)
                 {
                     i = CurrentActiveGunIndex;
                     swapped = true;
@@ -1837,8 +1834,8 @@ namespace Asteroid
                     if (mouseState.ScrollWheelValue < lastMouseState.ScrollWheelValue) { i--; }
                 }
 
-                if (i == ActiveGuns.Count) { i = 0; }
-                if (i < 0) { i = ActiveGuns.Count - 1; }
+                if (i==ActiveGuns.Count) { i = 0; }
+                if (i<0)                 { i = ActiveGuns.Count - 1; }
 
                 if (swapped)
                 {
@@ -1848,7 +1845,7 @@ namespace Asteroid
 
                     foreach (var gun in ActiveGuns)
                     {
-                        if (gun != ActiveGuns[i]) { gun.inEffect = false; }
+                        if (gun!=ActiveGuns[i]) { gun.inEffect = false; }
                     }
 
                     break;
@@ -1885,7 +1882,7 @@ namespace Asteroid
             ExtraHitboxes.Clear();
 
             Warp.AbilityUpdate();
-            if (mouseState.RightButton == ButtonState.Pressed && lastMouseState.RightButton == ButtonState.Released && Warp.WillAbilityGetUsed())
+            if (mouseState.RightButton==ButtonState.Pressed && lastMouseState.RightButton==ButtonState.Released && Warp.WillAbilityGetUsed())
             {
                 ship.Position = new Vector2(rand.Next(0, width), rand.Next(0, height));
                 iFrames = new TimeSpan(0, 0, 0, 0, 400);
@@ -1901,9 +1898,9 @@ namespace Asteroid
                     if (keyboardState.IsKeyDown(Keys.Z) && ShieldProgHolder[i].WillAbilityGetUsed())
                     {
                         float energyGainMultiplier = 5;
-                        if (i == 1) { energyGainMultiplier = 9; }
-                        if (i == 2) { energyGainMultiplier = 18; }
-                        if (i == 3) { energyGainMultiplier = 3.8f; }
+                        if (i==1) { energyGainMultiplier = 9; }
+                        if (i==2) { energyGainMultiplier = 18; }
+                        if (i==3) { energyGainMultiplier = 3.8f; }
                         ShieldProgHolder[i].EnergyGainMultiplier = energyGainMultiplier;
                         ShieldProgHolder[i].AbilityUse();
                         CanShoot = false;
@@ -1925,9 +1922,9 @@ namespace Asteroid
 
                     if (ShieldProgHolder[i].inEffect)
                     {
-                        if (iFrames <= TimeFromMilli(20)) { iFrames = TimeFromMilli(20); }
+                        if (iFrames<=TimeFromMilli(20)) { iFrames = TimeFromMilli(20); }
 
-                        if ((i == ShieldFinal.ProgressionLevel - 1) /*&& (!ExtraHitboxes.Contains(ShieldSprite.Hitbox))*/)
+                        if ((i==ShieldFinal.ProgressionLevel-1) /*&& (!ExtraHitboxes.Contains(ShieldSprite.Hitbox))*/)
                         {
                             ExtraHitboxes.Add(ShieldSprite.Hitbox);
                             ExtraPens.Add(ShieldFinal.Penetration);
@@ -1953,25 +1950,25 @@ namespace Asteroid
                     TimeStopProgHolder[i].AbilityUpdate();
                     if (keyboardState.IsKeyDown(Keys.X) && lastKeyboardState.IsKeyUp(Keys.X)
                         && TimeStopProgHolder[i].WillAbilityGetUsed() && (!TimeHasStopped && !GameFrozen)
-                        && (i == 3 || TimeStopProgHolder[i].energyRemaining.Width >= 98))
+                        && (i==3||TimeStopProgHolder[i].energyRemaining.Width>=98))
                     {
                         TimeStopProgHolder[i].EnergyGainMultiplier = 0.2f;
                         float energyUse = 0.9f;
-                        if (i == 1) { energyUse = 0.4f; TimeStopProgHolder[i].EnergyGainMultiplier = 1.5f; }
-                        if (i == 2) { energyUse = 0.2f; TimeStopProgHolder[i].EnergyGainMultiplier = 0.5f; }
-                        if (i == 3) { energyUse = 0.2f; TimeStopProgHolder[i].EnergyGainMultiplier = 0.5f; }
+                        if (i==1) { energyUse = 0.4f; TimeStopProgHolder[i].EnergyGainMultiplier = 1.5f; }
+                        if (i==2) { energyUse = 0.2f; TimeStopProgHolder[i].EnergyGainMultiplier = 0.5f; }
+                        if (i==3) { energyUse = 0.2f; TimeStopProgHolder[i].EnergyGainMultiplier = 0.5f; }
                         TimeStopProgHolder[i].EnergyUse = energyUse;
                         TimeStopProgHolder[i].inEffect = true;
                         TimeHasStopped = true;
                     }
-                    else if ((TimeStopProgHolder[i].energyRemaining.Width <= 0.5f
-                        || (i == 3 && keyboardState.IsKeyDown(Keys.X) && lastKeyboardState.IsKeyUp(Keys.X))
+                    else if ((TimeStopProgHolder[i].energyRemaining.Width<=0.5f
+                        || (i==3 && keyboardState.IsKeyDown(Keys.X) && lastKeyboardState.IsKeyUp(Keys.X))
                         && TimeHasStopped)||!TimeStopProgHolder[i].inEffect)
                     {
                         float energyGainMultiplier = 7;
-                        if (i == 1) { energyGainMultiplier = 5; }
-                        if (i == 2) { energyGainMultiplier = 3; }
-                        if (i == 3) { energyGainMultiplier = 3; }
+                        if (i==1) { energyGainMultiplier = 5; }
+                        if (i==2) { energyGainMultiplier = 3; }
+                        if (i==3) { energyGainMultiplier = 3; }
                         TimeStopProgHolder[i].EnergyGainMultiplier = energyGainMultiplier;
                         TimeStopProgHolder[i].inEffect = false;
                         TimeHasStopped = false;
@@ -2159,7 +2156,7 @@ namespace Asteroid
 
             foreach (var upgrade in ActiveUpgrades)
             {
-                if (upgrade.UpgradeType >= StatUpgradeType.Drones1 && upgrade.UpgradeType <= StatUpgradeType.DronesFinal && upgrade.inEffect)
+                if (upgrade.UpgradeType>=StatUpgradeType.Drones1 && upgrade.UpgradeType<=StatUpgradeType.DronesFinal && upgrade.inEffect)
                 {
                     for (int i = 0; i < DroneList.Count; i++)
                     {
@@ -2177,16 +2174,16 @@ namespace Asteroid
 
             foreach (var ability in ActiveAbilities)
             {
-                if (ability.AbilityType >= AbilityUpgradeType.Shield1 && ability.AbilityType <= AbilityUpgradeType.ShieldFinal && ability.inEffect)
+                if (ability.AbilityType>=AbilityUpgradeType.Shield1 && ability.AbilityType<=AbilityUpgradeType.ShieldFinal && ability.inEffect)
                 {
                     ShieldSprite.Position.X = ship.Position.X;
                     ShieldSprite.Position.Y = ship.Position.Y;
                     ShieldSprite.Rotation = ship.Rotation;
-                    if (ability.AbilityType == AbilityUpgradeType.ShieldFinal)
+                    if (ability.AbilityType==AbilityUpgradeType.ShieldFinal)
                         ShieldSprite.Color = Color.OrangeRed;
                     ShieldSprite.Draw(_spriteBatch);
                 }
-                if (ability.AbilityType >= AbilityUpgradeType.TimeStop1 && ability.AbilityType <= AbilityUpgradeType.TimeStopFinal && ability.inEffect)
+                if (ability.AbilityType>=AbilityUpgradeType.TimeStop1 && ability.AbilityType<=AbilityUpgradeType.TimeStopFinal && ability.inEffect)
                 {
                     _spriteBatch.FillRectangle(0, 0, 800, 480, new Color(Color.Black, 75));
                 }
@@ -2255,6 +2252,7 @@ namespace Asteroid
                     GameFrozen = false;
                     vSplitSwingEffect.Color = Color.White;
                     Mimicry.inEffect = false;
+                    iFrames = new TimeSpan(0, 0, 0, 1, 300);
                     splitHit = 0;
                 }
             }
@@ -2294,6 +2292,7 @@ namespace Asteroid
                     GameFrozen = false;
                     hSplitSwingEffect.Color = Color.White;
                     Mimicry.inEffect = false;
+                    iFrames = new TimeSpan(0, 0, 0, 1, 300);
                     splitHit = 0;
                 }
             }
