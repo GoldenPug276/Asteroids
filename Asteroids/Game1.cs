@@ -668,6 +668,8 @@ namespace Asteroid
          *                          First tested it by coloring Asteroids hit Red when they are supposed to take damage
          *                          Then make the damage
          *                              Made a splitHit bool to signify when there shoulndn't be more hitboxes
+         *                              
+         *                              
          *                                      (did both vertical and horizontal, thought horizontal is kinda slow when there's a lot to be culled.
          *                                      so speed up up horizontal (probably by making it just flat out remove the asteroids instead of breaking them into normal and small)
          *                                              did this on lines 1472-1478-ish and added an Enemy.cull, test if works and write about it soon
@@ -675,8 +677,16 @@ namespace Asteroid
          *                                      
          *                                      (add and put here the thing that makes the damage apply at the right time instead of at the end)
          *                                      (just need to finish this and add the E.G.O. effects then we'll be done with the splits. finally almost done)
-         *                  
-         *                  
+         *                                      
+         *                                      (made the damage apply at the right time
+         *                                      did this by making a new bool in Enemy called FrozenHurt which makes enemies ignore GameFrozen when collision is detected
+         *                                      doing this also makes the Splits look MUCH cooler and smoother
+         *                                          also with this vertical actually splits the enemies based on the slice position instead of just removing them
+         *                                      currently applying the 'effect' to enemies with an if before their collision functions
+         *                                      either find a better way to do this or make theses ifs look/function nicer
+         *                                      after doing that, document ALL of this as it should be documented in the to-do list
+         *                                          also while i was at it i turned the collision functions from foreach() to for() to make this actually work)
+         *                                          
          *                  
          *                  Added new dev shortcuts:
          *                      Numpad 7 spawns a dummy Asteroid with max armor to the left of the ship
@@ -1421,16 +1431,23 @@ namespace Asteroid
             }
             counter = 0;
 
-            foreach (var asteroid in Asteroids)
+            for (int i = 0; i < Asteroids.Count; i++)
             {
+                var asteroid = Asteroids[i];
+
                 //testestest
                 if (GameFrozen && vSplitPostSwing>TimeSpan.Zero && vSplitSwingEffect.Color.A>=210 && asteroid.Hitbox.Intersects(vSplitSwingEffect.Hitbox))
                 {
-                    asteroid.Color = Color.Red;
+                    asteroid.FrozenHurt = true;
                 }
-                else
+                if (GameFrozen && hSplitPostSwing > TimeSpan.Zero && hSplitSwingEffect.Color.A >= 210)
                 {
-                    asteroid.Color = Color.White;
+                    asteroid.FrozenHurt = true;
+                }
+                if (GameFrozen && hSplitPostSwing > TimeSpan.Zero && asteroid.leSize==Size.Baby)
+                {
+                    Asteroids.Remove(asteroid);
+                    i--;
                 }
                 //testestest
 
@@ -1467,7 +1484,7 @@ namespace Asteroid
 
 
 
-                    if (TimeHasStopped||GameFrozen)
+                    if (TimeHasStopped||(GameFrozen && !asteroid.FrozenHurt))
                     {
                         if (asteroid.ArmorValue - asteroid.stoppedDamage < 0)
                         {
@@ -1543,7 +1560,7 @@ namespace Asteroid
                     asteroid.Velocity.Y = j * Math.Sign(asteroid.Velocity.Y);
                 }
 
-                if (counter>=Asteroids.Count) { break; }
+                if (i>=Asteroids.Count) { break; }
 
                 if (!TimeHasStopped && !GameFrozen)
                 {
@@ -1560,30 +1577,30 @@ namespace Asteroid
 
                     if (ship.Hitbox.Intersects(asteroid.Hitbox)) { ShipGotHit(); }
                 }
-                counter++;
             }
-            counter = 0;
 
             UFOMovementSpace = new Rectangle((int)ship.Position.X - 60 - level.UFOMoveExtra, 50, 120 + (2 * level.UFOMoveExtra), 60);
             UFOShotArea = new Rectangle((int)ship.Position.X - level.UFORange, (int)ship.Position.Y, level.UFORange * 2, 1);
 
-            foreach (var UFO in UFOs)
+            for (int i = 0; i < UFOs.Count; i++)
             {
+                var UFO = UFOs[i];
+
                 //testestest
                 if (GameFrozen && vSplitPostSwing > TimeSpan.Zero && vSplitSwingEffect.Color.A >= 210 && UFO.Hitbox.Intersects(vSplitSwingEffect.Hitbox))
                 {
-                    UFO.Color = Color.Red;
+                    UFO.FrozenHurt = true;
                 }
-                else
+                if (GameFrozen && hSplitPostSwing > TimeSpan.Zero && hSplitSwingEffect.Color.A >= 210)
                 {
-                    UFO.Color = Color.White;
+                    UFO.FrozenHurt = true;
                 }
                 //testestest
 
                 UFO.TimeStopDamage();
                 if (EnemyCollisionDetection(UFO.Hitbox, shots, ExtraHitboxes, ExtraPens) || UFO.broken)
                 {
-                    if (TimeHasStopped || GameFrozen)
+                    if (TimeHasStopped||(GameFrozen && !UFO.FrozenHurt))
                     {
                         if (UFO.ArmorValue - UFO.stoppedDamage < 0)
                         {
@@ -1591,7 +1608,7 @@ namespace Asteroid
                         }
                         UFO.stoppedDamage += CollisionPenetration;
                     }
-                    else if (!UFO.ArmorDamage(CollisionPenetration) || UFO.broken)
+                    else if (!UFO.ArmorDamage(CollisionPenetration)||UFO.broken)
                     {
                         //Archived PowerUp Code: laser.Spawned(UFOs[i].Position, new Vector2(rand.Next(1, 3), rand.Next(1, 3)), UFOs[i].leSize);
 
@@ -1612,7 +1629,7 @@ namespace Asteroid
                     }
                 }
 
-                if (counter >= UFOs.Count) { break; }
+                if (i>=UFOs.Count) { break; }
 
                 if (!TimeHasStopped && !GameFrozen)
                 {
@@ -1628,15 +1645,13 @@ namespace Asteroid
                     if (ship.Hitbox.Intersects(UFO.Hitbox)) { ShipGotHit(); }
                 }
 
-                if (UFO.ShotTimer <= TimeSpan.Zero)
+                if (UFO.ShotTimer<=TimeSpan.Zero)
                 {
                     enemyShots.Add(UFO.Shoot(UFOShotArea, UFOShot));
                     UFO.ShotTimer = UFO.reserveShotTimer;
                     break;
                 }
-                counter++;
             }
-            counter = 0;
 
             ship.IsInBounds(playSpace);
 
@@ -2260,8 +2275,7 @@ namespace Asteroid
             {
                 if (hSplitSwingEffect.Color.A >= 210 && splitHit < 5)
                 {
-                    ExtraHitboxes.Add(hSplitSwingEffect.Hitbox);
-                    //ExtraHitboxes.Add(new Rectangle(-1000000, -1000000, 2000000, 2000000));
+                    ExtraHitboxes.Add(new Rectangle(-100, -100, hSplitSwingEffect.Hitbox.Width + 200, hSplitSwingEffect.Hitbox.Height + 200));
                     ExtraPens.Add(7);
                     splitHit++;
                 }

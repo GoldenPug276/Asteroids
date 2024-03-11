@@ -38,6 +38,7 @@ namespace Asteroid
         public bool broken = false;
         public float brokenTimes = 0;
         public int hits = 0;
+        public bool FrozenHurt = false; //technically counts even though it's for GameFrozen instead of Time Stop
         //Time Stop Parameters
 
         public Enemy(Vector2 position, Vector2 velocity, Texture2D image, float rot, float scale, Color color, Game1.Size size, TimeSpan shotTimer, Type type, float armorValue)
