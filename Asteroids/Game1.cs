@@ -27,7 +27,7 @@ namespace Asteroid
         private SpriteBatch _spriteBatch;
         public static GameTime gameTime;
 
-        //All Sprites are placeholders; change later
+        //Most Sprites are placeholders; change later
         Ship ship;
         Bullet defaultShot; Upgrade defaultGun;
         Bullet devBullets; Upgrade devGun; TimeSpan devShotTimer = new TimeSpan(0, 0, 0, 0, 25);
@@ -43,7 +43,6 @@ namespace Asteroid
         Vector2 BurnVec = new Vector2(0, 0);
         bool animBurnBool = true;
         bool BoolForRandomTests = false;
-        int counter = 0;
 
         public static bool GameFrozen = false;
 
@@ -673,7 +672,8 @@ namespace Asteroid
          *                                      (did both vertical and horizontal, thought horizontal is kinda slow when there's a lot to be culled.
          *                                      so speed up up horizontal (probably by making it just flat out remove the asteroids instead of breaking them into normal and small)
          *                                              did this on lines 1472-1478-ish and added an Enemy.cull, test if works and write about it soon
-         *                                      also i modified the way broken works. it is currently super unoptimized and just a "it works" thing. fix that and put the info here)
+         *                                      also i modified the way broken works. it is currently super unoptimized and just a "it works" thing. fix that and put the info here
+         *                                          i just deleted it since it really didn't do anything and was quite literally pointless. don't bother mentioning it)
          *                                      
          *                                      (add and put here the thing that makes the damage apply at the right time instead of at the end)
          *                                      (just need to finish this and add the E.G.O. effects then we'll be done with the splits. finally almost done)
@@ -684,8 +684,14 @@ namespace Asteroid
          *                                          also with this vertical actually splits the enemies based on the slice position instead of just removing them
          *                                      currently applying the 'effect' to enemies with an if before their collision functions
          *                                      either find a better way to do this or make theses ifs look/function nicer
+         *                                          made the ifs into one if. i'll just have one if at the start with multiple ORs to define seperate activation conditions
          *                                      after doing that, document ALL of this as it should be documented in the to-do list
-         *                                          also while i was at it i turned the collision functions from foreach() to for() to make this actually work)
+         *                                          also while i was at it i turned the collision functions from foreach() to for() to make this actually work
+         *                                              next session, i ended up converting every foreach() that used int counter to for(), then removed counter
+         *                                      while doing that quickly made it so that baby sized asteroids made by an attck in GameFrozen get like inf brokenTimes
+         *                                          this is because it became annoying have one or two tiny asteroids remaining when you just barely missed them)
+         *                                          
+         *                                      (document this all correctly, then finish up the VFX for E.G.O.)
          *                                          
          *                  
          *                  Added new dev shortcuts:
@@ -1384,7 +1390,7 @@ namespace Asteroid
 
             //Upgrade Code
 
-            if ((iFrames -= gameTime.ElapsedGameTime) >= TimeSpan.Zero)
+            if ((iFrames-=gameTime.ElapsedGameTime)>=TimeSpan.Zero)
             {
                 int color = 255 * ((int)iFrames.TotalMilliseconds % 2);
                 ship.Color = new Color(color, color, color);
@@ -1394,11 +1400,12 @@ namespace Asteroid
                 ship.Color = Color.White;
             }
 
-            foreach (var shot in shots)
-            {
+            for (int i = 0; i < shots.Count; i++)
+            {   var shot = shots[i];
+
                 shot.Move();
 
-                if (!IsBulletInBounds(shots, counter, playSpace)) { break; }
+                if (!IsBulletInBounds(shots, i, playSpace)) { break; }
 
                 /*  Old Powerup Code, Archived
                 if (!IsBulletInBounds(shots, i, playSpace))
@@ -1409,11 +1416,10 @@ namespace Asteroid
                     }
                 }
                 */
-                counter++;
             }
-            counter = 0;
-            foreach (var enemyShot in enemyShots)
-            {
+            for (int i = 0; i < enemyShots.Count; i++)
+            {   var enemyShot = enemyShots[i];
+
                 if (!TimeHasStopped && !GameFrozen) { enemyShot.Move(); }
 
                 if (ship.Hitbox.Intersects(enemyShot.Hitbox) && (!TimeHasStopped && !GameFrozen))
@@ -1423,66 +1429,28 @@ namespace Asteroid
                     break;
                 }
 
-                if (!IsBulletInBounds(enemyShots, counter, playSpace) && (!TimeHasStopped && !GameFrozen))
+                if (!IsBulletInBounds(enemyShots, i, playSpace) && (!TimeHasStopped && !GameFrozen))
                 {
                     break;
                 }
-                counter++;
             }
-            counter = 0;
 
             for (int i = 0; i < Asteroids.Count; i++)
-            {
-                var asteroid = Asteroids[i];
+            {   var asteroid = Asteroids[i];
 
-                //testestest
-                if (GameFrozen && vSplitPostSwing>TimeSpan.Zero && vSplitSwingEffect.Color.A>=210 && asteroid.Hitbox.Intersects(vSplitSwingEffect.Hitbox))
+                //Cutscene Damage Code
+                if (GameFrozen
+                    &&((vSplitPostSwing>TimeSpan.Zero && vSplitSwingEffect.Color.A>=210 && asteroid.Hitbox.Intersects(vSplitSwingEffect.Hitbox))
+                    || (hSplitPostSwing>TimeSpan.Zero && hSplitSwingEffect.Color.A>=210)))
                 {
                     asteroid.FrozenHurt = true;
                 }
-                if (GameFrozen && hSplitPostSwing > TimeSpan.Zero && hSplitSwingEffect.Color.A >= 210)
-                {
-                    asteroid.FrozenHurt = true;
-                }
-                if (GameFrozen && hSplitPostSwing > TimeSpan.Zero && asteroid.leSize==Size.Baby)
-                {
-                    Asteroids.Remove(asteroid);
-                    i--;
-                }
-                //testestest
+                //add extra conditions with more rows, each in its own set of parethesis
 
                 asteroid.TimeStopDamage();
                 if (EnemyCollisionDetection(asteroid.Hitbox, shots, ExtraHitboxes, ExtraPens) || asteroid.broken)
                 {
                     //Archived PowerUp Code: machine.Spawned(Asteroids[i].Position, new Vector2(rand.Next(1, 4), rand.Next(1, 4)), Asteroids[i].leSize);
-
-                    bool a = false;
-                    bool b = false;
-                    bool c = false;
-
-                    if (asteroid.broken==true)
-                    {
-                        switch (asteroid.leSize)
-                        {
-                            case Size.LeChonk:
-                                {
-                                    a = true;
-                                    break;
-                                }
-                            case Size.Normal:
-                                {
-                                    b = true;
-                                    break;
-                                }
-                            case Size.Baby:
-                                {
-                                    c = true;
-                                    break;
-                                }
-                        }
-                    }
-
-
 
                     if (TimeHasStopped||(GameFrozen && !asteroid.FrozenHurt))
                     {
@@ -1498,7 +1466,7 @@ namespace Asteroid
                         score += 70;
                         Asteroids.Remove(asteroid);
                     }
-                    else if (asteroid.leSize == Size.LeChonk && (!asteroid.ArmorDamage(CollisionPenetration) || a))
+                    else if (asteroid.leSize==Size.LeChonk && (!asteroid.ArmorDamage(CollisionPenetration)))
                     {
                         score += 10;
                         asteroid.leSize++;
@@ -1509,13 +1477,13 @@ namespace Asteroid
                             SmallAsteroid, 0, 1 / 1f, Color.White, Size.Normal, TimeSpan.Zero, Enemy.Type.Asteroid, 0));
                         if (asteroid.dummy) { Asteroids[Asteroids.Count - 1].dummy = true; }
                         asteroid.HitboxRefresh();
-                        if (a)
+                        if (asteroid.broken)
                         {
                             Asteroids[Asteroids.Count - 1].brokenTimes = asteroid.brokenTimes/2;
                             Asteroids[Asteroids.Count - 1].broken = true;
                         }
                     }
-                    else if (asteroid.leSize == Size.Normal || b)
+                    else if (asteroid.leSize==Size.Normal)
                     {
                         score += 30;
                         asteroid.leSize++;
@@ -1526,13 +1494,19 @@ namespace Asteroid
                             TinyAsteroid, 0, 1 / 1f, Color.White, Size.Baby, TimeSpan.Zero, Enemy.Type.Asteroid, 0));
                         if (asteroid.dummy) { Asteroids[Asteroids.Count - 1].dummy = true; }
                         asteroid.HitboxRefresh();
-                        if (b)
+                        if (asteroid.FrozenHurt)
+                        {
+                            asteroid.broken = true;
+                            asteroid.brokenTimes += 100;
+                            Asteroids[Asteroids.Count - 1].FrozenHurt = true;
+                        }
+                        if (asteroid.broken)
                         {
                             Asteroids[Asteroids.Count - 1].brokenTimes = asteroid.brokenTimes / 2;
                             Asteroids[Asteroids.Count - 1].broken = true;
                         }
                     }
-                    else if (asteroid.leSize == Size.Baby || c)
+                    else if (asteroid.leSize==Size.Baby)
                     {
                         score += 50;
                         Asteroids.Remove(asteroid);
@@ -1541,7 +1515,7 @@ namespace Asteroid
                     if (asteroid.broken)
                     {
                         asteroid.brokenTimes--;
-                        if (asteroid.brokenTimes <= 0)
+                        if (asteroid.brokenTimes<=0)
                         {
                             asteroid.broken = false;
                         }
@@ -1566,7 +1540,7 @@ namespace Asteroid
                 {
                     if (!asteroid.dummy)
                     {
-                        if (asteroid.leSize == Size.LeChonk) { asteroid.Rotation += 0.005f; }
+                        if (asteroid.leSize==Size.LeChonk) { asteroid.Rotation += 0.005f; }
                         else { asteroid.Rotation += 0.01f; }
 
                         asteroid.Position = new Vector2(asteroid.Position.X + (float)Math.Sin(asteroid.Rotation) + asteroid.Velocity.X,
@@ -1583,19 +1557,16 @@ namespace Asteroid
             UFOShotArea = new Rectangle((int)ship.Position.X - level.UFORange, (int)ship.Position.Y, level.UFORange * 2, 1);
 
             for (int i = 0; i < UFOs.Count; i++)
-            {
-                var UFO = UFOs[i];
+            {   var UFO = UFOs[i];
 
-                //testestest
-                if (GameFrozen && vSplitPostSwing > TimeSpan.Zero && vSplitSwingEffect.Color.A >= 210 && UFO.Hitbox.Intersects(vSplitSwingEffect.Hitbox))
+                //Cutscene Damage Code
+                if (GameFrozen
+                    &&((vSplitPostSwing>TimeSpan.Zero && vSplitSwingEffect.Color.A>=210 && UFO.Hitbox.Intersects(vSplitSwingEffect.Hitbox))
+                    || (hSplitPostSwing>TimeSpan.Zero && hSplitSwingEffect.Color.A>=210)))
                 {
                     UFO.FrozenHurt = true;
                 }
-                if (GameFrozen && hSplitPostSwing > TimeSpan.Zero && hSplitSwingEffect.Color.A >= 210)
-                {
-                    UFO.FrozenHurt = true;
-                }
-                //testestest
+                //add extra conditions with more rows, each in its own set of parethesis
 
                 UFO.TimeStopDamage();
                 if (EnemyCollisionDetection(UFO.Hitbox, shots, ExtraHitboxes, ExtraPens) || UFO.broken)
@@ -1622,7 +1593,7 @@ namespace Asteroid
                     if (UFO.broken)
                     {
                         UFO.brokenTimes--;
-                        if (UFO.brokenTimes <= 0)
+                        if (UFO.brokenTimes<=0)
                         {
                             UFO.broken = false;
                         }
@@ -1655,7 +1626,7 @@ namespace Asteroid
 
             ship.IsInBounds(playSpace);
 
-            if (lives < 0)
+            if (lives<0)
             {
                 Exit();
             }
@@ -1664,7 +1635,7 @@ namespace Asteroid
             {
                 score0s += '0';
             }
-            if (score > 99999)
+            if (score>99999)
             {
                 score = 0;
             }
@@ -2155,12 +2126,12 @@ namespace Asteroid
 
             _spriteBatch.DrawString(font, $"{GunInEffectName}", new Vector2(10, 50), GunInEffectColor);
 
-            foreach (var ability in ActiveAbilities)
-            {
-                ability.AbilityEnergyStack(ActiveAbilities, counter);
-                ability.EnergyDraw(_spriteBatch); counter++;
+            for (int i = 0; i < ActiveAbilities.Count; i++)
+            {   var ability = ActiveAbilities[i];
+
+                ability.AbilityEnergyStack(ActiveAbilities, i);
+                ability.EnergyDraw(_spriteBatch);
             }
-            counter = 0;
             foreach (var gun in ActiveGuns)
             {
                 gun.EnergyDraw(_spriteBatch);
